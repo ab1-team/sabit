@@ -47,7 +47,7 @@ class JenisBiayaController extends Controller
                 })
                 ->toJson();
         }
-        return view('jenis_biaya.index', ['title' => 'Jenis Keuangan']);
+        return view('jenis-biaya.index', ['title' => 'Jenis Keuangan']);
     }
 
     public function create()
@@ -56,7 +56,7 @@ class JenisBiayaController extends Controller
         $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
         $title = 'Tambah Nominal Keuangan';
 
-        return view('jenis_biaya.create', compact('title', 'jenisPembayaran', 'tahunAkademiks'));
+        return view('jenis-biaya.create', compact('title', 'jenisPembayaran', 'tahunAkademiks'));
     }
 
     public function createForm()
@@ -64,7 +64,7 @@ class JenisBiayaController extends Controller
         $jenisPembayaran = JenisPembayaran::orderBy('nama')->get();
         $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
         return response()->json([
-            'html' => view('jenis_biaya._form', [
+            'html' => view('jenis-biaya._form', [
                 'mode'            => 'create',
                 'jenisPembayaran' => $jenisPembayaran,
                 'tahunAkademiks'  => $tahunAkademiks,
@@ -79,7 +79,7 @@ class JenisBiayaController extends Controller
         $jenisPembayaran = JenisPembayaran::orderBy('nama')->get();
         $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
         return response()->json([
-            'html' => view('jenis_biaya._form', [
+            'html' => view('jenis-biaya._form', [
                 'mode'            => 'edit',
                 'jenisPembayaran' => $jenisPembayaran,
                 'tahunAkademiks'  => $tahunAkademiks,
@@ -117,7 +117,7 @@ class JenisBiayaController extends Controller
         $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
         $title = 'Edit Nominal Keuangan';
 
-        return view('jenis_biaya.edit', compact('title', 'jenisPembayaran', 'tahunAkademiks', 'jenis_biaya'));
+        return view('jenis-biaya.edit', compact('title', 'jenisPembayaran', 'tahunAkademiks', 'jenis_biaya'));
     }
 
     public function update(Request $request, Jenis_Biaya $jenis_biaya)

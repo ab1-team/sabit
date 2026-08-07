@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'central'),
 
     /*
     |--------------------------------------------------------------------------
@@ -23,7 +23,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here are each of the database connections setup for your application.
-    | Of course, examples of configuring each database platform that is
+    | Of course, examples of configuring the database platforms that are
     | supported by Laravel is shown below to make development simple.
     |
     |
@@ -34,6 +34,23 @@ return [
     */
 
     'connections' => [
+
+        'central' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST_CENTRAL', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_PORT_CENTRAL', env('DB_PORT', '3306')),
+            'database' => env('DB_DATABASE_CENTRAL', env('DB_DATABASE', 'forge')),
+            'username' => env('DB_USERNAME_CENTRAL', env('DB_USERNAME', 'forge')),
+            'password' => env('DB_PASSWORD_CENTRAL', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',
@@ -61,6 +78,33 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tenant template connection (multi-DB tenancy)
+        |--------------------------------------------------------------------------
+        |
+        | stancl/tenancy butuh koneksi ini sebagai template untuk generate
+        | koneksi tenant. Host/user/password sama dengan koneksi mysql biasa.
+        | Database name akan di-override per tenant dengan prefix + tenant_id.
+        |
+        */
+        'tenant_template' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE_TENANT', env('DB_DATABASE', 'forge')),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
         ],
 
         'pgsql' => [

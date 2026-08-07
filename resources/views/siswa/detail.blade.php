@@ -1,7 +1,7 @@
 @php
     use App\Utils\Tanggal;
 @endphp
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -42,7 +42,7 @@
                                     <div class="card-body p-3 text-center">
                                         <div class="mx-auto mb-2"
                                             style="width:120px; height:120px; border-radius:50%; overflow:hidden; background-color:#f1f1f1;">
-                                            <img src="{{ asset('storage/siswa/' . ($siswa->foto ?: 'default.png')) }}"
+                                            <img src="{{ \App\Models\Profil::tenantStorageUrl('siswa/' . ($siswa->foto ?: 'default.png')) }}"
                                                 style="width:100%; height:100%; object-fit:cover;">
                                         </div>
                                         <div class="d-flex justify-content-end mb-2">

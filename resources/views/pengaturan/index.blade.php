@@ -1,4 +1,4 @@
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
 <style>
     .sop-shell {
@@ -317,15 +317,21 @@
             contentType: false,
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function (result) {
+                if (result.logo) {
+                    const img = document.getElementById('previewLogo');
+                    const zone = document.getElementById('uploadZone');
+                    if (img) img.src = result.logo + '?v=' + Date.now();
+                    if (zone) zone.classList.add('has-image');
+                }
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
                     title: result.msg,
                     showConfirmButton: false,
-                    timer: 2500,
+                    timer: 2000,
                     timerProgressBar: true
-                }).then(() => window.location.reload());
+                });
             },
             error: function (xhr) {
                 let msg = 'Logo belum dipilih atau format salah';
@@ -333,7 +339,6 @@
                     msg = xhr.responseJSON.errors.logo[0];
                 }
                 Swal.fire('Error', msg, 'error');
-                console.error('Logo upload error:', xhr.responseJSON);
             }
         });
     });

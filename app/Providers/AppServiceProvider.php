@@ -7,6 +7,8 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\DatabaseConfig;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,21 +21,19 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-        $profil = null;
-        if (Schema::hasTable('profil')) {
-            try {
-                $profil = Profil::first();
-            } catch (\Throwable $e) {
-                $profil = null;
-            }
-        }
+        DatabaseConfig::generateDatabaseNamesUsing(function (TenantWithDatabase $tenant) {
+            return config('tenancy.database.prefix');
+        });
 
-        View::share('appLogoUrl', $profil && $profil->logo
-            ? asset('storage/logo/' . $profil->logo)
-            : asset('assets/img/apple-icon.png'));
+        // View composer: jalan setiap kali view 'layouts.tenant.base' di-render,
+        // sehingga data profil SELALU diambil dengan koneksi tenant yang sedang
+        // aktif (bukan koneksi central seperti di boot()).
+        View::composer('layouts.tenant.base', function ($view) {
+            $profil = Profil::safeFirst();
 
-        View::share('appName', $profil->nama ?? config('app.name'));
-
-        View::share('profil', $profil);
+            $view->with('profil', $profil);
+            $view->with('appLogoUrl', Profil::logoUrl());
+            $view->with('appName', $profil->nama ?? config('app.name'));
+        });
     }
 }

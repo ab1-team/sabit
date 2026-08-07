@@ -26,7 +26,8 @@ class AuthController extends Controller
         $user = User::where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return redirect()->back()
+            return redirect()
+                ->route('login')
                 ->withInput(['username' => $request->username])
                 ->with('error', 'Username atau password salah');
         }
@@ -49,7 +50,7 @@ class AuthController extends Controller
         if ($showPiutangPrompt) {
             $job = uniqid('gen_', true);
             session()->put('piutang_token_' . $job, true);
-            return redirect('/app/dashboard')->with([
+            return redirect()->route('app.dashboard')->with([
                 'piutang_prompt' => [
                     'bulan' => $bulanLabel,
                     'job' => $job,
@@ -57,7 +58,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return redirect('/app/dashboard')->with([
+        return redirect()->route('app.dashboard')->with([
             'icon' => 'success',
             'msg'  => 'Selamat datang ' . ($user->nama ?? $user->username ?? 'Pengguna'),
         ]);

@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class AdminInvoice extends Model
 {
+    protected $connection = 'central';
+
     protected $table = 'admin_invoice';
 
     protected $fillable = [
+        'tenant_id',
         'jenis_pembayaran',
         'tgl_invoice',
         'tgl_lunas',

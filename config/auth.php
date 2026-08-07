@@ -44,9 +44,9 @@ return [
             'driver' => 'session',
             'provider' => 'admin_users',
         ],
-        'master' => [
+        'tenant' => [
             'driver' => 'session',
-            'provider' => 'master_users',
+            'provider' => 'tenant_users',
         ],
     ],
 
@@ -76,9 +76,9 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\AdminUser::class,
         ],
-        'master_users' => [
+        'tenant_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\MasterUser::class,
+            'model' => App\Models\TenantUser::class,
         ],
 
         // 'users' => [
@@ -119,9 +119,9 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
-        'master_users' => [
-            'provider' => 'master_users',
-            'table' => 'master_password_reset_tokens',
+        'tenant_users' => [
+            'provider' => 'tenant_users',
+            'table' => 'tenant_password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

@@ -145,6 +145,7 @@ class PengaturanController extends Controller
             'penanggung_jawab' => 'required',
         ]);
         Profil::findOrFail($id)->update($request->all());
+        Profil::flushCache();
 
         return response()->json([
             'success' => true,
@@ -156,32 +157,38 @@ class PengaturanController extends Controller
     public function logo(Request $request, $id)
     {
         $request->validate([
-            'logo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'logo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
             'logo.required' => 'Pilih file logo terlebih dahulu.',
             'logo.image' => 'File harus berupa gambar.',
-            'logo.mimes' => 'Format logo harus JPG, JPEG, atau PNG.',
+            'logo.mimes' => 'Format logo harus JPG, JPEG, PNG, atau WebP.',
             'logo.max' => 'Ukuran logo maksimal 2MB.',
         ]);
 
         $profil = Profil::findOrFail($id);
 
-        if ($profil->logo && Storage::disk('public')->exists('logo/'.$profil->logo)) {
-            Storage::disk('public')->delete('logo/'.$profil->logo);
+        $disk = Storage::disk('public');
+        $dir = $disk->path('logo');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        if ($profil->logo && $disk->exists('logo/'.$profil->logo)) {
+            $disk->delete('logo/'.$profil->logo);
         }
 
         $file = $request->file('logo');
-        $name = $file->hashName();
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension());
+        $name = 'logo_' . $profil->id . '_' . time() . '.' . $ext;
         $file->storeAs('logo', $name, 'public');
 
-        $profil->update([
-            'logo' => $name,
-        ]);
+        $profil->update(['logo' => $name]);
+        Profil::flushCache();
 
         return response()->json([
             'success' => true,
             'msg' => 'Logo berhasil diperbarui',
-            'logo' => asset('storage/logo/'.$name),
+            'logo' => $disk->url('logo/'.$name),
         ]);
     }
 
@@ -218,7 +225,13 @@ class PengaturanController extends Controller
         $title = 'Daftar Invoice';
 
         if ($request->ajax()) {
-            $data = AdminInvoice::query()->latest('tgl_invoice')->latest('id');
+            $tenantId = $this->currentTenantId($request);
+
+            $data = AdminInvoice::query()
+                ->when($tenantId, fn ($q) => $q->where('admin_invoice.tenant_id', $tenantId))
+                ->latest('tgl_invoice')
+                ->latest('id');
+
             return \Yajra\DataTables\Facades\DataTables::eloquent($data)
                 ->addIndexColumn()
                 ->addColumn('tgl_invoice_fmt', fn ($row) => $row->tgl_invoice?->format('d/m/Y') ?? '—')
@@ -242,11 +255,20 @@ class PengaturanController extends Controller
                 ->toJson();
         }
 
-        return view('pengaturan.invoice', compact('title'));
+        return view('pengaturan.invoice', [
+            'title' => $title,
+            'currentTenantId' => $this->currentTenantId($request),
+        ]);
     }
 
-    public function invoicePrint(AdminInvoice $invoice)
+    public function invoicePrint(Request $request, AdminInvoice $invoice)
     {
+        $tenantId = $this->currentTenantId($request);
+
+        if ($tenantId && (string) $invoice->tenant_id !== (string) $tenantId) {
+            abort(404);
+        }
+
         $invoice->load('user');
         $logoPath = public_path('assets/logo/abt_logo.png');
         $data = ['invoice' => $invoice];
@@ -254,9 +276,16 @@ class PengaturanController extends Controller
             $data['logo'] = base64_encode(file_get_contents($logoPath));
             $data['logo_type'] = 'png';
         }
-        $pdf = Pdf::loadView('master.invoice.print', $data);
+        $pdf = Pdf::loadView('tenant.invoice.print', $data);
         $pdf->setPaper('A4', 'portrait');
 
         return $pdf->stream('invoice-'.$invoice->id.'.pdf');
+    }
+
+    private function currentTenantId(Request $request): ?string
+    {
+        $tid = $request->attributes->get('current_tenant_id');
+
+        return $tid ? (string) $tid : null;
     }
 }

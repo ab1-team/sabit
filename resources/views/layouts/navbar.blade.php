@@ -45,7 +45,7 @@
 
             <li class="nav-item dropdown pe-3 d-flex align-items-center" data-bs-auto-close="outside">
                 @auth
-                    @php $avatar = auth()->user()->foto ? asset('storage/users/' . auth()->user()->foto) : null; @endphp
+                    @php $avatar = auth()->user()->foto ? \App\Models\Profil::tenantStorageUrl('users/' . auth()->user()->foto) : null; @endphp
                 @endauth
                 <a href="javascript:;" class="nav-link text-body p-0" data-bs-toggle="dropdown">
                     @auth

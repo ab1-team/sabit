@@ -11,6 +11,7 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "stancl/tenancy": "^3.10",
         "yajra/laravel-datatables-oracle": "10.11"
     },
     "require-dev": {
@@ -64,6 +65,15 @@
         },
         "audit": {
             "ignore": [
+                "PKSA-vznr-tgp9-fd7d",
+                "PKSA-cnw1-2ytm-cgr8",
+                "PKSA-gcrk-3vtt-1r14",
+                "PKSA-gh7h-hhy4-byg7",
+                "PKSA-6r8f-nxsb-67bq",
+                "PKSA-cv56-2228-pzr6",
+                "PKSA-mwt3-h9tv-kx78",
+                "PKSA-mckv-s5hg-868k",
+                "PKSA-hp6n-n4kz-21wk",
                 "PKSA-bbs6-q5q9-f3t4",
                 "PKSA-qxvb-2bpp-dnk6",
                 "PKSA-fy2t-3c5f-827y",
