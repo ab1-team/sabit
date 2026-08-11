@@ -4,7 +4,7 @@
 @endphp
 <title>{{ $title }} {{ $sub_judul }}</title>
 
-@extends('laporan-keuangan.layout.base')
+@extends('laporan-keuangan.layout.dasar')
 @section('content')
     <style>
         .row-white {

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdminInvoice;
-use App\Models\AdminRekening;
-use App\Models\AdminTransaksi;
+use App\Models\Tenant\TenantInvoice;
+use App\Models\Tenant\TenantRekening;
+use App\Models\Tenant\TenantTransaksi;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -15,7 +15,7 @@ class TransaksiController extends Controller
     {
         if ($request->ajax()) {
             $tid = $this->currentTenantId($request);
-            $data = AdminInvoice::with(['user', 'hasTransaksi'])
+            $data = TenantInvoice::with(['user', 'hasTransaksi'])
                 ->where('status', 'unpaid')
                 ->when($tid, fn ($q) => $q->where('admin_invoice.tenant_id', $tid))
                 ->select('admin_invoice.*');
@@ -38,7 +38,7 @@ class TransaksiController extends Controller
         }
 
         $tid = $this->currentTenantId($request);
-        $rekenings = AdminRekening::query()
+        $rekenings = TenantRekening::query()
             ->when($tid, fn ($q) => $q->where('tenant_id', $tid))
             ->orderBy('nama_rekening')
             ->get(['kd_rekening', 'nama_rekening']);
@@ -50,7 +50,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function paymentForm(AdminInvoice $invoice)
+    public function paymentForm(TenantInvoice $invoice)
     {
         return response()->json([
             'id'              => $invoice->id,
@@ -72,10 +72,10 @@ class TransaksiController extends Controller
             'mark_paid'       => ['nullable'],
         ]);
 
-        $invoice = AdminInvoice::findOrFail($request->idv);
+        $invoice = TenantInvoice::findOrFail($request->idv);
         $tglLunas = $request->filled('tgl_lunas') ? \Carbon\Carbon::parse($request->tgl_lunas)->toDateString() : now()->toDateString();
 
-        AdminTransaksi::create([
+        TenantTransaksi::create([
             'tenant_id'            => $invoice->tenant_id,
             'tgl_transaksi'        => $tglLunas,
             'rekening_debit'       => $request->rekening_debit,
@@ -83,7 +83,7 @@ class TransaksiController extends Controller
             'idv'                  => $invoice->id,
             'keterangan_transaksi' => $request->keterangan ?? $invoice->jenis_pembayaran,
             'jumlah'               => $request->jumlah,
-            'urutan'               => AdminTransaksi::max('urutan') + 1,
+            'urutan'               => TenantTransaksi::max('urutan') + 1,
             'id_user'              => auth('tenant')->id(),
         ]);
 
@@ -103,3 +103,5 @@ class TransaksiController extends Controller
         return $request->attributes->get('current_tenant_id');
     }
 }
+
+

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,7 +47,7 @@
 <body class="min-h-screen text-slate-800">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -92,7 +92,7 @@
                     <h3 class="text-lg font-bold text-slate-900">Catat Pembayaran</h3>
                     <p id="payment-invoice-id" class="mt-1 text-sm text-slate-500"></p>
                 </div>
-                <button type="button" id="close-payment-modal" aria-label="Close" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
+                <button type="button" id="close-payment-modal" aria-label="Tutup" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -176,13 +176,13 @@
             },
             language: {
                 emptyTable: 'Tidak ada invoice belum lunas.',
-                info: 'Showing _START_–_END_ of _TOTAL_ entries',
-                infoEmpty: 'Showing 0–0 of 0 entries',
-                infoFiltered: '(filtered from _MAX_ total)',
-                lengthMenu: 'Show _MENU_ entries',
-                loadingRecords: 'Loading…',
-                processing: 'Processing…',
-                search: 'Search:',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 data',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                lengthMenu: 'Tampilkan _MENU_ data',
+                loadingRecords: 'Memuat…',
+                processing: 'Memproses…',
+                search: 'Cari:',
                 zeroRecords: 'Tidak ada invoice yang cocok.',
                 paginate: { first: '«', last: '»', next: '›', previous: '‹' },
             },

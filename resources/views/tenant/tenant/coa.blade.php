@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +12,13 @@
     <style>html, body { font-family: 'Inter', system-ui, sans-serif; } body { background:#f8fafc; }</style>
 </head>
 <body class="min-h-screen text-slate-800">
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div class="min-w-0">
                 <p class="text-sm font-semibold text-indigo-600">Tenant Console</p>
-                <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Chart of Account (COA)</h2>
+                <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Bagan Akun (COA)</h2>
                 <p class="mt-1 text-sm text-slate-500">Daftar rekening untuk tenant {{ $tenant->id }}.</p>
             </div>
         </header>
@@ -143,7 +143,7 @@
                                 @endforeach
                             @endif
                         @empty
-                            <tr><td colspan="6" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada Chart of Account.</td></tr>
+                            <tr><td colspan="6" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada Bagan Akun.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -209,7 +209,7 @@
                         <li class="px-4 py-1.5 text-xs italic text-slate-400">— belum ada akun</li>
                     @endforelse
                 @empty
-                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada Chart of Account.</li>
+                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada Bagan Akun.</li>
                 @endforelse
             </ul>
         </section>

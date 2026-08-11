@@ -1,18 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Tenant\TenantInvoiceController;
 use App\Http\Controllers\Tenant\AuthController;
-use App\Http\Controllers\Tenant\DashboardController;
-use App\Http\Controllers\Tenant\AdminInvoiceController;
-use App\Http\Controllers\Tenant\MigrasiSiswaController;
-use App\Http\Controllers\Tenant\TransaksiController;
-use App\Http\Controllers\Tenant\TenantController;
-use App\Http\Controllers\Tenant\HakAksesPusatController;
-use App\Http\Controllers\Tenant\ProfilSekolahController;
-use App\Http\Controllers\Tenant\UserOperatorController;
-use App\Http\Controllers\Tenant\TahunAkademikController;
 use App\Http\Controllers\Tenant\CoaController;
+use App\Http\Controllers\Tenant\DashboardController;
+use App\Http\Controllers\Tenant\HakAksesPusatController;
 use App\Http\Controllers\Tenant\JenisPembayaranController;
+use App\Http\Controllers\Tenant\MigrasiSiswaController;
+use App\Http\Controllers\Tenant\ProfilSekolahController;
+use App\Http\Controllers\Tenant\TahunAkademikController;
+use App\Http\Controllers\Tenant\TenantController;
+use App\Http\Controllers\Tenant\TransaksiController;
+use App\Http\Controllers\Tenant\UserOperatorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,14 +127,14 @@ $centralRoutes = function () {
             Route::post('coa/{rekening}/aktifkan', [CoaController::class, 'aktifkan'])->name('coa.aktifkan');
         });
 
-        Route::get('/invoice/data', [AdminInvoiceController::class, 'data'])->name('tenant.invoice.data');
-        Route::get('/invoice/{invoice}/print', [AdminInvoiceController::class, 'print'])->name('tenant.invoice.print');
+        Route::get('/invoice/data', [TenantInvoiceController::class, 'data'])->name('tenant.invoice.data');
+        Route::get('/invoice/{invoice}/print', [TenantInvoiceController::class, 'print'])->name('tenant.invoice.print');
 
         Route::get('/transaksi', [TransaksiController::class, 'index'])->name('tenant.transaksi.index');
         Route::get('/transaksi/data', [TransaksiController::class, 'index'])->name('tenant.transaksi.data');
         Route::get('/transaksi/{invoice}/payment', [TransaksiController::class, 'paymentForm'])->name('tenant.transaksi.paymentForm');
         Route::post('/transaksi', [TransaksiController::class, 'store'])->name('tenant.transaksi.store');
-        Route::resource('invoice', AdminInvoiceController::class)
+        Route::resource('invoice', TenantInvoiceController::class)
             ->only(['index', 'store', 'destroy'])
             ->names('tenant.invoice');
 

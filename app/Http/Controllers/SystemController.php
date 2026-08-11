@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Spp;
 use App\Models\Siswa;
 use App\Models\Transaksi;
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -39,7 +40,7 @@ class SystemController extends Controller
         }
 
         $akIds = $sppBelumLunas->keys()->all();
-        $akMap = Anggota_Kelas::whereIn('id', $akIds)
+        $akMap = AnggotaKelas::whereIn('id', $akIds)
             ->where('status', 'aktif')
             ->get()
             ->keyBy('id');
@@ -128,3 +129,4 @@ class SystemController extends Controller
         ]);
     }
 }
+

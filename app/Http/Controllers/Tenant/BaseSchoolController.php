@@ -30,3 +30,4 @@ abstract class BaseSchoolController extends Controller
         }
     }
 }
+

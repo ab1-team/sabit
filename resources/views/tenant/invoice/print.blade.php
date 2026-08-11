@@ -298,7 +298,7 @@ Masa Aktif :
 
 <tr>
 
-<td>Discount</td>
+<td>Diskon</td>
 
 <td>0.00</td>
 

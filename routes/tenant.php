@@ -20,7 +20,7 @@ use App\Http\Controllers\TahunAkademikController;
 use App\Http\Controllers\JenisPembayaranController;
 use App\Http\Controllers\RekeningController;
 use App\Http\Controllers\DaftarKelasController;
-use App\Http\Controllers\Tenant\LandingAdminController;
+use App\Http\Controllers\LandingAdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -124,11 +124,11 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         ->where('jenis', 'uts1|uts2|pas1|pas2');
     Route::delete('/transaksi/pembayaranSPPDestroy/{Transaksi}', [TransaksiController::class, 'pembayaranSPPDestroy']);
     Route::resource('/Transaksi', TransaksiController::class);
-    Route::get('/Transaksi/jurnal-umum/data', [TransaksiController::class, 'jurnalUmumData'])->name('Transaksi.jurnalUmumData');
-    Route::get('/Transaksi/jurnal-umum/detail', [TransaksiController::class, 'jurnalUmumDetail'])->name('Transaksi.jurnalUmumDetail');
-    Route::get('/Transaksi/jurnal-umum/cetak', [TransaksiController::class, 'jurnalUmumCetak'])->name('Transaksi.jurnalUmumCetak');
-    Route::get('/Transaksi/jurnal-umum/printDokumen/{jenis}', [TransaksiController::class, 'jurnalUmumPrintDokumen'])->name('Transaksi.jurnalUmumPrintDokumen');
-    Route::delete('/Transaksi/jurnal-umum/{transaksi}', [TransaksiController::class, 'jurnalUmumDestroy'])->name('Transaksi.jurnalUmumDestroy');
+    Route::get('/transaksi/jurnal-umum/data', [TransaksiController::class, 'jurnalUmumData'])->name('transaksi.jurnalUmumData');
+    Route::get('/transaksi/jurnal-umum/detail', [TransaksiController::class, 'jurnalUmumDetail'])->name('transaksi.jurnalUmumDetail');
+    Route::get('/transaksi/jurnal-umum/cetak', [TransaksiController::class, 'jurnalUmumCetak'])->name('transaksi.jurnalUmumCetak');
+    Route::get('/transaksi/jurnal-umum/printDokumen/{jenis}', [TransaksiController::class, 'jurnalUmumPrintDokumen'])->name('transaksi.jurnalUmumPrintDokumen');
+    Route::delete('/transaksi/jurnal-umum/{transaksi}', [TransaksiController::class, 'jurnalUmumDestroy'])->name('transaksi.jurnalUmumDestroy');
 
     Route::resource('/jenis-biaya', JenisBiayaController::class);
     Route::get('/jenis-biaya-create-form', [JenisBiayaController::class, 'createForm']);
@@ -205,7 +205,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
     Route::post('coa/{rekening}/nonaktifkan', [RekeningController::class, 'nonaktifkan'])->name('app.coa.nonaktifkan');
     Route::post('coa/{rekening}/aktifkan', [RekeningController::class, 'aktifkan'])->name('app.coa.aktifkan');
 
-    // NOTE: Dinonaktifkan sementara. App\Http\Controllers\Tenant\School\HakAksesController
+    // NOTE: Dinonaktifkan sementara. App\Http\Controllers\School\HakAksesController
     // belum ada sehingga route ini memicu ReflectionException (route:list gagal total).
     // Pengelolaan hak akses tetap tersedia dari console pusat via HakAksesPusatController.
     // Route::get('/hak-akses', [HakAksesController::class, 'index'])->name('app.hak-akses');

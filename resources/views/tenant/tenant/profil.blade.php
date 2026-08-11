@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,7 @@
     <style>html, body { font-family: 'Inter', system-ui, sans-serif; } body { background:#f8fafc; }</style>
 </head>
 <body class="min-h-screen text-slate-800">
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

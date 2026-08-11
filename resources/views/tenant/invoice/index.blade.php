@@ -2,7 +2,7 @@
     $initialModalOpen = $errors->any();
 @endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -81,18 +81,18 @@
 <body class="min-h-screen text-slate-800">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div class="min-w-0">
                 <p class="text-sm font-semibold text-indigo-600">Tenant Console</p>
-                <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Invoices</h2>
-                <p class="mt-1 text-sm text-slate-500">Manage invoice records and payment status.</p>
+                    <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Invoice</h2>
+                <p class="mt-1 text-sm text-slate-500">Kelola catatan invoice dan status pembayaran.</p>
             </div>
             <button type="button" id="add-invoice" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                Add invoice
+                Tambah Invoice
             </button>
         </header>
 
@@ -104,14 +104,14 @@
                     <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                         <tr>
                             <th class="px-3 py-3 text-left font-semibold">No</th>
-                            <th class="px-3 py-3 text-left font-semibold">Payment type</th>
-                            <th class="px-3 py-3 text-left font-semibold">Owner</th>
+                            <th class="px-3 py-3 text-left font-semibold">Jenis Pembayaran</th>
+                            <th class="px-3 py-3 text-left font-semibold">Pemilik</th>
                             <th class="px-3 py-3 text-left font-semibold">Sekolah</th>
-                            <th class="px-3 py-3 text-left font-semibold">Invoice date</th>
-                            <th class="px-3 py-3 text-left font-semibold">Paid date</th>
-                            <th class="px-3 py-3 text-right font-semibold">Amount</th>
+                            <th class="px-3 py-3 text-left font-semibold">Tanggal Invoice</th>
+                            <th class="px-3 py-3 text-left font-semibold">Tanggal Lunas</th>
+                            <th class="px-3 py-3 text-right font-semibold">Jumlah</th>
                             <th class="px-3 py-3 text-center font-semibold">Status</th>
-                            <th class="px-3 py-3 text-center font-semibold">Actions</th>
+                            <th class="px-3 py-3 text-center font-semibold">Aksi</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -125,9 +125,9 @@
             <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
                 <div>
                     <h3 id="modal-title" class="text-lg font-bold text-slate-900">Tambah Invoice</h3>
-                    <p id="modal-description" class="mt-1 text-sm text-slate-500">Buat record invoice baru.</p>
+                    <p id="modal-description" class="mt-1 text-sm text-slate-500">Buat catatan invoice baru.</p>
                 </div>
-                <button type="button" id="close-invoice-modal" aria-label="Close dialog" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
+                <button type="button" id="close-invoice-modal" aria-label="Tutup dialog" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -142,7 +142,7 @@
             <form id="invoice-form" action="{{ route('tenant.invoice.store') }}" method="POST" class="px-5 py-5 sm:px-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    @include('tenant.invoice._form')
+                    @include('tenant.invoice._formulir')
                 </div>
                 <div class="mt-6 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                     <button type="button" id="cancel-invoice-modal" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">Batal</button>
@@ -162,7 +162,7 @@
                     <h3 class="text-lg font-bold text-slate-900">Catat Pembayaran</h3>
                     <p id="payment-invoice-id" class="mt-1 text-sm text-slate-500"></p>
                 </div>
-                <button type="button" id="close-payment-modal" aria-label="Close" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
+                <button type="button" id="close-payment-modal" aria-label="Tutup" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -172,11 +172,11 @@
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Payment type</label>
+                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Jenis Pembayaran</label>
                         <input type="text" id="payment-jenis" readonly tabindex="-1" class="invoice-input cursor-not-allowed border-slate-200 bg-slate-50 font-medium text-slate-700 focus:border-slate-200 focus:shadow-none">
                     </div>
                     <div>
-                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Owner</label>
+                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Pemilik</label>
                         <input type="text" id="payment-owner" readonly tabindex="-1" class="invoice-input cursor-not-allowed border-slate-200 bg-slate-50 font-medium text-slate-700 focus:border-slate-200 focus:shadow-none">
                     </div>
 
@@ -199,7 +199,7 @@
                         <label for="payment-rekening" class="mb-1.5 block text-sm font-semibold text-slate-700">Rekening <span class="text-rose-500">*</span></label>
                         <select id="payment-rekening" name="rekening_debit" required class="invoice-input select2 bg-white" data-placeholder="Pilih rekening">
                             <option value="">Pilih rekening</option>
-                            @foreach (\App\Models\AdminRekening::orderBy('nama_rekening')->get() as $r)
+                            @foreach (\App\Models\Tenant\TenantRekening::orderBy('nama_rekening')->get() as $r)
                                 <option value="{{ $r->kd_rekening }}">{{ $r->nama_rekening }}</option>
                             @endforeach
                         </select>
@@ -213,7 +213,7 @@
                         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-3 transition hover:bg-emerald-50">
                             <input type="checkbox" id="payment-mark-paid" name="mark_paid" value="1" checked class="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                             <div class="flex-1">
-                                <span class="block text-sm font-semibold text-emerald-800">Tandai sebagai Paid</span>
+                                <span class="block text-sm font-semibold text-emerald-800">Tandai sebagai Lunas</span>
                                 <span class="block text-xs text-emerald-700/80">Centang untuk langsung mengubah status invoice menjadi lunas.</span>
                             </div>
                         </label>
@@ -386,12 +386,12 @@
         $('#invoices').on('click', '.delete-invoice', function () {
             const action = this.dataset.action;
             Swal.fire({
-                title: 'Delete this invoice?',
-                text: 'This action cannot be undone.',
+                title: 'Hapus invoice ini?',
+                text: 'Tindakan ini tidak dapat dibatalkan.',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, delete',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
                 reverseButtons: true,
                 buttonsStyling: false,
                 customClass: {
@@ -479,3 +479,4 @@
     @endif
 </body>
 </html>
+

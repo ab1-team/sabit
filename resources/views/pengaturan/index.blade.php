@@ -284,7 +284,7 @@
                     }
                 },
                 error: function(xhr) {
-                    Swal.fire('Error', 'Cek kembali input yang anda masukkan', 'error');
+                    Swal.fire('Galat', 'Cek kembali input yang anda masukkan', 'error');
                     if (xhr.status === 422) {
                         $.each(xhr.responseJSON.errors, function(key, value) {
                             $('#' + key).closest('.input-group-outline').addClass('is-invalid');
@@ -338,7 +338,7 @@
                 if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.logo) {
                     msg = xhr.responseJSON.errors.logo[0];
                 }
-                Swal.fire('Error', msg, 'error');
+                Swal.fire('Galat', msg, 'error');
             }
         });
     });

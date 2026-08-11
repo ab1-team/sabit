@@ -74,11 +74,11 @@ return [
         ],
         'admin_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\AdminUser::class,
+            'model' => App\Models\Tenant\TenantAdminUser::class,
         ],
         'tenant_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\TenantUser::class,
+            'model' => App\Models\Tenant\TenantUser::class,
         ],
 
         // 'users' => [
@@ -141,3 +141,4 @@ return [
     'password_timeout' => 10800,
 
 ];
+

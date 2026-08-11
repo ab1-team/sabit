@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,7 @@
     <style>html, body { font-family: 'Inter', system-ui, sans-serif; } body { background:#f8fafc; }</style>
 </head>
 <body class="min-h-screen text-slate-800">
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -156,7 +156,7 @@
         <div class="w-full max-w-md max-h-[95vh] overflow-y-auto rounded-2xl bg-white shadow-xl">
             <form id="form-edit" method="POST" class="space-y-4 p-6">
                 @csrf @method('PUT')
-                <h3 class="text-lg font-bold text-slate-900">Edit Tahun Akademik</h3>
+                <h3 class="text-lg font-bold text-slate-900">Ubah Tahun Akademik</h3>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Nama Tahun</label>
                     <input id="edit-nama" type="text" name="nama_tahun" required class="mt-1 block w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100">

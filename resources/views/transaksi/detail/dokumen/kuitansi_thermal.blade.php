@@ -1,6 +1,6 @@
 @php use App\Utils\Tanggal; use App\Utils\Terbilang; @endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Kuitansi Thermal</title>

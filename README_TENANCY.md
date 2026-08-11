@@ -10,7 +10,7 @@ app/
 │   ├── Tenant/                       ← Tenant Console (pusat / master admin)
 │   │   ├── AuthController.php        ← login pusat (guard: tenant)
 │   │   ├── DashboardController.php
-│   │   ├── AdminInvoiceController.php
+│   │   ├── TenantInvoiceController.php
 │   │   ├── MigrasiSiswaController.php
 │   │   ├── TransaksiController.php
 │   │   ├── TenantController.php      ← CRUD daftar sekolah
@@ -117,11 +117,15 @@ Setelah tenant dibuat, klik tenant di daftar → halaman **Overview** (statistik
 
 ## Default Akun Setiap Tenant
 
-| Username | Password   | Keterangan         |
-| -------- | ---------- | ------------------ |
-| `admin`  | `password` | Superadmin sekolah |
+| Username     | Password   | Jabatan                  | Hak Akses (menu ID)                                           | Domain Login |
+| ------------ | ---------- | ------------------------ | ------------------------------------------------------------- | ------------ |
+| `admin`      | `password` | Administrator            | Semua menu aktif: `[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]` | Domain admin |
+| `bendahara`  | `password` | Bendahara                | Semua menu **kecuali landing**: `[1,2,3,4,5,6,7,8,9,10,11,12,13,14]` | Domain admin |
+| `landing`    | `password` | Administrator Landing    | Hanya group landing: `[15,16,17]`                             | Domain landing |
 
 Ganti password setelah login pertama (atau lewat Tenant Console → User Operator → Reset Password).
+
+> **Catatan**: `hak_akses` disimpan sebagai array ID menu eksplisit (integer), bukan wildcard `*`. Hak akses benar-benar membatasi route yang dilindungi `middleware('hak.akses:<group>')` lewat nama group menu. User `landing` hanya login dari domain landing; jika coba login dari domain admin akan ditolak oleh `EnsureDomainType`.
 
 ## Default Akun Pusat (Tenant Console)
 

@@ -1,5 +1,5 @@
 <title>{{ $title }}</title>
-@extends('laporan-keuangan.layout.base')
+@extends('laporan-keuangan.layout.dasar')
 
 @section('content')
     @php

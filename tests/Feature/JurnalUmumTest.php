@@ -39,7 +39,7 @@ class JurnalUmumTest extends TestCase
         $sumber    = Rekening::where('kode_akun', '1.1.01.01')->firstOrFail();
         $disimpan  = Rekening::where('kode_akun', '1.1.03.01')->firstOrFail();
 
-        $this->postJson('/app/Transaksi', $this->jurnalPayload(
+        $this->postJson('/app/transaksi', $this->jurnalPayload(
             tanggal: '2024-09-15',
             sumber: $sumber->kode_akun,
             disimpan: $disimpan->kode_akun,
@@ -68,7 +68,7 @@ class JurnalUmumTest extends TestCase
 
     public function test_jurnal_umum_store_validation_requires_core_fields(): void
     {
-        $this->postJson('/app/Transaksi', [
+        $this->postJson('/app/transaksi', [
             'transaksi' => 'jurnal_umum',
         ])->assertStatus(422)
           ->assertJsonValidationErrors(['tanggal', 'sumber_dana', 'disimpan_ke']);
@@ -79,7 +79,7 @@ class JurnalUmumTest extends TestCase
         $sumber   = Rekening::where('kode_akun', '1.1.01.01')->firstOrFail();
         $disimpan = Rekening::where('kode_akun', '1.1.03.01')->firstOrFail();
 
-        $this->postJson('/app/Transaksi', $this->jurnalPayload(
+        $this->postJson('/app/transaksi', $this->jurnalPayload(
             tanggal: '2024-09-15',
             sumber: $sumber->kode_akun,
             disimpan: $disimpan->kode_akun,
@@ -87,7 +87,7 @@ class JurnalUmumTest extends TestCase
             ket: 'Tes saldo'
         ))->assertOk();
 
-        $this->get('/app/Transaksi')
+        $this->get('/app/transaksi')
             ->assertOk()
             ->assertViewHas('totalSaldo', 0.0);
     }
@@ -97,7 +97,7 @@ class JurnalUmumTest extends TestCase
         $sumber   = Rekening::where('kode_akun', '1.1.01.01')->firstOrFail();
         $disimpan = Rekening::where('kode_akun', '1.1.03.01')->firstOrFail();
 
-        $this->postJson('/app/Transaksi', $this->jurnalPayload(
+        $this->postJson('/app/transaksi', $this->jurnalPayload(
             tanggal: '2024-09-15',
             sumber: $sumber->kode_akun,
             disimpan: $disimpan->kode_akun,
@@ -107,7 +107,7 @@ class JurnalUmumTest extends TestCase
 
         $trx = Transaksi::where('keterangan', 'Akan dihapus')->firstOrFail();
 
-        $this->deleteJson("/app/Transaksi/jurnal-umum/{$trx->id}")
+        $this->deleteJson("/app/transaksi/jurnal-umum/{$trx->id}")
             ->assertOk()
             ->assertJson(['success' => true]);
 

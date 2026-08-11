@@ -3,7 +3,7 @@
     $active = $active ?? '';
     $subNav = [
         ['key' => 'profil', 'route' => 'tenant.tenant.profil.index', 'match' => 'tenant.tenant.profil.*', 'label' => 'Profil Sekolah', 'icon' => 'building'],
-        ['key' => 'user', 'route' => 'tenant.tenant.user.index', 'match' => 'tenant.tenant.user.*', 'label' => 'User Operator', 'icon' => 'users'],
+        ['key' => 'user', 'route' => 'tenant.tenant.user.index', 'match' => 'tenant.tenant.user.*', 'label' => 'Pengguna Operator', 'icon' => 'users'],
         ['key' => 'tahun-akademik', 'route' => 'tenant.tenant.tahun-akademik.index', 'match' => 'tenant.tenant.tahun-akademik.*', 'label' => 'Tahun Akademik', 'icon' => 'calendar'],
         ['key' => 'jenis-pembayaran', 'route' => 'tenant.tenant.jenis-pembayaran.index', 'match' => 'tenant.tenant.jenis-pembayaran.*', 'label' => 'Jenis Pembayaran', 'icon' => 'cash'],
         ['key' => 'coa', 'route' => 'tenant.tenant.coa.index', 'match' => 'tenant.tenant.coa.*', 'label' => 'COA', 'icon' => 'tree'],

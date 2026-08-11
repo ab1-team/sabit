@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Tenant;
 
+use App\Http\Controllers\Tenant\BaseSchoolController;
+
 use App\Models\JenisPembayaran;
 use Illuminate\Http\Request;
 use Stancl\Tenancy\Database\Models\Tenant;
@@ -63,3 +65,5 @@ class JenisPembayaranController extends BaseSchoolController
         });
     }
 }
+
+

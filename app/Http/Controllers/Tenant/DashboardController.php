@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdminInvoice;
-use App\Models\AdminUser;
+use App\Models\Tenant\TenantInvoice;
+use App\Models\Tenant\TenantAdminUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $tid = $this->currentTenantId($request);
         $tenants = $request->attributes->get('tenants', []);
 
-        $invoiceBase = AdminInvoice::query();
+        $invoiceBase = TenantInvoice::query();
         if ($tid) {
             $invoiceBase->where('tenant_id', $tid);
         }
@@ -24,13 +24,13 @@ class DashboardController extends Controller
             ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid, SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid, COALESCE(SUM(jumlah), 0) as total_amount")
             ->first();
 
-        $ownerBase = AdminUser::query();
+        $ownerBase = TenantAdminUser::query();
         if ($tid) {
             $ownerBase->where('tenant_id', $tid);
         }
         $ownerScopedCount = (clone $ownerBase)->count();
 
-        $ownerPerTenant = AdminUser::query()
+        $ownerPerTenant = TenantAdminUser::query()
             ->select('tenant_id', DB::raw('COUNT(*) as total'))
             ->groupBy('tenant_id')
             ->pluck('total', 'tenant_id');
@@ -40,8 +40,8 @@ class DashboardController extends Controller
             'invoice_paid' => (int) ($summary->paid ?? 0),
             'invoice_open' => (int) ($summary->unpaid ?? 0),
             'nominal_total' => (float) ($summary->total_amount ?? 0),
-            'owner_count' => $tid ? (int) $ownerScopedCount : (int) AdminUser::query()->distinct()->count('id'),
-            'owner_total' => (int) AdminUser::query()->distinct()->count('id'),
+            'owner_count' => $tid ? (int) $ownerScopedCount : (int) TenantAdminUser::query()->distinct()->count('id'),
+            'owner_total' => (int) TenantAdminUser::query()->distinct()->count('id'),
             'tenant_total' => count($tenants ?? []),
         ];
 
@@ -67,3 +67,5 @@ class DashboardController extends Controller
         return $request->attributes->get('current_tenant_id');
     }
 }
+
+

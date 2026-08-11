@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Tenant\LandingController;
+use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,16 +25,24 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing.home');
 
-Route::get('/berita', [LandingController::class, 'posts'])->name('landing.posts');
-Route::get('/berita/{slug}', [LandingController::class, 'post'])->name('landing.post');
+Route::get('/berita', [LandingController::class, 'posts'])->name('landing.daftar-artikel');
+Route::get('/berita/{slug}', [LandingController::class, 'post'])->name('landing.artikel');
 
-Route::get('/galeri', [LandingController::class, 'galleries'])->name('landing.galleries');
-Route::get('/video', [LandingController::class, 'videos'])->name('landing.videos');
-Route::get('/pengumuman', [LandingController::class, 'announcements'])->name('landing.announcements');
+Route::get('/galeri', [LandingController::class, 'galleries'])->name('landing.galeri');
+Route::get('/video', [LandingController::class, 'videos'])->name('landing.video');
+Route::get('/pengumuman', [LandingController::class, 'announcements'])->name('landing.pengumuman');
 
-Route::get('/kontak', [LandingController::class, 'contact'])->name('landing.contact');
-Route::post('/kontak', [LandingController::class, 'contactStore'])->name('landing.contact.store');
+Route::get('/kontak', [LandingController::class, 'contact'])->name('landing.kontak');
+Route::post('/kontak', [LandingController::class, 'contactStore'])->name('landing.kontak.store');
+
+Route::get('/ppdb', [LandingController::class, 'ppdb'])->name('landing.ppdb');
+Route::get('/ppdb/{section}', [LandingController::class, 'ppdb'])
+    ->where('section', 'pendaftaran|persyaratan|alur|jadwal|faq')
+    ->name('landing.ppdb.section');
+
+// Halaman profil sekolah terpadu (sidebar nav: Overview, History, dll).
+Route::get('/profil', [LandingController::class, 'profile'])->name('landing.profil');
 
 // Halaman statis dinamis (visi-misi, sekilas-pandang, dst).
 // Diletakkan paling akhir agar tidak menangkap URL di atas.
-Route::get('/{slug}', [LandingController::class, 'page'])->name('landing.page');
+Route::get('/{slug}', [LandingController::class, 'page'])->name('landing.halaman');

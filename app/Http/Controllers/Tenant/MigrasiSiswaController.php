@@ -164,3 +164,4 @@ class MigrasiSiswaController extends Controller
         return $request->attributes->get('current_tenant_id');
     }
 }
+

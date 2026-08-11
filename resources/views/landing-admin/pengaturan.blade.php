@@ -73,7 +73,7 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">Surel</label>
                         <input type="email" name="email" class="form-control"
                                value="{{ old('email', $setting->email) }}">
                     </div>

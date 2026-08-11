@@ -1,4 +1,4 @@
-@extends('laporan-keuangan.layout.base')
+@extends('laporan-keuangan.layout.dasar')
 <title>{{ $judul }}</title>
 @section('content')
     @php

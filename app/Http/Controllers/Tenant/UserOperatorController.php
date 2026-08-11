@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Tenant;
 
+use App\Http\Controllers\Tenant\BaseSchoolController;
+
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -100,3 +102,5 @@ class UserOperatorController extends BaseSchoolController
         });
     }
 }
+
+

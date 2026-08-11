@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,7 +53,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -65,7 +65,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-sm sm:px-3" title="Jumlah lokasi yang memiliki owner (admin)">
                     <svg class="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    <span class="text-slate-400">Owner</span>
+                    <span class="text-slate-400">Pemilik</span>
                     <span class="text-slate-900">{{ collect($perTenant)->filter(fn ($p) => collect($p['users'])->contains(fn ($u) => $u['username'] === 'admin'))->count() }}</span>
                 </div>
                 <button id="expand-all" type="button" title="Buka semua" aria-label="Buka semua" class="toolbar-btn inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-indigo-200 hover:text-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 sm:px-3">
@@ -120,7 +120,7 @@
                 <div class="hidden md:grid md:grid-cols-12 items-center gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     <div class="col-span-1"></div>
                     <div class="col-span-4">User</div>
-                    <div class="col-span-3">Username</div>
+                    <div class="col-span-3">Nama Pengguna</div>
                     <div class="col-span-1 text-center">Menu</div>
                     <div class="col-span-3 text-right">Aksi</div>
                 </div>
@@ -151,10 +151,10 @@
                                         </span>
                                     </div>
                                     <div class="flex flex-wrap items-center justify-end gap-1 md:col-span-6 md:flex-nowrap">
-                                        <button type="button" class="edit-user-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-600" title="Edit" aria-label="Edit">
+                                        <button type="button" class="edit-user-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-600" title="Ubah" aria-label="Ubah">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
-                                        <button type="button" class="reset-pwd-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600" title="Reset Password" aria-label="Reset Password">
+                                        <button type="button" class="reset-pwd-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600" title="Reset Kata Sandi" aria-label="Reset Kata Sandi">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586l4.293-4.293A6 6 0 1119 9z"/></svg>
                                         </button>
                                         <button type="button" class="delete-user-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Hapus" aria-label="Hapus">
@@ -166,7 +166,7 @@
                                         </button>
                                         <button type="button" class="clear-all-btn inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 sm:px-2" title="Kosongkan pilihan" aria-label="Kosongkan pilihan">
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            <span class="hidden sm:inline">Reset</span>
+                                            <span class="hidden sm:inline">Atur Ulang</span>
                                         </button>
                                     </div>
                                 </summary>
@@ -214,7 +214,7 @@
 
                                     <div class="mt-4 flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
                                         <button type="button" class="clear-all-btn inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 transition">
-                                            Reset
+                                            Atur Ulang
                                         </button>
                                         <button type="button" class="save-btn inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:opacity-50 transition">
                                             <svg class="h-3.5 w-3.5 save-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -266,10 +266,10 @@
         <div class="w-full max-w-5xl max-h-[95vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
             <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3 sm:px-6">
                 <div>
-                    <h3 id="add-user-title" class="text-base font-bold text-slate-900">Tambah User Operator</h3>
+                    <h3 id="add-user-title" class="text-base font-bold text-slate-900">Tambah Pengguna Operator</h3>
                     <p class="mt-0.5 text-xs text-slate-500">Buat akun baru lengkap dengan hak akses menu untuk lokasi <span id="add-user-tenant-label" class="font-semibold text-slate-700"></span>.</p>
                 </div>
-                <button type="button" id="close-add-user-modal" aria-label="Close" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
+                <button type="button" id="close-add-user-modal" aria-label="Tutup" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -283,7 +283,7 @@
                             <input id="add-nama" name="nama" type="text" required class="invoice-input" placeholder="Nama lengkap">
                         </div>
                         <div>
-                            <label for="add-username" class="mb-0.5 block text-[11px] font-semibold text-slate-700">Username <span class="text-rose-500">*</span></label>
+                            <label for="add-username" class="mb-0.5 block text-[11px] font-semibold text-slate-700">Nama Pengguna <span class="text-rose-500">*</span></label>
                             <input id="add-username" name="username" type="text" required class="invoice-input" placeholder="username_baru">
                         </div>
                         <div>
@@ -308,7 +308,7 @@
                             </div>
                             <div class="flex items-center gap-1">
                                 <button type="button" id="add-select-all" class="rounded-md px-2 py-0.5 text-[10px] font-semibold text-indigo-600 hover:bg-indigo-50">Semua</button>
-                                <button type="button" id="add-clear-all" class="rounded-md px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-50">Reset</button>
+                                <button type="button" id="add-clear-all" class="rounded-md px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-50">Atur Ulang</button>
                             </div>
                         </div>
                         <div class="menu-grid menu-scroll rounded-xl border border-slate-200 p-2.5">
@@ -337,7 +337,7 @@
                 <input type="hidden" id="edit-tenant-id">
                 <input type="hidden" id="edit-user-id">
                 <div>
-                    <h3 class="text-base font-bold text-slate-900">Edit User</h3>
+                    <h3 class="text-base font-bold text-slate-900">Ubah Pengguna</h3>
                     <p class="mt-0.5 text-xs text-slate-500">Ubah data identitas user operator.</p>
                 </div>
                 <div>
@@ -369,8 +369,8 @@
                 <input type="hidden" id="reset-tenant-id">
                 <input type="hidden" id="reset-user-id">
                 <div>
-                    <h3 class="text-base font-bold text-slate-900">Reset Password</h3>
-                    <p class="mt-0.5 text-xs text-slate-500">Reset password untuk <span id="reset-username" class="font-mono font-semibold text-slate-700"></span>.</p>
+                    <h3 class="text-base font-bold text-slate-900">Reset Kata Sandi</h3>
+                    <p class="mt-0.5 text-xs text-slate-500">Reset kata sandi untuk <span id="reset-username" class="font-mono font-semibold text-slate-700"></span>.</p>
                 </div>
                 <div>
                     <label class="mb-0.5 block text-[11px] font-semibold text-slate-700">Password Baru</label>
@@ -553,7 +553,7 @@
                                     Swal.fire({ icon: 'error', title: 'Gagal', text: j.message || 'Coba lagi' });
                                 }
                             })
-                            .catch(() => Swal.fire({ icon: 'error', title: 'Gagal', text: 'Network error' }));
+                            .catch(() => Swal.fire({ icon: 'error', title: 'Gagal', text: 'Galat jaringan' }));
                     });
                 });
             });
@@ -680,11 +680,11 @@
                         errEl.classList.remove('hidden');
                     }
                 })
-                .catch(() => {
-                    const errEl = document.getElementById('add-user-error');
-                    errEl.textContent = 'Network error';
-                    errEl.classList.remove('hidden');
-                })
+                                .catch(() => {
+                                    const errEl = document.getElementById('add-user-error');
+                                    errEl.textContent = 'Galat jaringan';
+                                    errEl.classList.remove('hidden');
+                                })
                 .finally(() => {
                     btn.disabled = false;
                     btn.querySelector('.submit-icon').classList.remove('hidden');
@@ -718,7 +718,7 @@
                     }
                 })
                 .catch(() => {
-                    errEl.textContent = 'Network error';
+                    errEl.textContent = 'Galat jaringan';
                     errEl.classList.remove('hidden');
                 });
         });
@@ -744,7 +744,7 @@
                     }
                 })
                 .catch(() => {
-                    errEl.textContent = 'Network error';
+                    errEl.textContent = 'Galat jaringan';
                     errEl.classList.remove('hidden');
                 });
         });

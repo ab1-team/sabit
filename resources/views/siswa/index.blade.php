@@ -269,7 +269,7 @@
                         showCancelButton: true,
                         showDenyButton: true,
                         confirmButtonText: "Pindahkan Siswa",
-                        denyButtonText: "Print Data Siswa",
+                        denyButtonText: "Cetak Data Siswa",
                         cancelButtonText: "Batal",
                         width: 600,
 
@@ -448,7 +448,7 @@
                     $("#loadingOverlay").hide();
                     $("button").prop("disabled", false);
 
-                    Swal.fire("Error", "Terjadi kesalahan pada server", "error");
+                    Swal.fire("Galat", "Terjadi kesalahan pada server", "error");
                 }
             });
         }

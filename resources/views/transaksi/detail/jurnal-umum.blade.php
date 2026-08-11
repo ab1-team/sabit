@@ -33,7 +33,7 @@
                                 <th>Nama Akun</th>
                                 <th>Keterangan</th>
                                 <th>Nominal</th>
-                                <th>User</th>
+                                <th>Pengguna</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -64,7 +64,7 @@
         processing: true,
         serverSide: true,
         ajax: {
-            url: '/app/Transaksi/jurnal-umum/data?' + params.toString(),
+            url: '/app/transaksi/jurnal-umum/data?' + params.toString(),
             type: 'GET'
         },
         columns: [
@@ -96,3 +96,4 @@
     });
 })();
 </script>
+

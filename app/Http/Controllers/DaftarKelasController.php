@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Anggota_Kelas;
+
+use App\Models\AnggotaKelas;
 use App\Models\Siswa;
 use App\Models\Spp;
-use App\Models\Tahun_Akademik;
+use App\Models\TahunAkademik;
 use App\Models\Kelas;
 use App\Models\Profil;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -36,19 +37,19 @@ class DaftarKelasController extends Controller
             $candidate = sprintf('%d/%d', $yy - 1, $yy);
         }
 
-        $found = Tahun_Akademik::where('nama_tahun', $candidate)->value('nama_tahun');
+        $found = TahunAkademik::where('nama_tahun', $candidate)->value('nama_tahun');
         if ($found) {
             return $found;
         }
 
-        return Tahun_Akademik::orderByDesc('nama_tahun')->value('nama_tahun');
+        return TahunAkademik::orderByDesc('nama_tahun')->value('nama_tahun');
     }
 
     public function listTahun(Request $request)
     {
         $search = $request->get('q');
 
-        $query = Tahun_Akademik::select('id', 'nama_tahun')
+        $query = TahunAkademik::select('id', 'nama_tahun')
             ->orderBy('nama_tahun');
         if ($search) {
             $query->where('nama_tahun', 'like', "%{$search}%");
@@ -263,7 +264,7 @@ class DaftarKelasController extends Controller
                     'tahun_akademik'   => $request->tahun_akademik,
                     'kelas'            => $request->kelas,
                 ];
-                $url = '/app/Transaksi/pembayaran-spp?' . http_build_query($params);
+                $url = '/app/transaksi/pembayaran-spp?' . http_build_query($params);
                 return '<a href="' . $url . '" class="btn btn-info btn-sm text-white d-inline-flex align-items-center gap-1 px-2" title="Bayar Sekarang" style="font-size:.75rem;line-height:1.4;">'
                     . '<span>Bayar Sekarang</span>'
                     . '<i class="material-icons align-middle" style="font-size:14px">arrow_forward</i>'
@@ -363,3 +364,6 @@ class DaftarKelasController extends Controller
         return $pdf->stream('kartu-'.($kat).$periode.'-'.$kelas.'.pdf');
     }
 }
+
+
+

@@ -6,13 +6,13 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $appName }} | {{ $title ?? 'Dashboard' }}</title>
+    <title>{{ $appName }} | {{ $title ?? 'Dasbor' }}</title>
 
     <link rel="icon" type="image/png" href="{{ $appLogoUrl }}?v={{ \App\Models\Profil::logoVersion() }}">
     <link rel="apple-touch-icon" sizes="76x76" href="{{ $appLogoUrl }}?v={{ \App\Models\Profil::logoVersion() }}">
@@ -835,10 +835,10 @@
             const job = pp.job;
             Swal.fire({
                 icon: 'warning',
-                title: 'Waktunya Generate Piutang SPP',
+                title: 'Waktunya Membuat Piutang SPP',
                 html: '<strong>Bulan: ' + pp.bulan + '</strong><br>Tekan tombol untuk memproses di tab baru.',
                 showCancelButton: true,
-                confirmButtonText: 'Generate',
+                confirmButtonText: 'Buat',
                 cancelButtonText: 'Nanti',
                 allowOutsideClick: false,
             }).then((r) => {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\JenisLaporan;
 use App\Models\Rekening;
 use App\Models\Transaksi;
@@ -9,13 +10,13 @@ use App\Models\Profil;
 use App\Models\Calk;
 use App\Models\AkunLevel1;
 use App\Models\MasterArusKas;
-use App\Models\Tanda_tangan;
-use App\Models\Tahun_Akademik;
+use App\Models\TandaTangan;
+use App\Models\TahunAkademik;
 use App\Models\Kelas;
 use App\Models\Spp;
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use App\Models\SubLaporan;
-use App\Models\Jenis_Biaya;
+use App\Models\JenisBiaya;
 use App\Models\Saldo;
 use App\Utils\Keuangan;
 use App\Utils\Tanggal;
@@ -55,7 +56,7 @@ class LaporanController extends Controller
         $laporan = JenisLaporan::where('file', '!=', '0')
             ->orderBy('urut', 'ASC')
             ->get();
-        return view('laporan-keuangan.index', compact('title', 'laporan'));
+        return view('laporan-keuangan.daftar', compact('title', 'laporan'));
     }
 
     public function subLaporan($file)
@@ -112,7 +113,7 @@ class LaporanController extends Controller
             ]);
         } elseif (in_array($file, ['pembayaran_spp', 'daftar_ulang', 'pembangunan', 'ujian_semester', 'bantuan_yayasan'], true)) {
 
-            $kelas = Anggota_Kelas::where('status', 'aktif')
+            $kelas = AnggotaKelas::where('status', 'aktif')
                 ->select('kode_kelas')
                 ->distinct()
                 ->orderBy('kode_kelas')
@@ -353,7 +354,7 @@ class LaporanController extends Controller
         $data['tgl_akhir_bulan'] = $tgl_akhir_bulan;
         $data['tahun'] = $thn;
         $data['bulan'] = $bln;
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
 
         $view = view('laporan-keuangan.views.buku_besar', $data)->render();
 
@@ -390,7 +391,7 @@ class LaporanController extends Controller
             })
             ->orderBy('tanggal_transaksi', 'asc')
             ->get();
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
         $view = view('laporan-keuangan.views.jurnal_transaksi', $data)->render();
 
         return $this->respond($view, $data, 'jurnal-transaksi.xls');
@@ -435,7 +436,7 @@ class LaporanController extends Controller
                     ->where('rekening_debit', 'like', '1.1.01%');
             }
         ])->where('parent_id', 0)->get();
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
 
         // hitung saldo kas sampai akhir bulan sebelumnya
         $keuangan = new Keuangan;
@@ -487,7 +488,7 @@ class LaporanController extends Controller
             $data['title_bulan'] = Tanggal::namaBulan($tgl) . ' ' . Tanggal::tahun($tgl);
             $data['tgl']       = Tanggal::namaBulan($tgl) . ' ' . Tanggal::tahun($tgl);
         }
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
 
         $view = view('laporan-keuangan.views.laba_rugi', $data)->render();
 
@@ -523,7 +524,7 @@ class LaporanController extends Controller
 
         $data['tgl_awal']  = $tgl_awal;
         $data['tgl_akhir'] = $tgl_akhir;
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
 
         $view = view('laporan-keuangan.views.neraca', $data)->render();
 
@@ -570,7 +571,7 @@ class LaporanController extends Controller
                 $rek->total_kredit = $rek->transaksiKredit->sum('jumlah');
                 return $rek;
             });
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
 
         $view = view('laporan-keuangan.views.neraca_saldo', $data)->render();
 
@@ -613,7 +614,7 @@ class LaporanController extends Controller
         $calk = Calk::where('tanggal', $tanggal)->first();
 
         $data['catatan'] = $calk ? $calk->catatan : '';
-        $data['ttd'] = Tanda_tangan::first();
+        $data['ttd'] = TandaTangan::first();
 
         $view = view('laporan-keuangan.views.calk', $data)->render();
 
@@ -622,7 +623,7 @@ class LaporanController extends Controller
 
     public function pembayaran_spp(Request $request)
     {
-        $request->validate([
+$request->validate([
             'tgl_awal'          => 'required|date',
             'tgl_akhir'         => 'required|date',
             'tahun_akademik_id' => 'nullable|exists:tahun_akademik,id',
@@ -666,12 +667,12 @@ class LaporanController extends Controller
             $cursor->addMonth();
         }
 
-        $anggotaKelas = Anggota_Kelas::with(['getSiswa'])
+        $anggotaKelas = AnggotaKelas::with(['getSiswa'])
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
-            ->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
-                $tahun = Tahun_Akademik::find($data['tahun_akademik_id']);
+->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
+                $tahun = TahunAkademik::find($data['tahun_akademik_id']);
                 if ($tahun) {
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
@@ -781,7 +782,7 @@ class LaporanController extends Controller
         string $filename,
         \Closure $targetResolver
     ) {
-        $request->validate([
+$request->validate([
             'tgl_awal'          => 'required|date',
             'tgl_akhir'         => 'required|date',
             'tahun_akademik_id' => 'nullable|exists:tahun_akademik,id',
@@ -809,7 +810,7 @@ class LaporanController extends Controller
             'akhir' => $tglAkhir->locale('id'),
         ];
 
-        $anggotaKelas = Anggota_Kelas::with(['getSiswa', 'getTahunAkademik'])
+        $anggotaKelas = AnggotaKelas::with(['getSiswa', 'getTahunAkademik'])
             ->whereHas('getSiswa.transaksi', function ($q) use ($kodeAkun, $tglAwal, $tglAkhir) {
                 $q->where('rekening_kredit', $kodeAkun)
                     ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir]);
@@ -817,8 +818,8 @@ class LaporanController extends Controller
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
-            ->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
-                $tahun = Tahun_Akademik::find($data['tahun_akademik_id']);
+->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
+                $tahun = TahunAkademik::find($data['tahun_akademik_id']);
                 if ($tahun) {
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
@@ -851,14 +852,14 @@ class LaporanController extends Controller
         return $this->respond($view, $data, str_replace('.pdf', '.xls', $filename));
     }
 
-    private function nominalJenisBiaya(Anggota_Kelas $row, int $idJp): float
+    private function nominalJenisBiaya(AnggotaKelas $row, int $idJp): float
     {
         $siswa = $row->getSiswa;
         if (!$siswa) {
             return 0;
         }
 
-        $biaya = Jenis_Biaya::where('id_jp', $idJp)
+        $biaya = JenisBiaya::where('id_jp', $idJp)
             ->where('angkatan', (string) $siswa->tahun_akademik)
             ->first();
 
@@ -910,3 +911,5 @@ class LaporanController extends Controller
         return '<a id="next" href="' . $url . '"></a><script>document.getElementById("next").click()</script>';
     }
 }
+
+

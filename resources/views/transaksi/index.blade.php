@@ -12,7 +12,7 @@
                 </div>
             </div>
             <div class="card-body p-3 pb-0">
-                <form action="/app/Transaksi" method="post" id="FormTransaksi">
+                <form action="/app/transaksi" method="post" id="FormTransaksi">
                     @csrf
                     <input type="hidden" name="transaksi" id="transaksi" value="jurnal_umum">
                     <div class="row">
@@ -511,7 +511,7 @@ $(document).on('submit', '#FormTransaksi', function (e) {
         if (!skipCek) {
             var saldo_rek = parseFloat($('#saldo_trx').val()) || 0;
             if (saldo_rek < nominal) {
-                Swal.fire('Error', 'Nominal transaksi melebihi saldo', 'error');
+                Swal.fire('Galat', 'Nominal transaksi melebihi saldo', 'error');
                 return false;
             }
         }
@@ -589,7 +589,7 @@ function ambilDaftarInventaris(tanggal) {
 function setFormSelect2(target, data) {
     var el = $(target);
     el.empty();
-    el.append(new Option('Select Value', '', true, true));
+    el.append(new Option('Pilih Nilai', '', true, true));
     data.forEach(opt => el.append(new Option(opt.text, opt.id, false, false)));
     el.trigger('change');
 }
@@ -605,7 +605,7 @@ function loadJurnalUmumDetail() {
     `);
     $(modal).modal('show');
 
-    $.get('/app/Transaksi/jurnal-umum/detail', {
+    $.get('/app/transaksi/jurnal-umum/detail', {
         tahun: $('#filter-tahunan').val() || '',
         bulan: $('#filter-bulanan').val() || '',
         tanggal: $('#filter-harian').val() || ''
@@ -661,7 +661,7 @@ $(document).on('click', '#btnCetakJurnal', function () {
         </div>
     `);
     $('#cetakJurnalModal').modal('show');
-    $.get('/app/Transaksi/jurnal-umum/cetak', params.toString())
+    $.get('/app/transaksi/jurnal-umum/cetak', params.toString())
         .done(function (res) {
             $('#cetakJurnalContent').html(res);
         })
@@ -695,7 +695,7 @@ $(document).on('click', '#btnCetakJurnalPilih', function () {
         return;
     }
     const ids = $checked.map(function () { return $(this).val(); }).get();
-    window.open('/app/Transaksi/jurnal-umum/printDokumen/cetak?ids=' + ids.join(','), '_blank');
+    window.open('/app/transaksi/jurnal-umum/printDokumen/cetak-dokumen?ids=' + ids.join(','), '_blank');
 });
 
 $(document).on('click', '#detailJurnal .btn-close-modal, #cetakJurnalModal .btn-close-modal, #btnTutupDetailJurnal, #btnTutupCakboxJurnal', function () {
@@ -703,3 +703,4 @@ $(document).on('click', '#detailJurnal .btn-close-modal, #cetakJurnalModal .btn-
 });
 </script>
 @endsection
+

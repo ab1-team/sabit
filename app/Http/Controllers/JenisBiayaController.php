@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Jenis_Biaya;
+
+use App\Models\JenisBiaya;
 use App\Models\JenisPembayaran;
-use App\Models\Tahun_Akademik;
+use App\Models\TahunAkademik;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -13,7 +14,7 @@ class JenisBiayaController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Jenis_Biaya::with('get_jenis_pembayaran')->select('jenis_biaya.*');
+            $data = JenisBiaya::with('get_jenis_pembayaran')->select('jenis_biaya.*');
             return DataTables::eloquent($data)
                 ->addIndexColumn()
                 ->addColumn('nama_jenis', function ($row) {
@@ -53,37 +54,37 @@ class JenisBiayaController extends Controller
     public function create()
     {
         $jenisPembayaran = JenisPembayaran::orderBy('nama')->get();
-        $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
+        $tahunAkademiks  = TahunAkademik::orderBy('nama_tahun', 'desc')->get();
         $title = 'Tambah Nominal Keuangan';
 
-        return view('jenis-biaya.create', compact('title', 'jenisPembayaran', 'tahunAkademiks'));
+        return view('jenis-biaya.tambah', compact('title', 'jenisPembayaran', 'tahunAkademiks'));
     }
 
     public function createForm()
     {
         $jenisPembayaran = JenisPembayaran::orderBy('nama')->get();
-        $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
+        $tahunAkademiks  = TahunAkademik::orderBy('nama_tahun', 'desc')->get();
         return response()->json([
-            'html' => view('jenis-biaya._form', [
+            'html' => view('jenis-biaya._formulir', [
                 'mode'            => 'create',
                 'jenisPembayaran' => $jenisPembayaran,
                 'tahunAkademiks'  => $tahunAkademiks,
-                'jenis_biaya'     => new Jenis_Biaya(),
+                'jenisBiaya'      => new JenisBiaya(),
             ])->render(),
         ]);
     }
 
-    public function editForm(Jenis_Biaya $jenis_biaya)
+    public function editForm(JenisBiaya $jenis_biaya)
     {
         $jenis_biaya->load('get_jenis_pembayaran');
         $jenisPembayaran = JenisPembayaran::orderBy('nama')->get();
-        $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
+        $tahunAkademiks  = TahunAkademik::orderBy('nama_tahun', 'desc')->get();
         return response()->json([
-            'html' => view('jenis-biaya._form', [
+            'html' => view('jenis-biaya._formulir', [
                 'mode'            => 'edit',
                 'jenisPembayaran' => $jenisPembayaran,
                 'tahunAkademiks'  => $tahunAkademiks,
-                'jenis_biaya'     => $jenis_biaya,
+                'jenisBiaya'      => $jenis_biaya,
             ])->render(),
         ]);
     }
@@ -98,7 +99,7 @@ class JenisBiayaController extends Controller
             'id_jp.unique' => 'Pembayaran untuk tahun akademik ini sudah ada, edit saja nilainya.',
         ]);
 
-        Jenis_Biaya::create([
+        JenisBiaya::create([
             'id_jp'       => $data['id_jp'],
             'angkatan'    => $data['angkatan'],
             'total_beban' => $this->normalizeNominal($data['total_beban']),
@@ -110,17 +111,17 @@ class JenisBiayaController extends Controller
         ]);
     }
 
-    public function edit(Jenis_Biaya $jenis_biaya)
+    public function edit(JenisBiaya $jenis_biaya)
     {
         $jenis_biaya->load('get_jenis_pembayaran');
         $jenisPembayaran = JenisPembayaran::orderBy('nama')->get();
-        $tahunAkademiks  = Tahun_Akademik::orderBy('nama_tahun', 'desc')->get();
+        $tahunAkademiks  = TahunAkademik::orderBy('nama_tahun', 'desc')->get();
         $title = 'Edit Nominal Keuangan';
 
         return view('jenis-biaya.edit', compact('title', 'jenisPembayaran', 'tahunAkademiks', 'jenis_biaya'));
     }
 
-    public function update(Request $request, Jenis_Biaya $jenis_biaya)
+    public function update(Request $request, JenisBiaya $jenis_biaya)
     {
         $data = $request->validate([
             'total_beban' => 'required|numeric|min:0',
@@ -142,7 +143,7 @@ class JenisBiayaController extends Controller
         ]);
     }
 
-    public function destroy(Jenis_Biaya $jenis_biaya)
+    public function destroy(JenisBiaya $jenis_biaya)
     {
         $jenis_biaya->delete();
         return response()->json([

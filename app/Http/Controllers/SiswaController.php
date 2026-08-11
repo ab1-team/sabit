@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Siswa;
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use App\Models\Ruangan;
-use App\Models\Jenis_Biaya;
-use App\Models\Tahun_Akademik;
+use App\Models\JenisBiaya;
+use App\Models\TahunAkademik;
 use App\Models\Kelas;
 use Illuminate\Http\Request;
 use App\Models\Transaksi;
@@ -51,7 +52,7 @@ class SiswaController extends Controller
                 ->addColumn('kode_kelas', function ($row) {
                     return optional($row->anggotaKelas->first())->kode_kelas ?: '-';
                 })
-                ->addColumn('tahun_akademik', function ($row) {
+->addColumn('tahun_akademik', function ($row) {
                     return optional($row->anggotaKelas->first())->tahun_akademik ?: '-';
                 })
                 ->addColumn('checkbox', function ($row) {
@@ -79,7 +80,7 @@ class SiswaController extends Controller
     {
         $search = $request->get('q');
 
-        $query = Tahun_Akademik::select('id', 'nama_tahun')
+        $query = TahunAkademik::select('id', 'nama_tahun')
             ->orderByDesc('nama_tahun');
         if ($search) {
             $query->where('nama_tahun', 'like', "%{$search}%");
@@ -131,7 +132,7 @@ class SiswaController extends Controller
             $data['logo'] = base64_encode(file_get_contents($logoPath));
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
-        $pdf = Pdf::loadView('siswa.view.print', $data);
+        $pdf = Pdf::loadView('siswa.view.cetak', $data);
         $pdf->setPaper('A4', 'portrait');
         return $pdf->stream('daftar_siswa.pdf');
     }
@@ -158,7 +159,7 @@ class SiswaController extends Controller
                 'kode_kelas' => $kodeKelasBaru,
             ]);
 
-            $anggota = Anggota_Kelas::where('id_siswa', $idSiswa)
+            $anggota = AnggotaKelas::where('id_siswa', $idSiswa)
                 ->orderByDesc('id')
                 ->first();
 
@@ -171,11 +172,11 @@ class SiswaController extends Controller
                 $anggota->update(['status' => 'nonaktif']);
             }
 
-            $nominal = Jenis_Biaya::whereHas('get_jenis_pembayaran', fn($q) => $q->where('kode_akun', '4.1.01.01'))
-                ->where('angkatan', Tahun_Akademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y'))
+            $nominal = JenisBiaya::whereHas('get_jenis_pembayaran', fn($q) => $q->where('kode_akun', '4.1.01.01'))
+                ->where('angkatan', TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y'))
                 ->value('total_beban') ?? 0;
 
-            $anggotaBaru = Anggota_Kelas::create([
+            $anggotaBaru = AnggotaKelas::create([
                 'id_siswa'       => $idSiswa,
                 'tahun_akademik' => $tahunAkademik,
                 'tingkat'        => $tingkatBaru,
@@ -206,10 +207,10 @@ class SiswaController extends Controller
         $title          = "Tambah Siswa";
         $kelas          = Kelas::get();
         $ruang          = Ruangan::get();
-        $tahunAkademmik = Tahun_Akademik::get();
+        $tahunAkademmik = TahunAkademik::get();
         $nominalSpp     = $this->nominalSppDefault();
 
-        return view('siswa.create', compact('title', 'kelas', 'ruang', 'tahunAkademmik', 'nominalSpp'));
+        return view('siswa.tambah', compact('title', 'kelas', 'ruang', 'tahunAkademmik', 'nominalSpp'));
     }
 
     /**
@@ -246,10 +247,10 @@ class SiswaController extends Controller
     public function nominalSppByTahun(?string $tahun): int
     {
         if (!$tahun) {
-            $tahun = Tahun_Akademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+            $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
         }
 
-        return (int) (Jenis_Biaya::whereHas('get_jenis_pembayaran', fn($q) => $q->where('kode_akun', '4.1.01.01'))
+        return (int) (JenisBiaya::whereHas('get_jenis_pembayaran', fn($q) => $q->where('kode_akun', '4.1.01.01'))
             ->where('angkatan', $tahun)
             ->value('total_beban') ?? 0);
     }
@@ -319,7 +320,7 @@ class SiswaController extends Controller
         $title          = "Edit Siswa";
         $kelas          = Kelas::get();
         $ruang          = Ruangan::get();
-        $tahunAkademmik = Tahun_Akademik::get();
+        $tahunAkademmik = TahunAkademik::get();
         $nominalSpp     = $this->nominalSppDefault();
 
         return view('siswa.edit', compact('title', 'kelas', 'siswa', 'ruang', 'tahunAkademmik', 'nominalSpp'));
@@ -357,7 +358,7 @@ class SiswaController extends Controller
 
         $siswa->update($data);
 
-        // Sync kelas, tingkat & spp_nominal ke anggota_kelas aktif
+        // Sync kelas, tingkat & spp_nominal ke AnggotaKelas aktif
         $anggota = $siswa->anggotaKelas()->where('status', 'aktif')->orderByDesc('id')->first();
         if ($anggota) {
             $oldSppNominal = (string) ($anggota->spp_nominal ?? '0');
@@ -398,3 +399,5 @@ class SiswaController extends Controller
         ]);
     }
 }
+
+

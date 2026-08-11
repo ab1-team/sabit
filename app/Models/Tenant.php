@@ -41,6 +41,22 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         // no-op: skip encoding attributes to JSON column
     }
 
+    /**
+     * Strip the (no-longer-existing) 'data' JSON column from the attributes
+     * before save so Eloquent doesn't try to UPDATE a column that was dropped
+     * by the 2026_08_07_000002 migration. The parent trait still sets
+     * attributes['data'] = null on retrieved events.
+     */
+    public function save(array $options = [])
+    {
+        $attrs = $this->getAttributes();
+        if (array_key_exists('data', $attrs) && ! array_key_exists('data', static::getCustomColumns())) {
+            unset($this->attributes['data']);
+        }
+
+        return parent::save($options);
+    }
+
     public function database(): DatabaseConfig
     {
         return new DatabaseConfig($this);

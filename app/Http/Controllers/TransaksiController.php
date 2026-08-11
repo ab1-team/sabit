@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Transaksi;
-use App\Models\Jenis_transaksi;
+use App\Models\JenisTransaksi;
 use App\Models\JenisPembayaran;
 use App\Models\Profil;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\Inventaris;
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use App\Utils\Inventaris as UtilsInventaris;
 use App\Utils\Angka;
 use App\Utils\Tanggal;
@@ -33,7 +34,7 @@ class TransaksiController extends Controller
     public function index()
     {
         $title = 'Jurnal Umum';
-        $jenisTransaksi = Jenis_transaksi::all();
+        $jenisTransaksi = JenisTransaksi::all();
         $rekening = Rekening::orderBy('kode_akun', 'asc')->get();
         $totalSaldo = (float) Saldo::selectRaw('SUM(debit - kredit) as total')->value('total');
 
@@ -380,7 +381,7 @@ class TransaksiController extends Controller
 
     public function jurnalUmumPrintDokumen(Request $request, string $jenis)
     {
-        $allowed = ['bkk', 'bkm', 'bm', 'kuitansi', 'kuitansi_thermal', 'cetak'];
+        $allowed = ['bkk', 'bkm', 'bm', 'kuitansi', 'kuitansi_thermal', 'cetak-dokumen'];
         if (!in_array($jenis, $allowed, true)) {
             abort(404, 'Jenis dokumen tidak dikenal.');
         }
@@ -413,7 +414,7 @@ class TransaksiController extends Controller
         }
 
         $view = 'transaksi.detail.dokumen.' . $jenis;
-        $isCetak = $jenis === 'cetak';
+        $isCetak = $jenis === 'cetak-dokumen';
         $isThermal = $jenis === 'kuitansi_thermal';
 
         if (!$isCetak) {
@@ -466,7 +467,7 @@ class TransaksiController extends Controller
             ->addColumn('user', fn ($r) => $r->user->nama_lengkap ?? $r->user->name ?? '-')
             ->addColumn('aksi', function ($r) {
                 $id = (int) $r->id;
-                $base = '/app/Transaksi/jurnal-umum/printDokumen/';
+                $base = '/app/transaksi/jurnal-umum/printDokumen/';
                 $html = '<div class="d-inline-flex gap-1">';
                 foreach ([
                     'bkk' => ['Bukti Kas Keluar', 'output'],
@@ -483,7 +484,7 @@ class TransaksiController extends Controller
                 foreach ([
                     'kuitansi' => 'Kuitansi',
                     'kuitansi_thermal' => 'Kuitansi Thermal',
-                    'cetak' => 'Cetak Bukti',
+                    'cetak-dokumen' => 'Cetak Bukti',
                 ] as $jenis => $title) {
                     $html .= '<li><a href="' . $base . $jenis . '?ids=' . $id . '" target="_blank" class="dropdown-item">' . $title . '</a></li>';
                 }
@@ -529,7 +530,7 @@ class TransaksiController extends Controller
      */
     public function pembayaranSPPStore(Request $request)
     {
-        $request->validate([
+$request->validate([
             'tanggal' => 'required|date',
             'siswa_id' => 'required',
             'sumber_dana' => 'required',
@@ -733,7 +734,7 @@ class TransaksiController extends Controller
             }
         ])->findOrFail($id);
 
-        return view('transaksi.map_arsip.detail', compact('siswa'));
+        return view('transaksi.map_arsip.rincian', compact('siswa'));
     }
 
     /**
@@ -743,7 +744,7 @@ class TransaksiController extends Controller
     {
         $siswa = Siswa::findOrFail($id);
 
-        $anggota_kelas = Anggota_Kelas::where('id_siswa', $id)
+$anggota_kelas = AnggotaKelas::where('id_siswa', $id)
             ->with(['getSpp'])
             ->where('status', 'aktif')
             ->first();
@@ -762,7 +763,7 @@ class TransaksiController extends Controller
                 ->values()
             : collect();
 
-        return view('transaksi.map_arsip.detail_tagihan', compact(
+        return view('transaksi.map_arsip.rincian-tagihan', compact(
             'siswa', 'sppBelumLunas', 'sppLunas', 'anggota_kelas'
         ));
     }
@@ -777,7 +778,7 @@ class TransaksiController extends Controller
             }
         ])->findOrFail($id);
 
-        return view('transaksi.map_arsip.detail_cetak', compact('siswa'));
+        return view('transaksi.map_arsip.rincian-cetak', compact('siswa'));
     }
 
     /**
@@ -824,7 +825,7 @@ class TransaksiController extends Controller
             $data['logo'] = base64_encode(file_get_contents($logoPath));
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
-        $pdf = Pdf::loadView('transaksi.map_arsip.view.kwitansi_spp', $data)
+        $pdf = Pdf::loadView('transaksi.map_arsip.view.kwitansi-spp', $data)
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream('kwitansi_spp.pdf');
@@ -856,7 +857,7 @@ class TransaksiController extends Controller
             $data['logo'] = base64_encode(file_get_contents($logoPath));
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
-        $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak', $data)
+$pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-arsip', $data)
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream('cetak.pdf');
@@ -873,7 +874,7 @@ class TransaksiController extends Controller
             abort(404, 'Transaksi tidak ditemukan.');
         }
 
-        return view('transaksi.map_arsip.view.cetakPadaKartu', [
+return view('transaksi.map_arsip.view.cetak-pada-kartu', [
             'transaksis' => $transaksis
         ]);
     }
@@ -883,7 +884,7 @@ class TransaksiController extends Controller
         $siswa = Siswa::with('tahunAkademik')->findOrFail($id);
         $profil = Profil::first();
         $tahun_pel = $siswa->tahunAkademik->nama_tahun
-            ?? \App\Models\Tahun_Akademik::where('status', 'aktif')->value('nama_tahun')
+            ?? \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun')
             ?? date('Y');
 
         $ta    = $request->query('tahun_akademik');
@@ -892,13 +893,13 @@ class TransaksiController extends Controller
             $kelas = null;
         }
 
-        $akQuery = \App\Models\Anggota_Kelas::where('id_siswa', $siswa->id)
+        $akQuery = \App\Models\AnggotaKelas::where('id_siswa', $siswa->id)
             ->where('status', 'aktif');
         if ($ta)    $akQuery->where('tahun_akademik', $ta);
         if ($kelas) $akQuery->where('kode_kelas', $kelas);
 
         $anggotaAktif = $akQuery->orderByDesc('id')->first()
-            ?? \App\Models\Anggota_Kelas::where('id_siswa', $siswa->id)
+            ?? \App\Models\AnggotaKelas::where('id_siswa', $siswa->id)
                 ->where('status', 'aktif')
                 ->orderByDesc('id')
                 ->first();
@@ -917,7 +918,7 @@ class TransaksiController extends Controller
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
 
-        $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak_kartu_spp', $data)
+$pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-kartu-spp', $data)
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream('kartu-spp-'.$siswa->nama.'.pdf');
@@ -941,13 +942,13 @@ class TransaksiController extends Controller
             $kelas = null;
         }
 
-        $akQuery = \App\Models\Anggota_Kelas::where('id_siswa', $siswa->id)
+        $akQuery = \App\Models\AnggotaKelas::where('id_siswa', $siswa->id)
             ->where('status', 'aktif');
         if ($ta)    $akQuery->where('tahun_akademik', $ta);
         if ($kelas) $akQuery->where('kode_kelas', $kelas);
 
         $anggotaAktif = $akQuery->orderByDesc('id')->first()
-            ?? \App\Models\Anggota_Kelas::where('id_siswa', $siswa->id)
+            ?? \App\Models\AnggotaKelas::where('id_siswa', $siswa->id)
                 ->where('status', 'aktif')
                 ->orderByDesc('id')
                 ->first();
@@ -981,7 +982,7 @@ class TransaksiController extends Controller
             'no_peserta'    => $no_peserta,
             'jenis_ujian'   => $subjudulMap[$kat].' '.$periodeRoman,
             'lokasi'        => $lokasi,
-            'anggota_kelas' => $anggotaAktif,
+            'anggotaAktif' => $anggotaAktif,
         ];
 
         $logoPath = \App\Models\Profil::logoPath();
@@ -990,7 +991,7 @@ class TransaksiController extends Controller
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
 
-        $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak_kartu_'.$kat, $data)
+$pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-kartu-'.$kat, $data)
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream('kartu-'.$jenis.'-'.$siswa->nama.'.pdf');
@@ -1053,3 +1054,8 @@ class TransaksiController extends Controller
         return response()->json(['saldo' => $total_saldo]);
     }
 }
+
+
+
+
+

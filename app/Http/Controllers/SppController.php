@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Anggota_Kelas;
-use App\Models\Jenis_Biaya;
+
+use App\Models\AnggotaKelas;
+use App\Models\JenisBiaya;
 use App\Models\JenisPembayaran;
 use App\Models\Profil;
 use App\Models\Rekening;
 use App\Models\Siswa;
 use App\Models\Spp;
-use App\Models\Tahun_Akademik;
+use App\Models\TahunAkademik;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 
@@ -78,13 +79,13 @@ class SppController extends Controller
             $target_bulan = 0;
             $sd_bulan_ini = 0;
             $sumber_dana = collect();
-            $tahun_angkatan = '';
+$tahun_angkatan = '';
             $jenis_biaya = collect();
             $nominalMap = collect();
             $kode_tunggakan = collect();
             $bulan_lunas = 0;
         } else {
-            $akQuery = Anggota_Kelas::where('id_siswa', $id)
+            $akQuery = AnggotaKelas::where('id_siswa', $id)
                 ->with([
                     'getSiswa',
                     'getSpp',
@@ -118,10 +119,10 @@ class SppController extends Controller
             $target_bulan = $spp->sum('nominal');
             $sd_bulan_ini = $spp->where('status', 'L')->sum('nominal');
             $bulan_lunas = $spp->where('status', 'L')->count();
-            $sumber_dana = Rekening::where('kode_akun', 'like', '1.1.01.%')->get();
-            $tahun_angkatan = Tahun_Akademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+$sumber_dana = Rekening::where('kode_akun', 'like', '1.1.01.%')->get();
+            $tahun_angkatan = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
             $jenis_biaya = JenisPembayaran::orderBy('id')->get();
-            $nominalMap = Jenis_Biaya::where('angkatan', (string) $tahun_angkatan)
+            $nominalMap = JenisBiaya::where('angkatan', (string) $tahun_angkatan)
                 ->get()
                 ->groupBy(fn ($i) => $i->id_jp.'|'.$i->angkatan);
             $sppJP = $jenis_biaya->first(fn ($jp) => $jp->isSpp());
@@ -137,7 +138,7 @@ class SppController extends Controller
 
         return response()->json([
             'success' => true,
-            'view' => view('transaksi.map_arsip.form_spp')
+            'view' => view('transaksi.map_arsip.formulir-spp')
                 ->with([
                     'siswa' => $siswa,
                     'anggota_kelas' => $anggota_kelas ?? null,
@@ -159,3 +160,6 @@ class SppController extends Controller
         ]);
     }
 }
+
+
+

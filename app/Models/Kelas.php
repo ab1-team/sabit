@@ -36,6 +36,6 @@ class Kelas extends Model
 
     public function anggotaKelas()
     {
-        return $this->hasMany(Anggota_Kelas::class, 'kode_kelas', 'kode_kelas');
+        return $this->hasMany(AnggotaKelas::class, 'kode_kelas', 'kode_kelas');
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use App\Models\Siswa;
 use App\Models\Spp;
 use Carbon\Carbon;
@@ -95,9 +95,9 @@ class SiswaService
         });
     }
 
-    public function attachKelas(Siswa $siswa, string $kodeKelas, string $tingkat, array $data, int $nominal = 0, ?string $tahunAkademik = null): Anggota_Kelas
+    public function attachKelas(Siswa $siswa, string $kodeKelas, string $tingkat, array $data, int $nominal = 0, ?string $tahunAkademik = null): AnggotaKelas
     {
-        return Anggota_Kelas::firstOrCreate([
+        return AnggotaKelas::firstOrCreate([
             'id_siswa'       => $siswa->id,
             'tahun_akademik' => $tahunAkademik ?? $this->resolveTahunAkademikNama($data),
             'kode_kelas'     => $kodeKelas,
@@ -144,7 +144,7 @@ class SiswaService
         return $data;
     }
 
-    public function generateSppBulanan(Anggota_Kelas $anggota, int $nominal, array $data): void
+    public function generateSppBulanan(AnggotaKelas $anggota, int $nominal, array $data): void
     {
         $tahunMasuk = Carbon::parse($data['tanggal_masuk'])->year;
         $mulai = Carbon::create($tahunMasuk, 7, 1);
@@ -175,7 +175,7 @@ class SiswaService
     public function resolveTahunAkademikNama(array $data): string
     {
         if (is_numeric($data['tahun_akademik'])) {
-            $ta = \App\Models\Tahun_Akademik::find($data['tahun_akademik']);
+            $ta = \App\Models\TahunAkademik::find($data['tahun_akademik']);
             if ($ta) {
                 return $ta->nama_tahun;
             }

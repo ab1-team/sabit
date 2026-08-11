@@ -7,10 +7,11 @@ use App\Models\AkunLevel2;
 use App\Models\AkunLevel3;
 use App\Models\Profil;
 use App\Models\Rekening;
-use App\Models\Tahun_Akademik;
-use App\Models\Tanda_tangan;
+use App\Models\TahunAkademik;
+use App\Models\TandaTangan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class TenantDatabaseSeeder extends Seeder
@@ -32,19 +33,64 @@ class TenantDatabaseSeeder extends Seeder
             'jatuh_tempo' => 10,
         ]);
 
+        // Kumpulan ID menu tersedia. Dipakai sebagai sumber tunggal agar konsisten
+        // untuk ketiga user default di bawah ini.
+        $allMenuIds = DB::table('menu')
+            ->where('status', 'aktif')
+            ->pluck('id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+
+        $landingMenuIds = DB::table('menu')
+            ->where('group', 'landing')
+            ->where('status', 'aktif')
+            ->pluck('id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+
+        // ID menu bendahara: semua menu aktif KECUALI grup landing.
+        $bendaharaMenuIds = array_values(array_diff($allMenuIds, $landingMenuIds));
+
         // Default operator sekolah (login pakai tabel users tenant)
+        // hak_akses disimpan sebagai ID menu eksplisit (array), bukan wildcard.
         User::firstOrCreate(
             ['username' => 'admin'],
             [
                 'nama'      => 'Administrator',
+                'jabatan'   => 'Administrator',
                 'email'     => $emailAdmin ?? 'admin@local.test',
                 'password'  => Hash::make('password'),
-                'hak_akses' => ['*'],
+                'hak_akses' => array_values($allMenuIds),
+            ]
+        );
+
+        // Bendahara: akses semua menu kecuali grup landing.
+        User::firstOrCreate(
+            ['username' => 'bendahara'],
+            [
+                'nama'      => 'Bendahara',
+                'jabatan'   => 'Bendahara',
+                'email'     => 'bendahara@local.test',
+                'password'  => Hash::make('password'),
+                'hak_akses' => $bendaharaMenuIds,
+            ]
+        );
+
+        // Administrator khusus landing page: hanya menu grup landing.
+        // Login hanya dari domain landing (lihat EnsureDomainType + EnsureHakAkses).
+        User::firstOrCreate(
+            ['username' => 'landing'],
+            [
+                'nama'      => 'Administrator Landing',
+                'jabatan'   => 'Administrator Landing Page',
+                'email'     => 'landing@local.test',
+                'password'  => Hash::make('password'),
+                'hak_akses' => array_values($landingMenuIds),
             ]
         );
 
         // Tahun akademik
-        $ta = Tahun_Akademik::firstOrCreate(['nama_tahun' => date('Y').'/'.(date('Y')+1)], [
+        $ta = TahunAkademik::firstOrCreate(['nama_tahun' => date('Y').'/'.(date('Y')+1)], [
             'keterangan' => 'Tahun Pelajaran',
             'status'     => 'aktif',
         ]);
@@ -126,8 +172,8 @@ class TenantDatabaseSeeder extends Seeder
             'saldo'        => 0,
         ]);
 
-        Tanda_tangan::firstOrCreate([], [
-            'tanda_tangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+        TandaTangan::firstOrCreate([], [
+            'TandaTangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
 <tbody>
 <tr>
 <td style="width: 33.3333%;">&nbsp;</td>
@@ -199,3 +245,4 @@ class TenantDatabaseSeeder extends Seeder
         ]);
     }
 }
+

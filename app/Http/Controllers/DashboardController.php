@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Jenis_Biaya;
+
+use App\Models\JenisBiaya;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use Carbon\Carbon;
@@ -39,7 +40,7 @@ class DashboardController extends Controller
         $siswaBlokir   = 0;
 
         // ============== JENIS BIAYA ==============
-        $jenis_biaya = Jenis_Biaya::whereHas('get_jenis_pembayaran', fn ($q) => $q->where('nama', 'like', '%SPP%'))
+$jenis_biaya = JenisBiaya::whereHas('get_jenis_pembayaran', fn ($q) => $q->where('nama', 'like', '%SPP%'))
             ->orderBy('angkatan', 'desc')
             ->get(['id', 'angkatan', 'total_beban', 'id_jp']);
 
@@ -108,7 +109,7 @@ class DashboardController extends Controller
             'siswaCount',
             'siswaAktif',
             'siswaNonAktif',
-            'siswaBlokir',
+'siswaBlokir',
             'jenis_biaya',
             'pemasukanHariIni',
             'pemasukanBulanIni',
@@ -149,7 +150,7 @@ class DashboardController extends Controller
         $tahunIni = (int) $now->format('Y');
         $bulanIni = (int) $now->format('m');
 
-        $rows = DB::table('spp')
+$rows = DB::table('spp')
             ->join('anggota_kelas as ak', 'ak.id', '=', 'spp.anggota_kelas')
             ->join('siswa', 'siswa.id', '=', 'ak.id_siswa')
             ->where('ak.status', 'aktif')
@@ -202,7 +203,7 @@ class DashboardController extends Controller
         $tahunIni = (int) $now->format('Y');
         $bulanIni = (int) $now->format('m');
 
-        return DB::table('spp')
+return DB::table('spp')
             ->join('anggota_kelas as ak', 'ak.id', '=', 'spp.anggota_kelas')
             ->where('ak.id_siswa', $idSiswa)
             ->where('ak.status', 'aktif')

@@ -44,7 +44,7 @@ class Spp extends Model
 
     public function anggotaKelas()
     {
-        return $this->belongsTo(Anggota_Kelas::class, 'anggota_kelas', 'id');
+        return $this->belongsTo(AnggotaKelas::class, 'anggota_kelas', 'id');
     }
 
     public function getAnggotaKelas()

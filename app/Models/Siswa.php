@@ -18,7 +18,7 @@ class Siswa extends Model
 
     public function tahunAkademik()
     {
-        return $this->belongsTo(Tahun_Akademik::class, 'tahun_akademik', 'nama_tahun');
+        return $this->belongsTo(TahunAkademik::class, 'tahun_akademik', 'nama_tahun');
     }
 
     public function kelas()
@@ -33,7 +33,7 @@ class Siswa extends Model
 
     public function anggotaKelas()
     {
-        return $this->hasMany(Anggota_Kelas::class, 'id_siswa', 'id');
+        return $this->hasMany(AnggotaKelas::class, 'id_siswa', 'id');
     }
 
     public function transaksi()
@@ -43,7 +43,7 @@ class Siswa extends Model
 
     public function spp()
     {
-        return $this->hasManyThrough(Spp::class, Anggota_Kelas::class, 'id_siswa', 'anggota_kelas', 'id', 'id');
+        return $this->hasManyThrough(Spp::class, AnggotaKelas::class, 'id_siswa', 'anggota_kelas', 'id', 'id');
     }
 
     public function getTahunAkademik()

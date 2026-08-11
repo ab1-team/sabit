@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Tenant;
 
-use App\Models\Tahun_Akademik;
+use App\Http\Controllers\Tenant\BaseSchoolController;
+
+use App\Models\TahunAkademik;
 use Illuminate\Http\Request;
 use Stancl\Tenancy\Database\Models\Tenant;
 
@@ -11,7 +13,7 @@ class TahunAkademikController extends BaseSchoolController
     public function index(Tenant $tenant)
     {
         return $this->runInTenant($tenant, function () use ($tenant) {
-            $items = Tahun_Akademik::orderByDesc('id')->get();
+            $items = TahunAkademik::orderByDesc('id')->get();
 
             return view('tenant.tenant.tahun-akademik', [
                 'tenant' => $tenant,
@@ -29,7 +31,7 @@ class TahunAkademikController extends BaseSchoolController
                 'status'     => ['required', 'in:aktif,nonaktif'],
             ]);
 
-            $ta = Tahun_Akademik::create($data);
+            $ta = TahunAkademik::create($data);
 
             if ($data['status'] === 'aktif') {
                 $ta->aktifkan();
@@ -40,18 +42,18 @@ class TahunAkademikController extends BaseSchoolController
         });
     }
 
-    public function update(Request $request, Tenant $tenant, Tahun_Akademik $tahun_akademik)
+    public function update(Request $request, Tenant $tenant, TahunAkademik $TahunAkademik)
     {
-        return $this->runInTenant($tenant, function () use ($request, $tahun_akademik, $tenant) {
+        return $this->runInTenant($tenant, function () use ($request, $TahunAkademik, $tenant) {
             $data = $request->validate([
                 'nama_tahun' => ['required', 'string', 'max:30'],
                 'keterangan' => ['nullable', 'string', 'max:191'],
                 'status'     => ['required', 'in:aktif,nonaktif'],
             ]);
 
-            $tahun_akademik->update($data);
+            $TahunAkademik->update($data);
             if ($data['status'] === 'aktif') {
-                $tahun_akademik->aktifkan();
+                $TahunAkademik->aktifkan();
             }
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
@@ -59,24 +61,27 @@ class TahunAkademikController extends BaseSchoolController
         });
     }
 
-    public function destroy(Tenant $tenant, Tahun_Akademik $tahun_akademik)
+    public function destroy(Tenant $tenant, TahunAkademik $TahunAkademik)
     {
-        return $this->runInTenant($tenant, function () use ($tahun_akademik, $tenant) {
-            $nama = $tahun_akademik->nama_tahun;
-            $tahun_akademik->delete();
+        return $this->runInTenant($tenant, function () use ($TahunAkademik, $tenant) {
+            $nama = $TahunAkademik->nama_tahun;
+            $TahunAkademik->delete();
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
                 ->with('success', "Tahun akademik {$nama} dihapus");
         });
     }
 
-    public function aktifkan(Tenant $tenant, Tahun_Akademik $tahun_akademik)
+    public function aktifkan(Tenant $tenant, TahunAkademik $TahunAkademik)
     {
-        return $this->runInTenant($tenant, function () use ($tahun_akademik, $tenant) {
-            $tahun_akademik->aktifkan();
+        return $this->runInTenant($tenant, function () use ($TahunAkademik, $tenant) {
+            $TahunAkademik->aktifkan();
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
-                ->with('success', "Tahun akademik {$tahun_akademik->nama_tahun} diaktifkan");
+                ->with('success', "Tahun akademik {$TahunAkademik->nama_tahun} diaktifkan");
         });
     }
 }
+
+
+

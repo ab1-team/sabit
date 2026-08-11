@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,25 +16,25 @@
 </head>
 <body class="min-h-screen text-slate-800">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
         <header class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div class="min-w-0">
-                <h2 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Dashboard</h2>
+                <h2 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Dasbor</h2>
                 <p class="text-xs text-slate-500">Ringkasan invoice dari semua sekolah.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-xs">
                 <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 font-semibold text-indigo-700">{{ ($stats['tenant_total'] ?? count($tenants ?? [])) }} sekolah</span>
-                <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 font-semibold text-sky-700">{{ $stats['owner_count'] ?? 0 }} owner</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 font-semibold text-sky-700">{{ $stats['owner_count'] ?? 0 }} pemilik</span>
             </div>
         </header>
 
         @php
             $cards = [
                 ['label' => 'Total', 'value' => $stats['invoice_total'], 'color' => 'indigo'],
-                ['label' => 'Paid', 'value' => $stats['invoice_paid'], 'color' => 'emerald'],
-                ['label' => 'Unpaid', 'value' => $stats['invoice_open'], 'color' => 'amber'],
+                ['label' => 'Lunas', 'value' => $stats['invoice_paid'], 'color' => 'emerald'],
+                ['label' => 'Belum Lunas', 'value' => $stats['invoice_open'], 'color' => 'amber'],
                 ['label' => 'Nominal', 'value' => 'Rp ' . number_format($stats['nominal_total'], 0, ',', '.'), 'color' => 'violet'],
             ];
         @endphp
@@ -63,7 +63,7 @@
                         <tr>
                             <th class="px-4 py-2 font-semibold">Jenis</th>
                             <th class="px-4 py-2 font-semibold">Tanggal</th>
-                            <th class="px-4 py-2 font-semibold">Sekolah / Owner</th>
+                            <th class="px-4 py-2 font-semibold">Sekolah / Pemilik</th>
                             <th class="px-4 py-2 text-right font-semibold">Nominal</th>
                             <th class="px-4 py-2 text-center font-semibold">Status</th>
                         </tr>
@@ -92,9 +92,9 @@
                                 <td class="whitespace-nowrap px-4 py-2 text-right font-semibold tabular-nums text-slate-900">Rp {{ number_format($invoice->jumlah, 0, ',', '.') }}</td>
                                 <td class="px-4 py-2 text-center">
                                     @if ($invoice->status === 'paid')
-                                        <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Paid</span>
+                                        <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Lunas</span>
                                     @else
-                                        <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Unpaid</span>
+                                        <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Belum Lunas</span>
                                     @endif
                                 </td>
                             </tr>
@@ -132,9 +132,9 @@
                             <div class="flex flex-shrink-0 flex-col items-end gap-1">
                                 <span class="whitespace-nowrap text-sm font-semibold tabular-nums text-slate-900">Rp {{ number_format($invoice->jumlah, 0, ',', '.') }}</span>
                                 @if ($invoice->status === 'paid')
-                                    <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Paid</span>
+                                    <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Lunas</span>
                                 @else
-                                    <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Unpaid</span>
+                                    <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Belum Lunas</span>
                                 @endif
                             </div>
                         </div>

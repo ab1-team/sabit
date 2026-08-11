@@ -38,12 +38,15 @@ class TenantController extends Controller
         $data = $request->validate([
             'id' => ['required', 'string', 'max:64', Rule::unique('tenants', 'id')],
             'nama_sekolah' => ['required', 'string', 'max:191'],
-            'domain' => ['required', 'string', 'max:191', 'regex:/^[a-z0-9.-]+$/i'],
+            'domain_landing' => ['required', 'string', 'max:191', 'regex:/^[a-z0-9.-]+$/i'],
+            'domain_admin' => ['required', 'string', 'max:191', 'regex:/^[a-z0-9.-]+$/i', 'different:domain_landing'],
             'email' => ['nullable', 'email', 'max:191'],
+        ], [
+            'domain_admin.different' => 'Domain admin dan domain landing harus berbeda.',
         ]);
 
-        $landingDomain = strtolower($data['domain']);
-        $adminDomain = $this->adminDomainFor($landingDomain);
+        $landingDomain = strtolower($data['domain_landing']);
+        $adminDomain = strtolower($data['domain_admin']);
 
         // Kedua domain harus divalidasi sebelum tenant dibuat, agar tidak
         // meninggalkan tenant setengah jadi bila salah satu domain sudah dipakai.
@@ -52,7 +55,7 @@ class TenantController extends Controller
         if ($conflict->isNotEmpty()) {
             return back()
                 ->withInput()
-                ->withErrors(['domain' => 'Domain sudah digunakan: ' . $conflict->implode(', ')]);
+                ->withErrors(['domain_landing' => 'Domain sudah digunakan: ' . $conflict->implode(', ')]);
         }
 
         $tenant = DB::connection(config('tenancy.database.central_connection'))
@@ -67,13 +70,13 @@ class TenantController extends Controller
                         . preg_replace('/[^A-Za-z0-9_]/', '_', $data['id']),
                 ]);
 
-                // Landing page publik: sma1.example.test
+                // Landing page publik
                 $tenant->domains()->create([
                     'domain' => $landingDomain,
                     'type' => Domain::TYPE_LANDING,
                 ]);
 
-                // Panel admin: admin-sma1.example.test
+                // Panel admin
                 $tenant->domains()->create([
                     'domain' => $adminDomain,
                     'type' => Domain::TYPE_ADMIN,
@@ -91,11 +94,14 @@ class TenantController extends Controller
         $data = $request->validate([
             'nama_sekolah' => ['required', 'string', 'max:191'],
             'email' => ['nullable', 'email', 'max:191'],
-            'domain' => ['required', 'string', 'max:191', 'regex:/^[a-z0-9.-]+$/i'],
+            'domain_landing' => ['required', 'string', 'max:191', 'regex:/^[a-z0-9.-]+$/i'],
+            'domain_admin' => ['required', 'string', 'max:191', 'regex:/^[a-z0-9.-]+$/i', 'different:domain_landing'],
+        ], [
+            'domain_admin.different' => 'Domain admin dan domain landing harus berbeda.',
         ]);
 
-        $landingDomain = strtolower($data['domain']);
-        $adminDomain = $this->adminDomainFor($landingDomain);
+        $landingDomain = strtolower($data['domain_landing']);
+        $adminDomain = strtolower($data['domain_admin']);
 
         $conflict = Domain::whereIn('domain', [$landingDomain, $adminDomain])
             ->where('tenant_id', '!=', $tenant->id)
@@ -104,7 +110,7 @@ class TenantController extends Controller
         if ($conflict->isNotEmpty()) {
             return back()
                 ->withInput()
-                ->withErrors(['domain' => 'Domain sudah digunakan tenant lain: ' . $conflict->implode(', ')]);
+                ->withErrors(['domain_landing' => 'Domain sudah digunakan tenant lain: ' . $conflict->implode(', ')]);
         }
 
         DB::connection(config('tenancy.database.central_connection'))
@@ -113,8 +119,7 @@ class TenantController extends Controller
                 $tenant->email = $data['email'] ?? null;
                 $tenant->save();
 
-                // Update per tipe secara eksplisit. Memakai domains()->first()
-                // tidak aman karena tenant kini punya lebih dari satu domain.
+                // Update per tipe secara eksplisit.
                 $this->syncDomain($tenant, Domain::TYPE_LANDING, $landingDomain);
                 $this->syncDomain($tenant, Domain::TYPE_ADMIN, $adminDomain);
             });
@@ -142,18 +147,6 @@ class TenantController extends Controller
             ->with('success', "Tenant {$id} berhasil dihapus.");
     }
 
-    /**
-     * Turunkan domain admin dari domain landing dengan prefix "admin-".
-     * Contoh: sma1.example.test => admin-sma1.example.test
-     *
-     * Prefix (bukan sub-level "admin.sma1") dipilih agar tetap satu level
-     * subdomain sehingga tercakup wildcard DNS/SSL *.example.test.
-     */
-    private function adminDomainFor(string $landingDomain): string
-    {
-        return 'admin-' . $landingDomain;
-    }
-
     private function syncDomain(Tenant $tenant, string $type, string $domain): void
     {
         $existing = $tenant->domains()->where('type', $type)->first();
@@ -172,3 +165,4 @@ class TenantController extends Controller
         ]);
     }
 }
+

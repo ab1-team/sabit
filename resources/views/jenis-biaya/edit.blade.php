@@ -63,7 +63,7 @@
                         </div>
                         <div class="action-toolbar mt-3">
                             <a href="/app/jenis-biaya" class="btn btn-secondary w-100 w-md-auto">Kembali</a>
-                            <button type="submit" class="btn btn-info w-100 w-md-auto" id="simpan">Update Data</button>
+                            <button type="submit" class="btn btn-info w-100 w-md-auto" id="simpan">Perbarui Data</button>
                         </div>
                     </form>
                 </div>
@@ -126,7 +126,7 @@
                 },
                 error: function(result) {
                     const response = result.responseJSON;
-                    Swal.fire('Error', 'Cek kembali input yang anda masukkan', 'error');
+                    Swal.fire('Galat', 'Cek kembali input yang anda masukkan', 'error');
                     if (response && typeof response === 'object') {
                         $.each(response, function(key, message) {
                             $('#' + key).closest('.input-group.input-group-static').addClass(

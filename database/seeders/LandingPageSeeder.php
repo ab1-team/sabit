@@ -63,7 +63,7 @@ class LandingPageSeeder extends Seeder
         // Header: ringkas, hanya tautan utama.
         $header = [
             ['title' => 'Home', 'url' => '/', 'sort_order' => 1],
-            ['title' => 'Profil', 'url' => '/sekilas-pandang', 'sort_order' => 2],
+            ['title' => 'Profil', 'url' => '/profil', 'sort_order' => 2],
             ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 3],
             ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 4],
             ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 5],
@@ -187,7 +187,7 @@ class LandingPageSeeder extends Seeder
             'subtitle' => 'Mencerdaskan, membentuk karakter, dan menyiapkan generasi unggul.',
             'image' => '',
             'button_text' => 'Profil Sekolah',
-            'button_url' => '/sekilas-pandang',
+            'button_url' => '/profil',
             'sort_order' => 1,
             'is_active' => true,
         ]);

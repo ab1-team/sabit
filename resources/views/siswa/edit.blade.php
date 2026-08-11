@@ -326,7 +326,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="input-group input-group-outline mb-3">
-                                        <label class="form-label">Password (kosongkan jika tidak diubah)</label>
+                                        <label class="form-label">Kata Sandi (kosongkan jika tidak diubah)</label>
                                         <input type="password" name="password" id="password" value=""
                                             autocomplete="new-password" class="form-control">
                                     </div>
@@ -738,7 +738,7 @@
                     }
                 },
                 error: function(xhr) {
-                    Swal.fire('Error', 'Cek kembali input yang anda masukkan', 'error');
+                    Swal.fire('Galat', 'Cek kembali input yang anda masukkan', 'error');
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         $.each(errors, function(key, value) {

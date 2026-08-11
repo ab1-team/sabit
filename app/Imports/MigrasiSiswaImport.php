@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Spp;
@@ -185,7 +185,7 @@ class MigrasiSiswaImport implements
             $this->inserted++;
         }
 
-        $anggota = Anggota_Kelas::firstOrCreate([
+        $anggota = AnggotaKelas::firstOrCreate([
             'id_siswa' => $siswa->id,
             'tahun_akademik' => $namaTahun,
             'kode_kelas' => $kodeKelas,
@@ -199,7 +199,7 @@ class MigrasiSiswaImport implements
         $this->generateSppBulanan($anggota);
     }
 
-    private function generateSppBulanan(Anggota_Kelas $anggota): void
+    private function generateSppBulanan(AnggotaKelas $anggota): void
     {
         $tahunMasuk = Carbon::parse($anggota->tgl_masuk)->year;
         $mulai = Carbon::create($tahunMasuk, 7, 1);

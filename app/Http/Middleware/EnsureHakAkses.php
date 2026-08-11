@@ -13,11 +13,14 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Menegakkan hak_akses di level route, bukan hanya menyembunyikan menu di sidebar.
  *
- * hak_akses pada tabel users tenant berisi array ID menu (integer).
- * Middleware ini memetakan nama group menu (mis. "landing") ke ID menu-nya,
- * lalu memastikan user punya salah satu ID tersebut.
+ * hak_akses pada tabel users tenant berisi array ID menu (integer eksplisit,
+ * tidak ada wildcard '*'). Middleware ini memetakan nama group menu (mis.
+ * "landing") ke ID menu-nya, lalu memastikan user punya salah satu ID
+ * tersebut lewat array_intersect.
  *
- * User dengan hak_akses ['*'] dianggap superadmin dan selalu lolos.
+ * Untuk "superadmin" (admin tenant), gunakan saja ID seluruh menu aktif di
+ * hak_akses saat pembuatannya — middleware secara otomatis lolos karena
+ * array_intersect akan selalu non-kosong untuk group manapun.
  */
 class EnsureHakAkses
 {
@@ -32,6 +35,7 @@ class EnsureHakAkses
         $hakAkses = $user->hak_akses ?? [];
 
         if (in_array('*', (array) $hakAkses, true)) {
+            // Backward-compat: tenant lama mungkin masih pakai wildcard.
             return $next($request);
         }
 

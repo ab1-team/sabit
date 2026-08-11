@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +23,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('tenant.partials.topbar')
+    @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
         <header class="mb-6">
@@ -84,7 +84,7 @@
             </div>
 
             <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button id="btn-reset" type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Reset</button>
+                <button id="btn-reset" type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Atur Ulang</button>
                 <button id="btn-import" type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50">
                     <span>Import Sekarang</span>
                 </button>
@@ -163,14 +163,14 @@
                     if (!data.summary || data.summary.failed === 0) {
                         resetForm();
                     }
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan.' });
-                }
-            })
-            .catch(() => {
-                btnImport.disabled = false;
-                Swal.fire({ icon: 'error', title: 'Network Error', text: 'Tidak dapat terhubung ke server.' });
-            });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan.' });
+                    }
+                })
+                .catch(() => {
+                    btnImport.disabled = false;
+                    Swal.fire({ icon: 'error', title: 'Galat Jaringan', text: 'Tidak dapat terhubung ke server.' });
+                });
         });
 
         document.getElementById('filter-tahun').addEventListener('change', function () {

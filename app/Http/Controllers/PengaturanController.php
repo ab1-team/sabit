@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AdminInvoice;
+
+use App\Models\Tenant\TenantInvoice;
 use App\Models\AkunLevel1;
 use App\Models\Profil;
-use App\Models\Tanda_tangan;
+use App\Models\TandaTangan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,9 +38,9 @@ class PengaturanController extends Controller
     {
         $title = 'Pengaturan Tanda Tangan Pelaporan';
 
-        if (! Tanda_tangan::first()) {
-            Tanda_tangan::create([
-                'tanda_tangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+        if (! TandaTangan::first()) {
+            TandaTangan::create([
+                'TandaTangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
 <tbody>
 <tr>
 <td style="width: 33.3333%;">&nbsp;</td>
@@ -98,11 +99,11 @@ class PengaturanController extends Controller
             ]);
         }
 
-        $ttd = Tanda_tangan::first();
+        $ttd = TandaTangan::first();
 
         $tanggal = false;
         if ($ttd) {
-            $str = strpos($ttd->tanda_tangan, '{tanggal}');
+            $str = strpos($ttd->TandaTangan, '{tanggal}');
 
             if ($str !== false) {
                 $tanggal = true;
@@ -112,13 +113,13 @@ class PengaturanController extends Controller
         return view('pengaturan.tanda_tangan')->with(compact('title', 'ttd', 'tanggal'));
     }
 
-    public function ttdPelaporanStore(Request $request)
+public function ttdPelaporanStore(Request $request)
     {
         $request->validate([
             'tanda_tangan' => 'required',
         ]);
 
-        $ttd = Tanda_tangan::first();
+        $ttd = TandaTangan::first();
 
         $data = [
             'tanda_tangan' => $request->tanda_tangan,
@@ -127,7 +128,7 @@ class PengaturanController extends Controller
         if ($ttd) {
             $ttd->update($data);
         } else {
-            Tanda_tangan::create($data);
+            TandaTangan::create($data);
         }
 
         return response()->json([
@@ -227,7 +228,7 @@ class PengaturanController extends Controller
         if ($request->ajax()) {
             $tenantId = $this->currentTenantId($request);
 
-            $data = AdminInvoice::query()
+            $data = TenantInvoice::query()
                 ->when($tenantId, fn ($q) => $q->where('admin_invoice.tenant_id', $tenantId))
                 ->latest('tgl_invoice')
                 ->latest('id');
@@ -261,7 +262,7 @@ class PengaturanController extends Controller
         ]);
     }
 
-    public function invoicePrint(Request $request, AdminInvoice $invoice)
+    public function invoicePrint(Request $request, TenantInvoice $invoice)
     {
         $tenantId = $this->currentTenantId($request);
 
@@ -289,3 +290,5 @@ class PengaturanController extends Controller
         return $tid ? (string) $tid : null;
     }
 }
+
+

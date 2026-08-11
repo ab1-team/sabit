@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="utf-8" />
@@ -43,12 +43,12 @@
                                     @csrf
                                     <div
                                         class="input-group input-group-outline my-3 mt-2 {{ old('username') ? 'is-filled' : '' }}">
-                                        <label class="form-label">Username</label>
+                                        <label class="form-label">Nama Pengguna</label>
                                         <input type="text" name="username" value="{{ old('username') }}"
                                             class="form-control">
                                     </div>
                                     <div class="input-group input-group-outline mb-3 mt-2">
-                                        <label class="form-label">Password</label>
+                                        <label class="form-label">Kata Sandi</label>
                                         <input type="password" name="password" class="form-control">
                                     </div>
                                     <div class="text-center">

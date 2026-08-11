@@ -244,7 +244,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="input-group input-group-outline mb-3 {{ $isFilled($user->email) }}">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">Surel</label>
                             <input type="email" name="email" value="{{ $user->email }}" class="form-control" required>
                         </div>
                     </div>
@@ -264,11 +264,11 @@
                 <div class="profile-actions">
                     <button type="reset" class="btn btn-secondary">
                         <span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle">refresh</span>
-                        Reset
+                        Atur Ulang
                     </button>
                     <button type="button" class="btn bg-gradient-info" data-type="home">
                         <span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle">save</span>
-                        Update Data
+                        Perbarui Data
                     </button>
                 </div>
             </div>
@@ -279,7 +279,7 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="input-group input-group-outline mb-3 {{ $isFilled($user->username) }}">
-                            <label class="form-label">Username</label>
+                            <label class="form-label">Nama Pengguna</label>
                             <input type="text" name="username" value="{{ $user->username }}" class="form-control" required>
                         </div>
                     </div>
@@ -299,7 +299,7 @@
                 <div class="profile-actions">
                     <button type="button" class="btn bg-gradient-dark" data-type="access">
                         <span class="material-symbols-rounded" style="font-size:18px;vertical-align:middle">save</span>
-                        Update Data
+                        Perbarui Data
                     </button>
                 </div>
             </div>

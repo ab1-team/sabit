@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="utf-8" />
@@ -108,8 +108,8 @@
                         sm:p-7
                         lg:p-8">
                 <div class="mb-5 lg:mb-5">
-                    <h2 class="text-lg font-bold text-slate-900 sm:text-xl">Welcome back</h2>
-                    <p class="mt-1 text-xs text-slate-500 sm:text-sm">Sign in to continue to the Tenant Console.</p>
+                    <h2 class="text-lg font-bold text-slate-900 sm:text-xl">Selamat datang kembali</h2>
+                    <p class="mt-1 text-xs text-slate-500 sm:text-sm">Masuk untuk melanjutkan ke Tenant Console.</p>
                 </div>
 
                 {{-- Error --}}
@@ -136,7 +136,7 @@
                             <input id="password" type="password" name="password" required
                                    class="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl border border-slate-300 bg-white
                                           sm:py-3" />
-                            <button type="button" id="togglePwd" aria-label="Show password"
+                            <button type="button" id="togglePwd" aria-label="Tampilkan kata sandi"
                                     class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300
                                            sm:right-2">
                                 <svg id="eyeOff" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.879l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
@@ -148,21 +148,21 @@
                     <div class="flex items-center justify-between pt-1">
                         <label class="inline-flex items-center gap-2 text-xs text-slate-600 select-none cursor-pointer sm:text-sm">
                             <input type="checkbox" name="remember" class="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 sm:w-4 sm:h-4">
-                            Remember me
+                            Ingat saya
                         </label>
-                        <a href="#" class="text-xs font-medium text-indigo-600 hover:text-indigo-700 sm:text-sm">Forgot password?</a>
+                        <a href="#" class="text-xs font-medium text-indigo-600 hover:text-indigo-700 sm:text-sm">Lupa kata sandi?</a>
                     </div>
 
                     <button type="submit" class="btn-grad w-full py-2.5 rounded-xl text-white font-semibold text-sm ring-focus mt-2 inline-flex items-center justify-center gap-2
                                                sm:py-3 sm:text-base">
-                        <span>Sign in to Tenant Console</span>
+                        <span>Masuk ke Tenant Console</span>
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                 </form>
             </div>
 
             <p class="mt-4 text-center text-[11px] text-white/80 drop-shadow sm:text-xs sm:mt-5">
-                &copy; {{ date('Y') }} {{ env('APP_NAME') }} — Internal use only.
+                &copy; {{ date('Y') }} {{ env('APP_NAME') }} — Hanya untuk penggunaan internal.
             </p>
         </div>
     </div>

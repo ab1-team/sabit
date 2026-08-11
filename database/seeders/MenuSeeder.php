@@ -18,8 +18,8 @@ class MenuSeeder extends Seeder
             [6, 'Invoice', '/app/pengaturan/invoice', 'receipt', 6, 'aktif', 'Pengaturan'],
             [7, 'Tambah Siswa', '/app/siswa/create', 'person_add', 7, 'aktif', 'Master Data'],
             [8, 'Data Siswa', '/app/siswa', 'school', 8, 'aktif', 'Master Data'],
-            [9, 'Tagihan Siswa', '/app/Transaksi/pembayaran-spp', 'request_quote', 9, 'aktif', 'Transaksi'],
-            [10, 'Jurnal Umum', '/app/Transaksi', 'menu_book', 10, 'aktif', 'Transaksi'],
+            [9, 'Tagihan Siswa', '/app/transaksi/pembayaran-spp', 'request_quote', 9, 'aktif', 'Transaksi'],
+            [10, 'Jurnal Umum', '/app/transaksi', 'menu_book', 10, 'aktif', 'Transaksi'],
             [11, 'Laporan Keuangan', '/app/laporan-keuangan', 'receipt_long', 11, 'aktif', 'Pelaporan'],
             [14, 'Daftar Kelas', '/app/daftar-kelas', 'class', 14, 'aktif', 'Master Data'],
         ];

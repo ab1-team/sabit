@@ -29,7 +29,7 @@ class AuthController extends Controller
             return redirect()->intended(route('tenant.dashboard'));
         }
 
-        $user = \App\Models\TenantUser::where('email', $request->email)->first();
+        $user = \App\Models\Tenant\TenantUser::where('email', $request->email)->first();
         \Log::info('Pusat login failed', [
             'email' => $request->email,
             'user_found' => (bool) $user,
@@ -47,3 +47,5 @@ class AuthController extends Controller
         return redirect()->route('tenant.login');
     }
 }
+
+

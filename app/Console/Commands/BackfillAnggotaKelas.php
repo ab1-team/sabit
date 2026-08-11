@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Anggota_Kelas;
+use App\Models\AnggotaKelas;
 use App\Models\Siswa;
-use App\Models\Tahun_Akademik;
+use App\Models\TahunAkademik;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -48,7 +48,7 @@ class BackfillAnggotaKelas extends Command
                 continue;
             }
 
-            Anggota_Kelas::create($row);
+            AnggotaKelas::create($row);
             $created++;
         }
 
@@ -59,7 +59,7 @@ class BackfillAnggotaKelas extends Command
     private function resolveTahunAkademik($value): string
     {
         if (is_numeric($value)) {
-            $ta = Tahun_Akademik::find($value);
+            $ta = TahunAkademik::find($value);
             if ($ta) {
                 return $ta->nama_tahun;
             }

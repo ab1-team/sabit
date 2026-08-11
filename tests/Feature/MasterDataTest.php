@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Jurusan;
-use App\Models\Tahun_akademik;
+use App\Models\TahunAkademik;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -53,8 +53,8 @@ class MasterDataTest extends TestCase
 
     public function test_tahun_akademik_aktifkan_deactivates_others(): void
     {
-        $a = Tahun_akademik::create(['nama_tahun' => '2024/2025', 'keterangan' => '-', 'status' => 'aktif']);
-        $b = Tahun_akademik::create(['nama_tahun' => '2025/2026', 'keterangan' => '-', 'status' => 'nonaktif']);
+        $a = TahunAkademik::create(['nama_tahun' => '2024/2025', 'keterangan' => '-', 'status' => 'aktif']);
+        $b = TahunAkademik::create(['nama_tahun' => '2025/2026', 'keterangan' => '-', 'status' => 'nonaktif']);
 
         $this->postJson("/app/tahun-akademik/{$b->id}/aktifkan")
             ->assertOk()
@@ -66,7 +66,7 @@ class MasterDataTest extends TestCase
 
     public function test_tahun_akademik_store_deactivates_existing_active(): void
     {
-        Tahun_akademik::create(['nama_tahun' => '2024/2025', 'keterangan' => '-', 'status' => 'aktif']);
+        TahunAkademik::create(['nama_tahun' => '2024/2025', 'keterangan' => '-', 'status' => 'aktif']);
 
         $this->postJson('/app/tahun-akademik', [
             'nama_tahun' => '2025/2026',
@@ -78,3 +78,4 @@ class MasterDataTest extends TestCase
         $this->assertDatabaseHas('tahun_akademik', ['nama_tahun' => '2025/2026', 'status' => 'aktif']);
     }
 }
+

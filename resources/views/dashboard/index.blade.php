@@ -551,7 +551,7 @@ $(document).ready(function () {
     .then(r => r.json())
     .then(data => {
         if (data.ok) {
-            msg.textContent = 'Generate selesai. Memuat hasil...';
+            msg.textContent = 'Pembuatan selesai. Memuat hasil...';
             let tries = 0;
             const poll = setInterval(() => {
                 tries++;
@@ -568,7 +568,7 @@ $(document).ready(function () {
                             const url = window.location.pathname;
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Generate Piutang Selesai',
+                                title: 'Pembuatan Piutang Selesai',
                                 html: `Bulan: <strong>${bulan}</strong>`,
                                 confirmButtonText: 'OK',
                                 allowOutsideClick: false,
@@ -577,7 +577,7 @@ $(document).ready(function () {
                             clearInterval(poll);
                             overlay.style.display = 'none';
                             document.body.style.overflow = '';
-                            Swal.fire({ icon: 'warning', title: 'Timeout', text: 'Cek log server.' });
+                            Swal.fire({ icon: 'warning', title: 'Batas waktu habis', text: 'Cek log server.' });
                         }
                     });
             }, 1000);
@@ -588,7 +588,7 @@ $(document).ready(function () {
     .catch(() => {
         overlay.style.display = 'none';
         document.body.style.overflow = '';
-        Swal.fire({ icon: 'error', title: 'Generate gagal', text: 'Terjadi kesalahan server.' });
+            Swal.fire({ icon: 'error', title: 'Pembuatan gagal', text: 'Terjadi kesalahan server.' });
     });
 })();
 </script>

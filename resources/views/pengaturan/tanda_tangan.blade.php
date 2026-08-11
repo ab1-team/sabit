@@ -109,7 +109,7 @@
                     });
                 },
                 error: function (xhr) {
-                    Swal.fire('Error', 'Gagal menyimpan tanda tangan', 'error');
+                    Swal.fire('Galat', 'Gagal menyimpan tanda tangan', 'error');
                     console.log(xhr.responseText);
                 }
             });

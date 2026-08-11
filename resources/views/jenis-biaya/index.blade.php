@@ -57,7 +57,7 @@
             <div class="toast-header border-0">
                 <i class="material-symbols-rounded text-warning me-2">travel_explore</i>
                 <span class="me-auto font-weight-bold">{{ $appName }}</span>
-                <small class="text-body">Now</small>
+                <small class="text-body">Sekarang</small>
                 <i class="fas fa-times text-md ms-3 cursor-pointer" data-bs-dismiss="toast" aria-label="Close"></i>
             </div>
             <div class="toast-body text-dark">
@@ -285,7 +285,7 @@
                             if (first && first[0]) msg = first[0];
                         }
                     }
-                    Swal.fire('Error', msg, 'error');
+                    Swal.fire('Galat', msg, 'error');
                 }
             });
         });

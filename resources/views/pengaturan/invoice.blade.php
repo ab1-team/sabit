@@ -45,8 +45,12 @@
                     search: 'Cari:',
                     info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
                     infoEmpty: 'Tidak ada data',
+                    infoFiltered: '(disaring dari _MAX_ total data)',
                     zeroRecords: 'Data tidak ditemukan',
-                    paginate: { previous: 'Sebelumnya', next: 'Berikutnya' }
+                    emptyTable: 'Tidak ada data tersedia',
+                    loadingRecords: 'Memuat...',
+                    processing: 'Memproses...',
+                    paginate: { previous: 'Sebelumnya', next: 'Berikutnya', first: 'Pertama', last: 'Terakhir' }
                 },
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center text-muted' },
