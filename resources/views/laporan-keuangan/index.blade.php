@@ -1,4 +1,4 @@
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
     <style>
         .lk-page { max-width: 1100px; margin: 0 auto; }

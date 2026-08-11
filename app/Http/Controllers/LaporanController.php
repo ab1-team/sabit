@@ -229,9 +229,8 @@ class LaporanController extends Controller
         $tgl_awal_tahun  = "$thn-01-01";
         $tgl_awal_bulan  = "$thn-$bln-01";
         $tgl_akhir_bulan = "$thn-$bln-" . cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn);
+        $tgl_akhir_sebelum = date('Y-m-d', strtotime("$tgl_awal_bulan -1 day"));
 
-
-        // Ambil rekening yang dipilih
         $rek = Rekening::where('kode_akun', $data['kode_akun'])->first();
         if (!$rek) {
             return abort(404, 'Rekening tidak ditemukan!');
@@ -239,87 +238,114 @@ class LaporanController extends Controller
         $data['rek'] = $rek;
         $data['judul'] = "Buku Besar " . ($rek->kode_akun ?? '-') . " (" . Tanggal::namaBulan($tgl_awal_bulan) . " $thn)";
 
-        // Saldo Awal Tahun
-        $saldo_awal = Transaksi::where(fn($q) => $q
-            ->where('rekening_debit', $rek->kode_akun)
-            ->orWhere('rekening_kredit', $rek->kode_akun))
+        $kode = $rek->kode_akun;
+        $isDebet = ($rek->jenis_mutasi == 'debet');
+
+        // Helper inline — saldo: +(debit) atau -(kredit) untuk akun Debet-normal,
+        // atau kebalikannya untuk akun Kredit-normal.
+        $sumExpr = fn ($col) => $isDebet
+            ? "COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0) - COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0)"
+            : "COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0) - COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0)";
+
+        // 1) Saldo awal tahun: 1 query aggregate
+        $saldo_awal = (float) DB::table('transaksi')
+            ->whereNull('deleted_at')
             ->where('tanggal_transaksi', '<', $tgl_awal_tahun)
-            ->get()
-            ->reduce(fn($carry, $trx) => $carry + (
-                $trx->rekening_debit == $rek->kode_akun
-                ? ($rek->jenis_mutasi == 'debet' ? $trx->jumlah : -$trx->jumlah)
-                : ($rek->jenis_mutasi == 'debet' ? -$trx->jumlah : $trx->jumlah)
-            ), 0);
+            ->where(function ($q) use ($kode) {
+                $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
+            })
+            ->selectRaw($sumExpr('rekening_debit'), [$kode, $kode])
+            ->value(DB::raw('1')); // trick agar selectRaw dipakai
+
+        // value() butuh raw lagi — kita ambil langsung via DB::select
+        $saldo_awal = (float) DB::table('transaksi')
+            ->whereNull('deleted_at')
+            ->where('tanggal_transaksi', '<', $tgl_awal_tahun)
+            ->where(function ($q) use ($kode) {
+                $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
+            })
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN rekening_debit = ? THEN jumlah ELSE 0 END),0) -
+                COALESCE(SUM(CASE WHEN rekening_kredit = ? THEN jumlah ELSE 0 END),0) AS net
+            ', [$kode, $kode])
+            ->value('net');
+        // Koreksi sign berdasarkan normal akun
+        if (! $isDebet) {
+            $saldo_awal = -$saldo_awal;
+        }
         $data['saldo_awal'] = $saldo_awal;
 
-        // Kumulatif s/d Bulan Lalu
-        $transaksi_bulan_lalu = Transaksi::where(fn($q) => $q
-            ->where('rekening_debit', $rek->kode_akun)
-            ->orWhere('rekening_kredit', $rek->kode_akun))
-            ->whereBetween('tanggal_transaksi', [$tgl_awal_tahun, date('Y-m-d', strtotime("$tgl_awal_bulan -1 day"))])
-            ->get();
+        // 2) Kumulatif s/d bulan lalu (Jan s/d akhir bulan lalu) — 1 query
+        $blLalu = DB::table('transaksi')
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_transaksi', [$tgl_awal_tahun, $tgl_akhir_sebelum])
+            ->where(function ($q) use ($kode) {
+                $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
+            })
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN rekening_debit = ? THEN jumlah ELSE 0 END),0) AS debit,
+                COALESCE(SUM(CASE WHEN rekening_kredit = ? THEN jumlah ELSE 0 END),0) AS kredit
+            ', [$kode, $kode])
+            ->first();
 
-        $komulatif_bulan_lalu = $transaksi_bulan_lalu->reduce(function ($carry, $trx) use ($rek) {
-            if ($trx->rekening_debit == $rek->kode_akun) {
-                $carry['debit'] += $trx->jumlah;
-                $carry['saldo'] += ($rek->jenis_mutasi == 'debet' ? $trx->jumlah : -$trx->jumlah);
-            } elseif ($trx->rekening_kredit == $rek->kode_akun) {
-                $carry['kredit'] += $trx->jumlah;
-                $carry['saldo'] += ($rek->jenis_mutasi == 'debet' ? -$trx->jumlah : $trx->jumlah);
-            }
-            return $carry;
-        }, ['debit' => 0, 'kredit' => 0, 'saldo' => $saldo_awal]);
+        $komulatif_debit  = (float) $blLalu->debit;
+        $komulatif_kredit = (float) $blLalu->kredit;
+        $komulatif_saldo  = $saldo_awal + ($isDebet
+            ? $komulatif_debit - $komulatif_kredit
+            : $komulatif_kredit - $komulatif_debit);
 
-        $data['komulatif_bulan_lalu_debit']  = $komulatif_bulan_lalu['debit'];
-        $data['komulatif_bulan_lalu_kredit'] = $komulatif_bulan_lalu['kredit'];
-        $data['komulatif_bulan_lalu_saldo']  = $komulatif_bulan_lalu['saldo'];
+        $data['komulatif_bulan_lalu_debit']  = $komulatif_debit;
+        $data['komulatif_bulan_lalu_kredit'] = $komulatif_kredit;
+        $data['komulatif_bulan_lalu_saldo']  = $komulatif_saldo;
 
-        // Transaksi Bulan Ini
-        $transaksi_bulan_ini = Transaksi::with('user')
-            ->where(fn($q) => $q
-                ->where('rekening_debit', $rek->kode_akun)
-                ->orWhere('rekening_kredit', $rek->kode_akun))
+        // 3) Transaksi bulan ini (untuk daftar di view) + totals
+        $transaksi_bulan_ini = Transaksi::with('user:id,nama_lengkap')
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($kode) {
+                $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
+            })
             ->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
             ->orderBy('tanggal_transaksi')
+            ->select(['id', 'tanggal_transaksi', 'keterangan', 'rekening_debit', 'rekening_kredit', 'jumlah', 'user_id'])
             ->get();
-        $data['transaksi'] = $transaksi_bulan_ini;
 
-        $total_bulan_ini = $transaksi_bulan_ini->reduce(function ($carry, $trx) use ($rek) {
-            if ($trx->rekening_debit == $rek->kode_akun) {
-                $carry['debit'] += $trx->jumlah;
-            } elseif ($trx->rekening_kredit == $rek->kode_akun) {
-                $carry['kredit'] += $trx->jumlah;
+        $data['transaksi']     = $transaksi_bulan_ini;
+        $total_bulan_ini_debit = 0.0;
+        $total_bulan_ini_kredit = 0.0;
+        foreach ($transaksi_bulan_ini as $trx) {
+            if ($trx->rekening_debit == $kode) {
+                $total_bulan_ini_debit += (float) $trx->jumlah;
+            } elseif ($trx->rekening_kredit == $kode) {
+                $total_bulan_ini_kredit += (float) $trx->jumlah;
             }
-            return $carry;
-        }, ['debit' => 0, 'kredit' => 0]);
-        $data['total_bulan_ini'] = $total_bulan_ini;
+        }
+        $data['total_bulan_ini'] = ['debit' => $total_bulan_ini_debit, 'kredit' => $total_bulan_ini_kredit];
 
-        // Total s/d Bulan Ini (Jan - Bulan Ini)
         $data['total_sampai_bulan_ini'] = [
-            'debit'  => $komulatif_bulan_lalu['debit'] + $total_bulan_ini['debit'],
-            'kredit' => $komulatif_bulan_lalu['kredit'] + $total_bulan_ini['kredit'],
-            'saldo'  => $komulatif_bulan_lalu['saldo']
-                + ($rek->jenis_mutasi == 'debet'
-                    ? $total_bulan_ini['debit'] - $total_bulan_ini['kredit']
-                    : $total_bulan_ini['kredit'] - $total_bulan_ini['debit']),
+            'debit'  => $komulatif_debit + $total_bulan_ini_debit,
+            'kredit' => $komulatif_kredit + $total_bulan_ini_kredit,
+            'saldo'  => $komulatif_saldo + ($isDebet
+                ? $total_bulan_ini_debit - $total_bulan_ini_kredit
+                : $total_bulan_ini_kredit - $total_bulan_ini_debit),
         ];
 
-        // Total Kumulatif Tahun (sampai Desember)
-        $transaksi_tahun_ini = Transaksi::where(fn($q) => $q
-            ->where('rekening_debit', $rek->kode_akun)
-            ->orWhere('rekening_kredit', $rek->kode_akun))
+        // 4) Total kumulatif tahun (sampai Des) — 1 query aggregate
+        $thnIni = DB::table('transaksi')
+            ->whereNull('deleted_at')
             ->whereBetween('tanggal_transaksi', [$tgl_awal_tahun, "$thn-12-31"])
-            ->get();
+            ->where(function ($q) use ($kode) {
+                $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
+            })
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN rekening_debit = ? THEN jumlah ELSE 0 END),0) AS debit,
+                COALESCE(SUM(CASE WHEN rekening_kredit = ? THEN jumlah ELSE 0 END),0) AS kredit
+            ', [$kode, $kode])
+            ->first();
 
-        $total_tahun_ini = $transaksi_tahun_ini->reduce(function ($carry, $trx) use ($rek) {
-            if ($trx->rekening_debit == $rek->kode_akun) {
-                $carry['debit'] += $trx->jumlah;
-            } elseif ($trx->rekening_kredit == $rek->kode_akun) {
-                $carry['kredit'] += $trx->jumlah;
-            }
-            return $carry;
-        }, ['debit' => 0, 'kredit' => 0]);
-        $data['total_tahun_ini'] = $total_tahun_ini;
+        $data['total_tahun_ini'] = [
+            'debit'  => (float) $thnIni->debit,
+            'kredit' => (float) $thnIni->kredit,
+        ];
 
         // Sub Judul + tanggal
         $data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn;

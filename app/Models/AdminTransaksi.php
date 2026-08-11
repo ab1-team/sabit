@@ -8,11 +8,26 @@ use Illuminate\Database\Eloquent\Model;
 class AdminTransaksi extends Model
 {
     use HasFactory;
+
+    protected $connection = 'central';
+
     protected $table = 'admin_transaksi';
     protected $guarded = ['idt'];
 
     protected $primaryKey = 'idt';
     public $timestamps = false;
+
+    protected $fillable = [
+        'tenant_id',
+        'tgl_transaksi',
+        'rekening_debit',
+        'rekening_kredit',
+        'idv',
+        'keterangan_transaksi',
+        'jumlah',
+        'urutan',
+        'id_user',
+    ];
 
     protected $casts = [
         'tgl_transaksi' => 'date',

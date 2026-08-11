@@ -7,6 +7,8 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\DatabaseConfig;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,21 +21,33 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-        $profil = null;
-        if (Schema::hasTable('profil')) {
-            try {
-                $profil = Profil::first();
-            } catch (\Throwable $e) {
-                $profil = null;
+        DatabaseConfig::generateDatabaseNamesUsing(function (TenantWithDatabase $tenant) {
+            // Nama DB tenant SELALU dibaca dari kolom `tenancy_db_name` di tabel tenants.
+            // Kalau kosong, fallback ke prefix + tenant_id.
+            $explicit = $tenant->getAttribute('tenancy_db_name');
+            if (! empty($explicit)) {
+                return $explicit;
             }
-        }
 
-        View::share('appLogoUrl', $profil && $profil->logo
-            ? asset('storage/logo/' . $profil->logo)
-            : asset('assets/img/apple-icon.png'));
+            $internal = $tenant->getInternal('db_name');
+            if (! empty($internal)) {
+                return $internal;
+            }
 
-        View::share('appName', $profil->nama ?? config('app.name'));
+            return config('tenancy.database.prefix')
+                . $tenant->getTenantKey()
+                . config('tenancy.database.suffix', '');
+        });
 
-        View::share('profil', $profil);
+        // View composer: jalan setiap kali view 'layouts.tenant.base' di-render,
+        // sehingga data profil SELALU diambil dengan koneksi tenant yang sedang
+        // aktif (bukan koneksi central seperti di boot()).
+        View::composer('layouts.tenant.base', function ($view) {
+            $profil = Profil::safeFirst();
+
+            $view->with('profil', $profil);
+            $view->with('appLogoUrl', Profil::logoUrl());
+            $view->with('appName', $profil->nama ?? config('app.name'));
+        });
     }
 }

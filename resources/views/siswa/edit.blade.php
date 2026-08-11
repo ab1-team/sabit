@@ -1,7 +1,7 @@
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
     <div class="row">
-        <form id="FormSiswa" method="POST" action="/app/siswa/{{ $siswa->id }}" class="text-start"
+        <form id="FormSiswa" method="POST" action="{{ route('siswa.update', $siswa->id) }}" class="text-start"
             enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -33,7 +33,7 @@
                                     <div id="preview-img-box" style="width:150px;height:150px"
                                         class="border bg-light overflow-hidden rounded">
                                         <img id="preview-img"
-                                            src="{{ $siswa->foto ? asset('storage/siswa/' . $siswa->foto) : asset('no-img.png') }}"
+                                            src="{{ $siswa->foto ? \App\Models\Profil::tenantStorageUrl('siswa/' . $siswa->foto) : asset('no-img.png') }}"
                                             class="w-100 h-100" style="object-fit:cover;">
                                     </div>
                                     <div class="col-md-12 mt-3">

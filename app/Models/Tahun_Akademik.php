@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Tahun_Akademik extends Model
 {
@@ -19,5 +20,16 @@ class Tahun_Akademik extends Model
     public function anggotaKelas()
     {
         return $this->hasMany(Anggota_Kelas::class, 'tahun_akademik', 'nama_tahun');
+    }
+
+    public function aktifkan(): void
+    {
+        DB::table('tahun_akademik')
+            ->where('id', '!=', $this->id)
+            ->update(['status' => 'nonaktif']);
+        DB::table('tahun_akademik')
+            ->where('id', $this->id)
+            ->update(['status' => 'aktif']);
+        $this->refresh();
     }
 }

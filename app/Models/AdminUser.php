@@ -10,9 +10,12 @@ class AdminUser extends Model implements Authenticatable
 {
     use AuthenticatableTrait;
 
+    protected $connection = 'central';
+
     protected $table = 'admin_user';
 
     protected $fillable = [
+        'tenant_id',
         'nama_lengkap',
         'email',
         'password',

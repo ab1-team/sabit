@@ -1,9 +1,9 @@
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
     <div class="row">
         <div class="col-12">
             <div class="card my-4">
-                <div class="card-body px-4 py-3">
+                <div class="card-body px-3 py-3">
                     <div class="table-responsive">
                         <table id="invoices" class="table table-striped table-hover align-middle mb-0">
                             <thead class="table-light">

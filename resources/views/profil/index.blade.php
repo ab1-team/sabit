@@ -1,9 +1,9 @@
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
 
 @php
     $avatar = $user->foto
-        ? asset('storage/users/' . $user->foto)
+        ? \App\Models\Profil::tenantStorageUrl('users/' . $user->foto)
         : 'https://ui-avatars.com/api/?name=' . urlencode($user->nama ?? 'User') . '&size=120&background=111827&color=fff&bold=true';
     $isFilled = fn($v) => $v ? 'is-filled' : '';
 @endphp

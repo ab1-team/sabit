@@ -1,7 +1,7 @@
-@extends('layouts.base')
+@extends('layouts.tenant.base')
 @section('content')
     <div class="row">
-        <form id="FormSiswa" method="POST" action="/app/siswa" class="text-start" enctype="multipart/form-data">
+        <form id="FormSiswa" method="POST" action="{{ route('siswa.store') }}" class="text-start" enctype="multipart/form-data">
             @csrf
             <div class="col-12">
                 <div class="card my-4 shadow-sm">

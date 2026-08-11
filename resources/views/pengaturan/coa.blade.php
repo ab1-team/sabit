@@ -1,4 +1,4 @@
- @extends('layouts.base')
+@extends('layouts.tenant.base')
 
  @section('content')
  <div class="row">
