@@ -228,7 +228,7 @@ tbody td{
 
 <b>{{ $tenantNama }}</b><br>
 @if($tenantDomain)
-    {{ $tenantDomain }}.pembayaran-spp.test<br>
+    {{ $tenantDomain }}.sabit.test<br>
 @endif
 Owner: {{ $invoice->user->nama_lengkap ?? '-' }}<br>
 Email: {{ $invoice->user->email ?? '-' }}

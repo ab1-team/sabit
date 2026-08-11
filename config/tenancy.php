@@ -17,8 +17,8 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        env('CENTRAL_DOMAIN', 'pusat.pembayaran-spp.test'),
-        'pembayaran-spp.test',
+        env('CENTRAL_DOMAIN', 'pusat.sabit.test'),
+        'sabit.test',
     ],
 
     /**

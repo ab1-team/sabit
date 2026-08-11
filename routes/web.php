@@ -19,10 +19,10 @@ use App\Http\Controllers\Tenant\JenisPembayaranController;
 | TENANT (Master Console / Pusat) Routes
 |--------------------------------------------------------------------------
 |
-| Domain pusat: env('CENTRAL_DOMAIN') => pusat.pembayaran-spp.test
+| Domain pusat: env('CENTRAL_DOMAIN') => pusat.sabit.test
 | Mengelola sekolah (subdomain tenant) dari pusat.
 | Login pusat di /login (sebelumnya /master/login).
-| Sekolah diakses via subdomain, mis: demo.pembayaran-spp.test
+| Sekolah diakses via subdomain, mis: demo.sabit.test
 |
 */
 

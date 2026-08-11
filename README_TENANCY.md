@@ -1,6 +1,6 @@
 # Multi-Tenancy — stancl/tenancy v3
 
-Aplikasi `pembayaran-spp` berjalan sebagai **multi-tenant (multi-database)**.
+Aplikasi SAbIT berjalan sebagai **multi-tenant (multi-database)**.
 
 ## Struktur Folder (ringkas, mudah dikontrol)
 
