@@ -39,81 +39,177 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @forelse ($rekenings as $r)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 font-mono text-xs text-slate-700">{{ $r->kode_akun }}</td>
-                                <td class="px-5 py-3 font-semibold text-slate-800">{{ $r->nama_akun }}</td>
-                                <td class="px-5 py-3 text-slate-700">{{ ucfirst($r->jenis_mutasi ?? '—') }}</td>
-                                <td class="px-5 py-3 text-right tabular-nums text-slate-700">Rp {{ number_format((float) $r->saldo, 0, ',', '.') }}</td>
-                                <td class="px-5 py-3 text-center">
-                                    @if ($r->tgl_nonaktif)
-                                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Nonaktif</span>
-                                    @else
-                                        <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Aktif</span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-3 text-right">
-                                    @if ($r->tgl_nonaktif)
-                                        <form action="{{ route('tenant.tenant.coa.aktifkan', [$tenant, $r]) }}" method="POST" class="inline">
-                                            @csrf @method('POST')
-                                            <button class="inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600" title="Aktifkan">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                            </button>
-                                        </form>
-                                    @else
-                                        <form action="{{ route('tenant.tenant.coa.nonaktifkan', [$tenant, $r]) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan rekening {{ $r->kode_akun }}?');">
-                                            @csrf @method('POST')
-                                            <button class="inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Nonaktifkan">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/></svg>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </td>
+                        @forelse ($akunLevel1 as $l1)
+                            <tr class="bg-slate-100">
+                                <td class="px-5 py-2 font-mono text-xs font-bold text-slate-700">{{ $l1->kode_akun }}</td>
+                                <td colspan="5" class="px-5 py-2 text-xs font-bold uppercase tracking-wider text-slate-700">{{ $l1->nama_akun }}</td>
                             </tr>
+                            @forelse ($l1->tree as $l2)
+                                <tr class="bg-slate-50">
+                                    <td class="px-5 py-1.5 pl-8 font-mono text-xs font-semibold text-slate-600">{{ $l2->kode_akun }}</td>
+                                    <td colspan="5" class="px-5 py-1.5 text-xs font-semibold text-slate-700">{{ $l2->nama_akun }}</td>
+                                </tr>
+                                @forelse ($l2->akun3 as $l3)
+                                    <tr class="bg-white">
+                                        <td class="px-5 py-1.5 pl-12 font-mono text-xs text-slate-600">{{ $l3->kode_akun }}</td>
+                                        <td class="px-5 py-1.5 text-xs text-slate-700">{{ $l3->nama_akun }}</td>
+                                        <td colspan="4" class="px-5 py-1.5 text-xs italic text-slate-400">sub-kelompok</td>
+                                    </tr>
+                                    @forelse ($l3->rekenings as $r)
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="px-5 py-3 pl-16 font-mono text-xs text-slate-700">{{ $r->kode_akun }}</td>
+                                            <td class="px-5 py-3 font-semibold text-slate-800">{{ $r->nama_akun }}</td>
+                                            <td class="px-5 py-3 text-slate-700">{{ ucfirst($r->jenis_mutasi ?? '—') }}</td>
+                                            <td class="px-5 py-3 text-right tabular-nums text-slate-700">Rp {{ number_format((float) $r->saldo, 0, ',', '.') }}</td>
+                                            <td class="px-5 py-3 text-center">
+                                                @if ($r->tgl_nonaktif)
+                                                    <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Nonaktif</span>
+                                                @else
+                                                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Aktif</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-5 py-3 text-right">
+                                                @if ($r->tgl_nonaktif)
+                                                    <form action="{{ route('tenant.tenant.coa.aktifkan', [$tenant, $r]) }}" method="POST" class="inline">
+                                                        @csrf @method('POST')
+                                                        <button class="inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600" title="Aktifkan">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('tenant.tenant.coa.nonaktifkan', [$tenant, $r]) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan rekening {{ $r->kode_akun }}?');">
+                                                        @csrf @method('POST')
+                                                        <button class="inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Nonaktifkan">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/></svg>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td class="px-5 py-2 pl-16 text-xs italic text-slate-400">— belum ada rekening</td>
+                                            <td colspan="5"></td>
+                                        </tr>
+                                    @endforelse
+                                @empty
+                                    <tr>
+                                        <td class="px-5 py-1.5 pl-12 text-xs italic text-slate-400">— belum ada akun</td>
+                                        <td colspan="5"></td>
+                                    </tr>
+                                @endforelse
+                            @empty
+                                <tr>
+                                    <td class="px-5 py-1.5 pl-8 text-xs italic text-slate-400">— belum ada akun</td>
+                                    <td colspan="5"></td>
+                                </tr>
+                            @endforelse
+                            @if ($l1->orphanRekenings->isNotEmpty())
+                                <tr class="bg-amber-50">
+                                    <td class="px-5 py-1.5 pl-8 text-xs italic font-semibold text-amber-700">Lainnya</td>
+                                    <td colspan="5" class="px-5 py-1.5 text-xs italic text-amber-700">rekening tanpa parent L3 (data historis)</td>
+                                </tr>
+                                @foreach ($l1->orphanRekenings as $r)
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="px-5 py-3 pl-12 font-mono text-xs text-slate-700">{{ $r->kode_akun }}</td>
+                                        <td class="px-5 py-3 font-semibold text-slate-800">{{ $r->nama_akun }}</td>
+                                        <td class="px-5 py-3 text-slate-700">{{ ucfirst($r->jenis_mutasi ?? '—') }}</td>
+                                        <td class="px-5 py-3 text-right tabular-nums text-slate-700">Rp {{ number_format((float) $r->saldo, 0, ',', '.') }}</td>
+                                        <td class="px-5 py-3 text-center">
+                                            @if ($r->tgl_nonaktif)
+                                                <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Nonaktif</span>
+                                            @else
+                                                <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Aktif</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-3 text-right">
+                                            @if ($r->tgl_nonaktif)
+                                                <form action="{{ route('tenant.tenant.coa.aktifkan', [$tenant, $r]) }}" method="POST" class="inline">
+                                                    @csrf @method('POST')
+                                                    <button class="inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600" title="Aktifkan">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <form action="{{ route('tenant.tenant.coa.nonaktifkan', [$tenant, $r]) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan rekening {{ $r->kode_akun }}?');">
+                                                    @csrf @method('POST')
+                                                    <button class="inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Nonaktifkan">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/></svg>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
                         @empty
-                            <tr><td colspan="6" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada rekening.</td></tr>
+                            <tr><td colspan="6" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada Chart of Account.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
             <ul class="divide-y divide-slate-100 md:hidden">
-                @forelse ($rekenings as $r)
-                    <li class="px-4 py-3.5">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0">
-                                <p class="font-mono text-xs text-slate-500">{{ $r->kode_akun }}</p>
-                                <p class="mt-0.5 truncate text-sm font-semibold text-slate-900">{{ $r->nama_akun }}</p>
-                                <p class="mt-0.5 text-xs text-slate-600">{{ ucfirst($r->jenis_mutasi ?? '—') }} · Rp {{ number_format((float) $r->saldo, 0, ',', '.') }}</p>
-                                <div class="mt-1">
-                                    @if ($r->tgl_nonaktif)
-                                        <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Nonaktif</span>
-                                    @else
-                                        <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Aktif</span>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="flex flex-shrink-0 items-center gap-1">
-                                @if ($r->tgl_nonaktif)
-                                    <form action="{{ route('tenant.tenant.coa.aktifkan', [$tenant, $r]) }}" method="POST" class="inline">
-                                        @csrf @method('POST')
-                                        <button class="inline-flex items-center rounded-md bg-emerald-100 p-1.5 text-emerald-700 hover:bg-emerald-200" title="Aktifkan">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                        </button>
-                                    </form>
-                                @else
-                                    <form action="{{ route('tenant.tenant.coa.nonaktifkan', [$tenant, $r]) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan rekening {{ $r->kode_akun }}?');">
-                                        @csrf @method('POST')
-                                        <button class="inline-flex items-center rounded-md bg-rose-100 p-1.5 text-rose-700 hover:bg-rose-200" title="Nonaktifkan">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/></svg>
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                        </div>
+                @forelse ($akunLevel1 as $l1)
+                    <li class="bg-slate-100 px-4 py-2">
+                        <p class="font-mono text-xs font-bold text-slate-700">{{ $l1->kode_akun }}</p>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-700">{{ $l1->nama_akun }}</p>
                     </li>
+                    @forelse ($l1->tree as $l2)
+                        <li class="bg-slate-50 px-4 py-1.5">
+                            <p class="font-mono text-xs font-semibold text-slate-600">{{ $l2->kode_akun }}</p>
+                            <p class="text-xs font-semibold text-slate-700">{{ $l2->nama_akun }}</p>
+                        </li>
+                        @forelse ($l2->akun3 as $l3)
+                            <li class="px-4 py-1.5">
+                                <p class="font-mono text-xs text-slate-600">{{ $l3->kode_akun }}</p>
+                                <p class="text-xs text-slate-700">{{ $l3->nama_akun }}</p>
+                            </li>
+                            @forelse ($l3->rekenings as $r)
+                                <li class="px-4 py-3.5">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="font-mono text-xs text-slate-500">{{ $r->kode_akun }}</p>
+                                            <p class="mt-0.5 truncate text-sm font-semibold text-slate-900">{{ $r->nama_akun }}</p>
+                                            <p class="mt-0.5 text-xs text-slate-600">{{ ucfirst($r->jenis_mutasi ?? '—') }} · Rp {{ number_format((float) $r->saldo, 0, ',', '.') }}</p>
+                                            <div class="mt-1">
+                                                @if ($r->tgl_nonaktif)
+                                                    <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Nonaktif</span>
+                                                @else
+                                                    <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Aktif</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-shrink-0 items-center gap-1">
+                                            @if ($r->tgl_nonaktif)
+                                                <form action="{{ route('tenant.tenant.coa.aktifkan', [$tenant, $r]) }}" method="POST" class="inline">
+                                                    @csrf @method('POST')
+                                                    <button class="inline-flex items-center rounded-md bg-emerald-100 p-1.5 text-emerald-700 hover:bg-emerald-200" title="Aktifkan">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <form action="{{ route('tenant.tenant.coa.nonaktifkan', [$tenant, $r]) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan rekening {{ $r->kode_akun }}?');">
+                                                    @csrf @method('POST')
+                                                    <button class="inline-flex items-center rounded-md bg-rose-100 p-1.5 text-rose-700 hover:bg-rose-200" title="Nonaktifkan">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/></svg>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </li>
+                            @empty
+                                <li class="px-4 py-1.5 text-xs italic text-slate-400">— belum ada rekening</li>
+                            @endforelse
+                        @empty
+                            <li class="px-4 py-1.5 text-xs italic text-slate-400">— belum ada akun</li>
+                        @endforelse
+                    @empty
+                        <li class="px-4 py-1.5 text-xs italic text-slate-400">— belum ada akun</li>
+                    @endforelse
                 @empty
-                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada rekening.</li>
+                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada Chart of Account.</li>
                 @endforelse
             </ul>
         </section>

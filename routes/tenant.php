@@ -20,7 +20,7 @@ use App\Http\Controllers\TahunAkademikController;
 use App\Http\Controllers\JenisPembayaranController;
 use App\Http\Controllers\RekeningController;
 use App\Http\Controllers\DaftarKelasController;
-use App\Http\Controllers\Tenant\School\HakAksesController;
+use App\Http\Controllers\Tenant\LandingAdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -205,9 +205,26 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
     Route::post('coa/{rekening}/nonaktifkan', [RekeningController::class, 'nonaktifkan'])->name('app.coa.nonaktifkan');
     Route::post('coa/{rekening}/aktifkan', [RekeningController::class, 'aktifkan'])->name('app.coa.aktifkan');
 
-    Route::get('/hak-akses', [HakAksesController::class, 'index'])->name('app.hak-akses');
-    Route::post('/hak-akses', [HakAksesController::class, 'store'])->name('app.hak-akses.store');
-    Route::put('/hak-akses/{user}', [HakAksesController::class, 'update'])->name('app.hak-akses.update');
+    // NOTE: Dinonaktifkan sementara. App\Http\Controllers\Tenant\School\HakAksesController
+    // belum ada sehingga route ini memicu ReflectionException (route:list gagal total).
+    // Pengelolaan hak akses tetap tersedia dari console pusat via HakAksesPusatController.
+    // Route::get('/hak-akses', [HakAksesController::class, 'index'])->name('app.hak-akses');
+    // Route::post('/hak-akses', [HakAksesController::class, 'store'])->name('app.hak-akses.store');
+    // Route::put('/hak-akses/{user}', [HakAksesController::class, 'update'])->name('app.hak-akses.update');
+
+    // Landing page: kelola konten website publik sekolah.
+    // Dibatasi hak_akses menu 'Landing Page' (lihat middleware hak.akses).
+    Route::prefix('landing')->name('app.landing.')->middleware('hak.akses:landing')->group(function () {
+        Route::get('/', [LandingAdminController::class, 'index'])->name('index');
+
+        Route::get('/pengaturan', [LandingAdminController::class, 'pengaturan'])->name('pengaturan');
+        Route::post('/pengaturan', [LandingAdminController::class, 'pengaturanStore'])->name('pengaturan.store');
+
+        Route::get('/hero', [LandingAdminController::class, 'hero'])->name('hero');
+        Route::post('/hero', [LandingAdminController::class, 'heroStore'])->name('hero.store');
+        Route::put('/hero/{slide}', [LandingAdminController::class, 'heroUpdate'])->name('hero.update');
+        Route::delete('/hero/{slide}', [LandingAdminController::class, 'heroDestroy'])->name('hero.destroy');
+    });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

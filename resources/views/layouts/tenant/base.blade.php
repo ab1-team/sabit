@@ -1,6 +1,8 @@
 @php
     use App\Utils\Tanggal;
-    $jatuhTempo = session('profil')->jatuh_tempo ?? null;
+    $jatuhTempo = optional(session('profil'))->jatuh_tempo ?? null;
+    $appName = $appName ?? \App\Models\Profil::namaLembaga();
+    $appLogoUrl = $appLogoUrl ?? \App\Models\Profil::logoUrl();
 @endphp
 
 <!DOCTYPE html>

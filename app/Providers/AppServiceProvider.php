@@ -22,7 +22,21 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         DatabaseConfig::generateDatabaseNamesUsing(function (TenantWithDatabase $tenant) {
-            return config('tenancy.database.prefix');
+            // Nama DB tenant SELALU dibaca dari kolom `tenancy_db_name` di tabel tenants.
+            // Kalau kosong, fallback ke prefix + tenant_id.
+            $explicit = $tenant->getAttribute('tenancy_db_name');
+            if (! empty($explicit)) {
+                return $explicit;
+            }
+
+            $internal = $tenant->getInternal('db_name');
+            if (! empty($internal)) {
+                return $internal;
+            }
+
+            return config('tenancy.database.prefix')
+                . $tenant->getTenantKey()
+                . config('tenancy.database.suffix', '');
         });
 
         // View composer: jalan setiap kali view 'layouts.tenant.base' di-render,

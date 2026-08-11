@@ -114,9 +114,7 @@ class HakAksesPusatController extends Controller
             $user->email = $data['email'] ?? null;
             $user->password = Hash::make($data['password']);
             $user->telepon = $data['telepon'] ?? null;
-            $user->hak_akses = is_array($data['hak_akses'] ?? null)
-                ? array_values(array_unique(array_map('intval', $data['hak_akses'])))
-                : [];
+            $user->hak_akses = $this->normalizeMenuIds($data['hak_akses'] ?? []);
             $user->save();
 
             return response()->json([
@@ -130,7 +128,7 @@ class HakAksesPusatController extends Controller
         });
     }
 
-    public function updateUser(Request $request, Tenant $tenant, User $user)
+    public function updateUser(Request $request, Tenant $tenant, $userId)
     {
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:120'],
@@ -138,7 +136,11 @@ class HakAksesPusatController extends Controller
             'telepon' => ['nullable', 'string', 'max:30'],
         ]);
 
-        return $this->runInTenant($tenant, function () use ($data, $user) {
+        return $this->runInTenant($tenant, function () use ($data, $userId) {
+            $user = User::find($userId);
+            if (!$user) {
+                return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
+            }
             $user->nama = $data['nama'];
             $user->email = $data['email'] ?? null;
             $user->telepon = $data['telepon'] ?? null;
@@ -148,21 +150,65 @@ class HakAksesPusatController extends Controller
         });
     }
 
-    public function updateHakAkses(Request $request, Tenant $tenant, User $user)
+    public function updateHakAkses(Request $request, Tenant $tenant, $userId)
     {
-        $menuIds = array_map('intval', (array) $request->input('menu_ids', []));
+        $raw = $request->input('menu_ids', []);
+        $menuIds = $this->normalizeMenuIds($raw);
 
-        return $this->runInTenant($tenant, function () use ($menuIds, $user) {
-            $user->hak_akses = array_values(array_unique($menuIds));
+        return $this->runInTenant($tenant, function () use ($menuIds, $userId) {
+            $user = User::find($userId);
+            if (!$user) {
+                return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
+            }
+            $user->hak_akses = $menuIds;
             $user->save();
 
             return response()->json(['ok' => true, 'count' => count($user->hak_akses)]);
         });
     }
 
-    public function destroyUser(Tenant $tenant, User $user)
+    /**
+     * Normalisasi input menu_ids ke array<int> yang bersih.
+     * Terima: [1,2], ["1","2"], "1,2", atau nilai gabungan.
+     */
+    private function normalizeMenuIds($raw): array
     {
-        return $this->runInTenant($tenant, function () use ($user) {
+        if (is_string($raw)) {
+            $raw = preg_split('/[,;|]/', $raw) ?: [];
+        }
+        $raw = (array) $raw;
+
+        $ids = [];
+        foreach ($raw as $v) {
+            if (is_array($v)) {
+                foreach ($v as $sub) {
+                    foreach (preg_split('/[,;|]/', (string) $sub) ?: [] as $piece) {
+                        $piece = trim($piece);
+                        if ($piece !== '' && is_numeric($piece)) {
+                            $ids[] = (int) $piece;
+                        }
+                    }
+                }
+            } else {
+                foreach (preg_split('/[,;|]/', (string) $v) ?: [] as $piece) {
+                    $piece = trim($piece);
+                    if ($piece !== '' && is_numeric($piece)) {
+                        $ids[] = (int) $piece;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    public function destroyUser(Tenant $tenant, $userId)
+    {
+        return $this->runInTenant($tenant, function () use ($userId) {
+            $user = User::find($userId);
+            if (!$user) {
+                return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
+            }
             if ($user->username === 'admin') {
                 return response()->json([
                     'ok' => false,
@@ -176,13 +222,17 @@ class HakAksesPusatController extends Controller
         });
     }
 
-    public function resetPassword(Request $request, Tenant $tenant, User $user)
+    public function resetPassword(Request $request, Tenant $tenant, $userId)
     {
         $data = $request->validate([
             'password' => ['required', 'string', 'min:6', 'max:60'],
         ]);
 
-        return $this->runInTenant($tenant, function () use ($data, $user) {
+        return $this->runInTenant($tenant, function () use ($data, $userId) {
+            $user = User::find($userId);
+            if (!$user) {
+                return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
+            }
             $user->password = Hash::make($data['password']);
             $user->save();
 
@@ -222,17 +272,28 @@ class HakAksesPusatController extends Controller
             'database' => $this->tenantDbName($tenant),
         ]));
 
-        // Purge cache connection agar setting database baru dipakai
         DB::purge($connName);
+
+        $prevDefault = Config::get('database.default');
         Config::set('database.default', $connName);
+
+        // Override global default connection resolver agar Eloquent model
+        // (termasuk User) otomatis pakai koneksi tenant selama callback.
+        $resolver = \Illuminate\Database\Eloquent\Model::getConnectionResolver();
+        \Illuminate\Database\Eloquent\Model::setConnectionResolver(new class($connName) implements \Illuminate\Database\ConnectionResolverInterface {
+            public function __construct(private string $conn) {}
+            public function connection($name = null) { return \DB::connection($this->conn); }
+            public function getDefaultConnection() { return $this->conn; }
+            public function setDefaultConnection($name) { /* no-op */ }
+        });
 
         try {
             $result = $callback();
 
-            // Reset model connection default ke central (aman untuk request lain)
             return $result;
         } finally {
-            Config::set('database.default', config('database.connections.central') ? 'central' : 'mysql');
+            \Illuminate\Database\Eloquent\Model::setConnectionResolver($resolver);
+            Config::set('database.default', $prevDefault);
             DB::purge($connName);
         }
     }

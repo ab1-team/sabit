@@ -1,5 +1,7 @@
 @php
-    $jatuhTempo = session('profil')->jatuh_tempo ?? null;
+    $appName = $appName ?? \App\Models\Profil::namaLembaga();
+    $appLogoUrl = $appLogoUrl ?? \App\Models\Profil::logoUrl();
+    $jatuhTempo = optional(session('profil'))->jatuh_tempo ?? null;
 @endphp
 
 <div class="container-fluid py-1 px-3">

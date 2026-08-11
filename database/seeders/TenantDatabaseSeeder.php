@@ -5,19 +5,12 @@ namespace Database\Seeders;
 use App\Models\AkunLevel1;
 use App\Models\AkunLevel2;
 use App\Models\AkunLevel3;
-use App\Models\JenisLaporan;
-use App\Models\JenisPembayaran;
-use App\Models\Kelas;
-use App\Models\Menu;
 use App\Models\Profil;
 use App\Models\Rekening;
-use App\Models\Ruangan;
-use App\Models\SubLaporan;
 use App\Models\Tahun_Akademik;
 use App\Models\Tanda_tangan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class TenantDatabaseSeeder extends Seeder
@@ -26,8 +19,10 @@ class TenantDatabaseSeeder extends Seeder
     {
         $tenant = tenant();
 
-        $namaSekolah = $tenant?->data['nama'] ?? 'Sekolah';
-        $emailAdmin  = $tenant?->data['email'] ?? null;
+        // Model Tenant memakai kolom DB nyata (nama_sekolah, email), bukan
+        // virtual column 'data', sehingga diakses langsung sebagai atribut.
+        $namaSekolah = $tenant?->nama_sekolah ?: 'Sekolah';
+        $emailAdmin  = $tenant?->email;
 
         // Profil sekolah (tenant)
         Profil::firstOrCreate(['nama' => $namaSekolah], [
@@ -54,54 +49,65 @@ class TenantDatabaseSeeder extends Seeder
             'status'     => 'aktif',
         ]);
 
-        // Default ruangan & kelas
-        $ruang = Ruangan::firstOrCreate(['nama_ruangan' => 'Ruang Kelas'], [
-            'kode_gedung'        => 'G1',
-            'kode_ruangan'       => 'R1',
-            'kapasitas_belajar'  => '36',
-            'kapasitas_ujian'    => '36',
-            'keterangan'         => 'Ruang Kelas',
-            'status'             => 'aktif',
-        ]);
-        Kelas::firstOrCreate(['nama_kelas' => 'X IPA 1'], [
-            'kode_kelas'     => 'X-IPA-1',
-            'tingkat'        => '10',
-            'kode_kurikulum' => 'K-IPA',
-        ]);
-
-        // Jenis pembayaran
-        JenisPembayaran::firstOrCreate(['nama' => 'SPP'], [
-            'kode_akun' => '4.1.01',
-            'jumlah'    => '0',
-        ]);
-        JenisPembayaran::firstOrCreate(['nama' => 'Ujian'], [
-            'kode_akun' => '4.1.02',
-            'jumlah'    => '0',
+        // Paket data master: ruangan, kelas, jurusan, jenis_transaksi, jenis_biaya,
+        // jenis_pembayaran, jenis_laporan, sub_laporan, jabatan.
+        $this->call([
+            RuanganSeeder::class,
+            KelasSeeder::class,
+            JurusanSeeder::class,
+            JenisTransaksiSeeder::class,
+            JenisPembayaranSeeder::class,
+            JenisBiayaSeeder::class,
+            JenisLaporanSeeder::class,
+            SubLaporansSeeder::class,
+            JabatanSeeder::class,
         ]);
 
-        // Jenis laporan + sub laporan
-        $jl = JenisLaporan::firstOrCreate(['nama' => 'Bulanan'], [
-            'file'  => 'bulanan',
-            'urut'  => 1,
-        ]);
-        SubLaporan::firstOrCreate(['id_lap' => $jl->id, 'nama_laporan' => 'Kas'], [
-            'file' => 'kas',
-            'urut' => 1,
+        // COA template lengkap: L1 (kategori), L2 (kelompok), L3 (subkelompok),
+        // dan rekening detail per L3 (Kas Tunai, Bank, Piutang SPP, dll).
+        $this->call([
+            AkunLevel1Seeder::class,
+            AkunLevel2Seeder::class,
+            AkunLevel3Seeder::class,
+            RekeningSeeder::class,
         ]);
 
-        // COA template
+        // Backfill rekening generik untuk setiap akun_level3 yang belum punya
+        // rekening sama sekali (parent_id = id L3). Kode rekening sama dengan
+        // kode_akun L3 agar mudah di-lookup.
+        $l3Rows = AkunLevel3::orderBy('id')->get();
+        foreach ($l3Rows as $l3) {
+            $hasAny = Rekening::where('parent_id', $l3->id)->exists();
+            if ($hasAny) {
+                continue;
+            }
+            Rekening::firstOrCreate(
+                ['kode_akun' => $l3->kode_akun],
+                [
+                    'parent_id'    => $l3->id,
+                    'lev1'         => $l3->lev1,
+                    'lev2'         => $l3->lev2,
+                    'lev3'         => $l3->lev3,
+                    'nama_akun'    => $l3->nama_akun,
+                    'jenis_mutasi' => $l3->jenis_mutasi,
+                    'saldo'        => 0,
+                ]
+            );
+        }
+
+        // Pastikan akun minimum (Kas & SPP) selalu ada, untuk kompatibilitas data lama.
         $l1Kas = AkunLevel1::firstOrCreate(['kode_akun' => '1.0.00.00'], ['nama_akun' => 'Aset', 'lev1' => 1]);
         $l1Pendapatan = AkunLevel1::firstOrCreate(['kode_akun' => '4.0.00.00'], ['nama_akun' => 'Pendapatan', 'lev1' => 4]);
         $l2Kas = AkunLevel2::firstOrCreate(['kode_akun' => '1.1.00.00'], [
             'nama_akun' => 'Kas & Bank', 'parent_id' => $l1Kas->id, 'lev1' => 1, 'lev2' => 1,
         ]);
-        $l3Kas = AkunLevel3::firstOrCreate(['kode_akun' => '1.1.01'], [
+        $l3Kas = AkunLevel3::firstOrCreate(['kode_akun' => '1.1.01.00'], [
             'nama_akun' => 'Kas', 'parent_id' => $l2Kas->id, 'lev1' => 1, 'lev2' => 1, 'lev3' => 1,
         ]);
         $l2Spp = AkunLevel2::firstOrCreate(['kode_akun' => '4.1.00.00'], [
             'nama_akun' => 'Pendapatan SPP', 'parent_id' => $l1Pendapatan->id, 'lev1' => 4, 'lev2' => 1,
         ]);
-        $l3Spp = AkunLevel3::firstOrCreate(['kode_akun' => '4.1.01'], [
+        $l3Spp = AkunLevel3::firstOrCreate(['kode_akun' => '4.1.01.00'], [
             'nama_akun' => 'SPP', 'parent_id' => $l2Spp->id, 'lev1' => 4, 'lev2' => 1, 'lev3' => 1,
         ]);
 
@@ -121,29 +127,75 @@ class TenantDatabaseSeeder extends Seeder
         ]);
 
         Tanda_tangan::firstOrCreate([], [
-            'tanda_tangan' => 'Tanda tangan Kepala Sekolah - ' . $namaSekolah,
+            'tanda_tangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+<tbody>
+<tr>
+<td style="width: 33.3333%;">&nbsp;</td>
+<td style="width: 33.3333%;">&nbsp;</td>
+<td style="width: 33.3333%; text-align: center;">' . $namaSekolah . ', {tanggal}</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td style="text-align: center;">Diperiksa Oleh</td>
+<td style="text-align: center;">Diketahui</td>
+<td style="text-align: center;">Dilaporkan</td>
+</tr>
+<tr>
+<td style="text-align: center;">
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</td>
+<td style="text-align: center;">&nbsp;</td>
+<td style="text-align: center;">&nbsp;</td>
+</tr>
+<tr>
+<td style="text-align: center;">..........rrr.....rrr.............</td>
+<td style="text-align: center;">...............................................</td>
+<td style="text-align: center;"><strong>......................................</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Badan Pengawas</strong></td>
+<td style="text-align: center;"><strong>Manager DBM</strong></td>
+<td style="text-align: center;"><strong>Bendahara</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">Disetujui Oleh</td>
+<td style="text-align: center;" colspan="2">&nbsp;</td>
+</tr>
+<tr>
+<td style="text-align: center;">
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</td>
+<td style="text-align: center;">&nbsp;</td>
+<td style="text-align: center;">&nbsp;</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>......................................</strong></td>
+<td style="text-align: center;" colspan="2">&nbsp;</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Direktur</strong></td>
+<td style="text-align: center;" colspan="2">&nbsp;</td>
+</tr>
+</tbody>
+</table>',
         ]);
 
-        // Jabatan default
-        DB::table('jabatan')->insertOrIgnore([
-            ['nama_jabatan' => 'Kepala Sekolah', 'kode_jabatan' => 'KS', 'created_at' => now(), 'updated_at' => now()],
-            ['nama_jabatan' => 'Bendahara',     'kode_jabatan' => 'BD', 'created_at' => now(), 'updated_at' => now()],
-            ['nama_jabatan' => 'Operator',      'kode_jabatan' => 'OP', 'created_at' => now(), 'updated_at' => now()],
+        // Menu default: panggil MenuSeeder + MenuStructureSeeder agar struktur
+        // menu + sub-menu lengkap (Pengaturan, Transaksi, Pelaporan, dll).
+        $this->call([
+            MenuSeeder::class,
+            MenuStructureSeeder::class,
         ]);
 
-        // Menu default
-        $menuItems = [
-            ['id' => 1, 'nama_menu' => 'Dashboard', 'route' => 'app.dashboard', 'icon' => 'dashboard', 'group' => 'Utama', 'urutan' => 1, 'status' => 'aktif'],
-            ['id' => 2, 'nama_menu' => 'Transaksi', 'route' => 'Transaksi.index', 'icon' => 'money', 'group' => 'Utama', 'urutan' => 2, 'status' => 'aktif'],
-            ['id' => 3, 'nama_menu' => 'Siswa', 'route' => 'siswa.index', 'icon' => 'students', 'group' => 'Akademik', 'urutan' => 3, 'status' => 'aktif'],
-            ['id' => 4, 'nama_menu' => 'Daftar Kelas', 'route' => 'daftar-kelas.index', 'icon' => 'class', 'group' => 'Akademik', 'urutan' => 4, 'status' => 'aktif'],
-            ['id' => 5, 'nama_menu' => 'Pengaturan', 'route' => 'pengaturan.index', 'icon' => 'settings', 'group' => 'Sistem', 'urutan' => 5, 'status' => 'aktif'],
-            ['id' => 6, 'nama_menu' => 'Laporan Keuangan', 'route' => 'laporan-keuangan.index', 'icon' => 'report', 'group' => 'Laporan', 'urutan' => 6, 'status' => 'aktif'],
-            ['id' => 7, 'nama_menu' => 'Hak Akses', 'route' => 'app.hak-akses', 'icon' => 'shield', 'group' => 'Sistem', 'urutan' => 7, 'status' => 'aktif'],
-        ];
-
-        foreach ($menuItems as $m) {
-            Menu::firstOrCreate(['id' => $m['id']], $m);
-        }
+        // Konten default landing page publik sekolah (lp_* tables) agar tenant
+        // baru langsung punya website tampil rapi, bukan halaman kosong.
+        $this->call([
+            LandingPageSeeder::class,
+        ]);
     }
 }

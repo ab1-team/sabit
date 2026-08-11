@@ -1,4 +1,7 @@
 @extends('layouts.tenant.base')
+@php
+    $appName = $appName ?? \App\Models\Profil::namaLembaga();
+@endphp
 @section('content')
     <div class="row">
         <div class="col-12">

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Events;
@@ -25,8 +24,7 @@ class TenancyServiceProvider extends ServiceProvider
             Events\CreatingTenant::class => [],
             Events\TenantCreated::class => [
                 JobPipeline::make([
-                    // CreateDatabase diskip karena DB tenant di-pre-create manual
-                    // Jobs\CreateDatabase::class,
+                    Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
                     Jobs\SeedDatabase::class,
 
@@ -101,7 +99,10 @@ class TenancyServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->bootEvents();
-        $this->mapRoutes();
+
+        // Route tenant didaftarkan di RouteServiceProvider::mapTenantRoutes().
+        // Provider ini boot setelah RouteServiceProvider memanggil $this->routes(),
+        // sehingga route yang didaftarkan di sini tidak akan masuk pipeline request.
 
         $this->makeTenancyMiddlewareHighestPriority();
     }
@@ -116,21 +117,6 @@ class TenancyServiceProvider extends ServiceProvider
 
                 Event::listen($event, $listener);
             }
-        }
-    }
-
-    protected function mapRoutes()
-    {
-        if (file_exists(base_path('routes/tenant.php'))) {
-            $tenancyMiddleware = [
-                'web',
-                Middleware\PreventAccessFromCentralDomains::class,
-                Middleware\InitializeTenancyByDomain::class,
-            ];
-
-            \Illuminate\Support\Facades\Route::middleware($tenancyMiddleware)
-                ->namespace(static::$controllerNamespace)
-                ->group(base_path('routes/tenant.php'));
         }
     }
 

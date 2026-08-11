@@ -52,11 +52,14 @@ class TenantContext
                 ->orderBy('id')
                 ->get()
                 ->map(function ($t) {
-                    $domain = optional($t->domains->first())->domain ?? '—';
+                    $admin = $t->domains->firstWhere('type', 'admin');
+                    $landing = $t->domains->firstWhere('type', 'landing');
+
                     return (object) [
-                        'id'     => (string) $t->id,
-                        'nama'   => $t->nama_sekolah ?? $t->id,
-                        'domain' => $domain,
+                        'id'      => (string) $t->id,
+                        'nama'    => $t->nama_sekolah ?? $t->id,
+                        'domain'  => $admin->domain ?? optional($t->domains->first())->domain ?? '—',
+                        'landing' => $landing->domain ?? null,
                     ];
                 })
                 ->all();

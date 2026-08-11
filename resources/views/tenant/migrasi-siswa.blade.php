@@ -65,9 +65,20 @@
                 </div>
             </div>
 
+            <div class="mt-5 flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+                <div>
+                    <p class="text-xs font-semibold text-slate-700">Belum punya formatnya?</p>
+                    <p class="text-[11px] text-slate-500">Download template Excel yang sudah berisi header + 1 baris contoh.</p>
+                </div>
+                <a href="{{ route('tenant.migrasi.siswa.template') }}" class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                    Download Template
+                </a>
+            </div>
+
             <div id="drop-zone" class="mt-5 cursor-pointer rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-indigo-400 hover:bg-indigo-50 transition">
                 <p class="text-sm font-semibold text-slate-700">Klik atau seret file Excel ke sini</p>
-                <p class="mt-1 text-xs text-slate-400">Format: .xlsx, .xls, .csv</p>
+                <p class="mt-1 text-xs text-slate-400">Format: .xlsx, .xls, .csv (maks 10 MB)</p>
                 <p id="file-name" class="mt-3 hidden text-xs font-semibold text-indigo-600"></p>
                 <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
             </div>
@@ -127,7 +138,7 @@
 
             btnImport.disabled = true;
 
-            fetch('{{ route('tenant.migrasi.siswa') }}', {
+            fetch('{{ route('tenant.migrasi.siswa.import') }}', {
                 method: 'POST',
                 body: formData,
                 headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
@@ -136,8 +147,22 @@
             .then(({ ok, data }) => {
                 btnImport.disabled = false;
                 if (ok && data.ok) {
-                    Swal.fire({ icon: 'success', title: 'Berhasil', text: data.message || 'File berhasil diupload.' });
-                    resetForm();
+                    let html = (data.message || 'File berhasil diupload.');
+                    if (data.failures && data.failures.length) {
+                        const list = data.failures.slice(0, 10).map(f =>
+                            `<li class="text-left text-xs">Baris ${f.row} (${f.nama || '-'}): ${(f.errors || []).join(', ')}</li>`
+                        ).join('');
+                        html += `<ul class="mt-2 list-disc pl-5">${list}${data.failures.length > 10 ? `<li class="text-left text-xs">...dan ${data.failures.length - 10} baris lainnya</li>` : ''}</ul>`;
+                    }
+                    Swal.fire({
+                        icon: data.summary && data.summary.failed > 0 ? 'warning' : 'success',
+                        title: data.summary && data.summary.failed > 0 ? 'Selesai dengan catatan' : 'Berhasil',
+                        html: html,
+                        width: 600,
+                    });
+                    if (!data.summary || data.summary.failed === 0) {
+                        resetForm();
+                    }
                 } else {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan.' });
                 }

@@ -140,15 +140,16 @@ $centralRoutes = function () {
 
         Route::get('/migrasi/siswa', [MigrasiSiswaController::class, 'index'])->name('tenant.migrasi.siswa');
         Route::get('/migrasi/siswa/template', [MigrasiSiswaController::class, 'template'])->name('tenant.migrasi.siswa.template');
+        Route::post('/migrasi/siswa/import', [MigrasiSiswaController::class, 'import'])->name('tenant.migrasi.siswa.import');
 
         // Hak Akses per Lokasi (pusat kelola hak akses semua tenant)
         Route::prefix('hak-akses')->name('tenant.hak-akses.')->group(function () {
             Route::get('/', [HakAksesPusatController::class, 'index'])->name('index');
             Route::post('/{tenant}/user', [HakAksesPusatController::class, 'storeUser'])->name('user.store');
-            Route::put('/{tenant}/user/{user}', [HakAksesPusatController::class, 'updateUser'])->name('user.update');
-            Route::put('/{tenant}/user/{user}/hak-akses', [HakAksesPusatController::class, 'updateHakAkses'])->name('hak-akses.update');
-            Route::delete('/{tenant}/user/{user}', [HakAksesPusatController::class, 'destroyUser'])->name('user.destroy');
-            Route::post('/{tenant}/user/{user}/reset-password', [HakAksesPusatController::class, 'resetPassword'])->name('user.reset-password');
+            Route::put('/{tenant}/user/{userId}', [HakAksesPusatController::class, 'updateUser'])->name('user.update');
+            Route::put('/{tenant}/user/{userId}/hak-akses', [HakAksesPusatController::class, 'updateHakAkses'])->name('hak-akses.update');
+            Route::delete('/{tenant}/user/{userId}', [HakAksesPusatController::class, 'destroyUser'])->name('user.destroy');
+            Route::post('/{tenant}/user/{userId}/reset-password', [HakAksesPusatController::class, 'resetPassword'])->name('user.reset-password');
         });
     });
 };

@@ -285,7 +285,7 @@
                 const name = this.dataset.name;
                 Swal.fire({
                     title: 'Hapus tenant ini?',
-                    text: 'Tenant ' + name + ' dan database tenant' + name + ' akan dihapus. Tindakan ini tidak dapat dibatalkan.',
+                    text: 'Tenant ' + name + ', database tenant' + name + ', dan folder storage akan dihapus. Tindakan ini tidak dapat dibatalkan.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Ya, hapus',
