@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Tenancy;
 
 $tenancy = app(Tenancy::class);
-$t = \App\Models\Tenant::find('sabit-demo');
+$t = \App\Models\Tenant::find('demo');
 $tenancy->initialize($t);
 
 $menus = DB::table('menu')->where('status', 'aktif')->orderBy('group')->orderBy('urutan')->get();

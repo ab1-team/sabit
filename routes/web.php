@@ -6,9 +6,15 @@ use App\Http\Controllers\Tenant\AuthController;
 use App\Http\Controllers\Tenant\CoaController;
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\HakAksesPusatController;
+use App\Http\Controllers\Tenant\LocaleController;
+use App\Http\Controllers\Tenant\JabatanPusatController;
 use App\Http\Controllers\Tenant\JenisPembayaranController;
+use App\Http\Controllers\Tenant\KelasPusatController;
+use App\Http\Controllers\Tenant\KurikulumPusatController;
+use App\Http\Controllers\Tenant\JurusanPusatController;
 use App\Http\Controllers\Tenant\MigrasiSiswaController;
 use App\Http\Controllers\Tenant\ProfilSekolahController;
+use App\Http\Controllers\Tenant\RuanganPusatController;
 use App\Http\Controllers\Tenant\TahunAkademikController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Tenant\TransaksiController;
@@ -92,11 +98,14 @@ $centralRoutes = function () {
     });
 
     Route::group(['middleware' => ['auth:tenant'], 'prefix' => ''], function () {
+        Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('tenant.locale.switch');
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
 
         // Tenant management (pusat mengelola sekolah)
         Route::get('/tenant', [TenantController::class, 'index'])->name('tenant.tenant.index');
         Route::post('/tenant', [TenantController::class, 'store'])->name('tenant.tenant.store');
+        Route::get('/tenant/{tenant}', [TenantController::class, 'show'])->name('tenant.tenant.show');
         Route::put('/tenant/{tenant}', [TenantController::class, 'update'])->name('tenant.tenant.update');
         Route::delete('/tenant/{tenant}', [TenantController::class, 'destroy'])->name('tenant.tenant.destroy');
 
@@ -125,6 +134,32 @@ $centralRoutes = function () {
             Route::get('coa', [CoaController::class, 'index'])->name('coa.index');
             Route::post('coa/{rekening}/nonaktifkan', [CoaController::class, 'nonaktifkan'])->name('coa.nonaktifkan');
             Route::post('coa/{rekening}/aktifkan', [CoaController::class, 'aktifkan'])->name('coa.aktifkan');
+
+            // Master data akademik + referensi (pusat)
+            Route::get('jabatan', [JabatanPusatController::class, 'index'])->name('jabatan.index');
+            Route::post('jabatan', [JabatanPusatController::class, 'store'])->name('jabatan.store');
+            Route::put('jabatan/{jabatan}', [JabatanPusatController::class, 'update'])->name('jabatan.update');
+            Route::delete('jabatan/{jabatan}', [JabatanPusatController::class, 'destroy'])->name('jabatan.destroy');
+
+            Route::get('kurikulum', [KurikulumPusatController::class, 'index'])->name('kurikulum.index');
+            Route::post('kurikulum', [KurikulumPusatController::class, 'store'])->name('kurikulum.store');
+            Route::put('kurikulum/{kurikulum}', [KurikulumPusatController::class, 'update'])->name('kurikulum.update');
+            Route::delete('kurikulum/{kurikulum}', [KurikulumPusatController::class, 'destroy'])->name('kurikulum.destroy');
+
+            Route::get('jurusan', [JurusanPusatController::class, 'index'])->name('jurusan.index');
+            Route::post('jurusan', [JurusanPusatController::class, 'store'])->name('jurusan.store');
+            Route::put('jurusan/{jurusan}', [JurusanPusatController::class, 'update'])->name('jurusan.update');
+            Route::delete('jurusan/{jurusan}', [JurusanPusatController::class, 'destroy'])->name('jurusan.destroy');
+
+            Route::get('kelas', [KelasPusatController::class, 'index'])->name('kelas.index');
+            Route::post('kelas', [KelasPusatController::class, 'store'])->name('kelas.store');
+            Route::put('kelas/{kelas}', [KelasPusatController::class, 'update'])->name('kelas.update');
+            Route::delete('kelas/{kelas}', [KelasPusatController::class, 'destroy'])->name('kelas.destroy');
+
+            Route::get('ruangan', [RuanganPusatController::class, 'index'])->name('ruangan.index');
+            Route::post('ruangan', [RuanganPusatController::class, 'store'])->name('ruangan.store');
+            Route::put('ruangan/{ruangan}', [RuanganPusatController::class, 'update'])->name('ruangan.update');
+            Route::delete('ruangan/{ruangan}', [RuanganPusatController::class, 'destroy'])->name('ruangan.destroy');
         });
 
         Route::get('/invoice/data', [TenantInvoiceController::class, 'data'])->name('tenant.invoice.data');

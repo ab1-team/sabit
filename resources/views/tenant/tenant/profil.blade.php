@@ -3,71 +3,68 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Sekolah — Tenant {{ env('APP_NAME') }}</title>
+    <title>Profil Sekolah — {{ env('APP_NAME') }}</title>
     <link rel="icon" type="image/png" href="{{ \App\Models\Profil::logoUrl() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html, body { font-family: 'Inter', system-ui, sans-serif; } body { background:#f8fafc; }</style>
+    @include('tenant.partials._fancy_inputs_head')
+    <style>
+        html, body { font-family: 'Inter', system-ui, sans-serif; }
+        body { -webkit-tap-highlight-color: transparent; background: #f8fafc; }
+        .invoice-input { width: 100%; min-height: 44px; border: 1px solid #cbd5e1; border-radius: .75rem; background: #fff; padding: .625rem .875rem; font-size: .875rem; color: #1e293b; transition: border-color .15s ease, box-shadow .15s ease; }
+        .invoice-input::placeholder { color: #94a3b8; }
+        .invoice-input:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
+        textarea.invoice-input { min-height: 96px; }
+    </style>
 </head>
 <body class="min-h-screen text-slate-800">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div class="min-w-0">
                 <p class="text-sm font-semibold text-indigo-600">Tenant Console</p>
                 <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Profil Sekolah</h2>
-                <p class="mt-1 text-sm text-slate-500">Identitas & kontak lembaga untuk tenant {{ $tenant->id }}.</p>
+                <p class="mt-1 text-sm text-slate-500">Identitas & kontak lembaga.</p>
             </div>
+            <a href="{{ route('tenant.tenant.index') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:w-auto">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Kembali ke data tenant
+            </a>
         </header>
 
         @include('tenant.partials.tenant_subnav', ['tenant' => $tenant, 'active' => 'profil'])
 
-        <form method="POST" action="{{ route('tenant.tenant.profil.update', $tenant) }}" class="mt-6 space-y-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
-            @csrf @method('PUT')
+        <form method="POST" action="{{ route('tenant.tenant.profil.update', $tenant) }}" class="mt-6 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            @csrf
+            @method('PUT')
+            @include('tenant.tenant._formulir_profil', ['profilItem' => $profil])
 
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Nama Sekolah</label>
-                    <input type="text" name="nama" value="{{ old('nama', $profil->nama ?? '') }}" required class="mt-1 block w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100">
-                    @error('nama') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $profil->email ?? '') }}" class="mt-1 block w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100">
-                    @error('email') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Telepon</label>
-                    <input type="text" name="telpon" value="{{ old('telpon', $profil->telpon ?? '') }}" class="mt-1 block w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100">
-                    @error('telpon') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Tanggal Jatuh Tempo (1-31)</label>
-                    <input type="number" name="jatuh_tempo" min="1" max="31" value="{{ old('jatuh_tempo', $profil->jatuh_tempo ?? 10) }}" class="mt-1 block w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100">
-                    @error('jatuh_tempo') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700">Alamat</label>
-                <textarea name="alamat" rows="3" class="mt-1 block w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100">{{ old('alamat', $profil->alamat ?? '') }}</textarea>
-                @error('alamat') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
-            </div>
-
-            <div class="flex items-center justify-end gap-2 pt-4">
-                <a href="{{ route('tenant.tenant.index') }}" class="inline-flex items-center rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">Batal</a>
-                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    Simpan
+            <div class="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+                <a href="{{ route('tenant.tenant.index') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">Batal</a>
+                <button type="submit" id="submit-profil" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span id="submit-label">Simpan</span>
                 </button>
             </div>
         </form>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const profilForm = document.querySelector('form[action*="profil"]');
+        if (profilForm) {
+            profilForm.addEventListener('submit', function () {
+                const btn = document.getElementById('submit-profil');
+                btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                document.getElementById('submit-label').textContent = 'Menyimpan…';
+            });
+        }
+    </script>
+
     @if (session('success'))
         <script>Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>
     @endif

@@ -4,11 +4,34 @@
 
 @php
     $hero = $slides->first();
-    $heroImage = $hero && $hero->image
-        ? Storage::disk('public')->url('landing/' . $hero->image)
-        : 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=80';
+
+    $heroTitle = $hero->title ?? 'Mendidik dengan Hati, Meraih Prestasi';
+    $heroSubtitle = $hero->subtitle ?? 'Membangun generasi yang berkarakter, cerdas, dan siap menghadapi tantangan masa depan melalui pembelajaran yang inspiratif dan bermakna.';
+    $heroButtonText = $hero->button_text ?? 'Daftar PPDB';
+    $heroButtonUrl = $hero->button_url ?? null;
+
+    if ($setting->hasThemeBackground()) {
+        $heroImage = $setting->heroBackgroundUrl();
+    } elseif ($hero && $hero->image) {
+        $heroImage = Storage::disk('public')->url('landing/' . $hero->image);
+    } else {
+        $heroImage = $setting->heroBackgroundUrl();
+    }
 
     $programs = $posts->take(3);
+
+    // CTA PPDB section data
+    $ppdbCta = $setting->ppdbCtaData();
+    $ppdbCtaActive = $ppdbCta['is_active'] ?? true;
+    $year = date('Y');
+    $nextYear = $year + 1;
+    $ppdbTitle = str_replace(['{{year}}'], [$year . '/' . $nextYear], $ppdbCta['title'] ?? '');
+    $ppdbParagraph = str_replace(['{{school}}'], $setting->school_name ?? 'sekolah kami', $ppdbCta['paragraph'] ?? '');
+    $ppdbPoints = $ppdbCta['points'] ?? [
+        'Pendaftaran online & mudah',
+        'Kuota terbatas per jenjang',
+        'Bantuan seleksi & verifikasi',
+    ];
 @endphp
 
 @section('content')
@@ -17,17 +40,17 @@
 <section class="lp-hero">
     <div class="lp-hero-bg" style="background-image:url('{{ $heroImage }}')"></div>
     <div class="container lp-hero-content">
-        <h1 class="lp-reveal" data-from="zoom">{{ $hero->title ?? 'Mendidik dengan Hati, Meraih Prestasi' }}</h1>
+        <h1 class="lp-reveal" data-from="zoom">{{ $heroTitle }}</h1>
         <p class="lead lp-reveal" data-delay="2">
-            {{ $hero->subtitle ?? 'Membangun generasi yang berkarakter, cerdas, dan siap menghadapi tantangan masa depan melalui pembelajaran yang inspiratif dan bermakna.' }}
+            {{ $heroSubtitle }}
         </p>
         <div class="lp-hero-actions lp-reveal" data-delay="3">
-            @if ($hero && $hero->button_url && $hero->button_url !== '#daftar')
-                <a href="{{ $hero->button_url }}" class="lp-btn-light">{{ $hero->button_text ?? 'Daftar PPDB' }} <i class="bi bi-arrow-right"></i></a>
+            @if ($heroButtonUrl && $heroButtonUrl !== '#daftar')
+                <a href="{{ $heroButtonUrl }}" class="lp-btn-light">{{ $heroButtonText }} <i class="bi bi-arrow-right"></i></a>
             @else
                 <a href="{{ route('landing.ppdb') }}" class="lp-btn-light">Daftar PPDB 2026/2027 <i class="bi bi-arrow-right"></i></a>
             @endif
-            <a href="{{ tenant()?->adminUrl() ?: '#' }}" class="lp-btn-outline-light">SabIT</a>
+            <a href="{{ tenant()?->adminUrl() ?: '#' }}" class="lp-btn-outline-light" target="_blank" rel="noopener noreferrer">SabIT</a>
         </div>
         <div class="lp-reveal mt-4 d-flex flex-wrap justify-content-center gap-2" data-delay="4">
             <span class="lp-badge"><i class="bi bi-patch-check-fill"></i> Terakreditasi A</span>
@@ -420,27 +443,41 @@
 @endif
 
 {{-- ===== CTA PPDB ===== --}}
+@if ($ppdbCtaActive)
 <section class="lp-section" id="daftar">
     <div class="container">
         <div class="lp-cta-strip lp-reveal" data-from="zoom">
             <div class="row align-items-center g-4">
-                <div class="col-lg-8">
-                    <h3>Penerimaan Peserta Didik Baru 2026/2027 Telah Dibuka!</h3>
-                    <p>Daftarkan putra-putri Anda sekarang dan jadilah bagian dari keluarga besar {{ $setting->school_name ?? 'sekolah kami' }}. Kuota terbatas untuk setiap jenjang.</p>
+                <div class="col-lg-7">
+                    <span class="lp-cta-eyebrow">
+                        <i class="bi bi-megaphone-fill"></i> PPDB {{ $year }}/{{ $nextYear }}
+                    </span>
+                    <h3>{{ $ppdbTitle }}</h3>
+                    <p>{{ $ppdbParagraph }}</p>
+                    <ul class="lp-cta-points">
+                        @foreach ($ppdbPoints as $point)
+                            <li><i class="bi bi-check2-circle"></i> {{ $point }}</li>
+                        @endforeach
+                    </ul>
                 </div>
-                <div class="col-lg-4 text-lg-end">
-                    <a href="{{ route('landing.kontak') }}" class="lp-cta-btn">
-                        <i class="bi bi-pencil-square"></i> Daftar Sekarang
-                    </a>
-                    <div class="mt-2">
-                        <a href="{{ route('landing.kontak') }}" class="lp-cta-btn-outline">
-                            <i class="bi bi-telephone"></i> Hubungi Kami
+                <div class="col-lg-5">
+                    <div class="lp-cta-actions">
+                        <a href="{{ $ppdbCta['button_primary_url'] ?: route('landing.ppdb') }}" class="lp-cta-btn">
+                            <span>{{ $ppdbCta['button_primary_text'] ?: 'Daftar Sekarang' }}</span>
+                            <i class="bi bi-arrow-right"></i>
                         </a>
+                        <a href="{{ $ppdbCta['button_secondary_url'] ?: route('landing.kontak') }}" class="lp-cta-btn-outline">
+                            <i class="bi bi-telephone"></i> {{ $ppdbCta['button_secondary_text'] ?: 'Hubungi Kami' }}
+                        </a>
+                        <div class="lp-cta-meta">
+                            <i class="bi bi-shield-check"></i> Gratis konsultasi sebelum daftar
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+@endif
 
 @endsection

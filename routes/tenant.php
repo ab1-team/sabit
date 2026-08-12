@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect('/app/dashboard');
+    return redirect()->route('login');
 })->name('tenant.home');
 
 Route::get('/login', [AuthController::class, 'index'])->name('login');
@@ -219,11 +219,106 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
 
         Route::get('/pengaturan', [LandingAdminController::class, 'pengaturan'])->name('pengaturan');
         Route::post('/pengaturan', [LandingAdminController::class, 'pengaturanStore'])->name('pengaturan.store');
+        Route::delete('/pengaturan/custom-background', [LandingAdminController::class, 'hapusCustomBackground'])->name('pengaturan.custom.destroy');
 
         Route::get('/hero', [LandingAdminController::class, 'hero'])->name('hero');
         Route::post('/hero', [LandingAdminController::class, 'heroStore'])->name('hero.store');
         Route::put('/hero/{slide}', [LandingAdminController::class, 'heroUpdate'])->name('hero.update');
         Route::delete('/hero/{slide}', [LandingAdminController::class, 'heroDestroy'])->name('hero.destroy');
+
+        Route::get('/posts', [LandingAdminController::class, 'posts'])->name('posts');
+        Route::get('/posts/create', [LandingAdminController::class, 'postCreate'])->name('posts.create');
+        Route::post('/posts', [LandingAdminController::class, 'postStore'])->name('posts.store');
+        Route::get('/posts/{post}/edit', [LandingAdminController::class, 'postEdit'])->name('posts.edit');
+        Route::put('/posts/{post}', [LandingAdminController::class, 'postUpdate'])->name('posts.update');
+        Route::delete('/posts/{post}', [LandingAdminController::class, 'postDestroy'])->name('posts.destroy');
+
+        Route::get('/announcements', [LandingAdminController::class, 'announcements'])->name('announcements');
+        Route::get('/announcements/create', [LandingAdminController::class, 'announcementCreate'])->name('announcements.create');
+        Route::post('/announcements', [LandingAdminController::class, 'announcementStore'])->name('announcements.store');
+        Route::get('/announcements/{announcement}/edit', [LandingAdminController::class, 'announcementEdit'])->name('announcements.edit');
+        Route::put('/announcements/{announcement}', [LandingAdminController::class, 'announcementUpdate'])->name('announcements.update');
+        Route::delete('/announcements/{announcement}', [LandingAdminController::class, 'announcementDestroy'])->name('announcements.destroy');
+
+        Route::get('/galleries', [LandingAdminController::class, 'galleries'])->name('galleries');
+        Route::get('/galleries/create', [LandingAdminController::class, 'galleryCreate'])->name('galleries.create');
+        Route::post('/galleries', [LandingAdminController::class, 'galleryStore'])->name('galleries.store');
+        Route::get('/galleries/{gallery}/edit', [LandingAdminController::class, 'galleryEdit'])->name('galleries.edit');
+        Route::put('/galleries/{gallery}', [LandingAdminController::class, 'galleryUpdate'])->name('galleries.update');
+        Route::delete('/galleries/{gallery}', [LandingAdminController::class, 'galleryDestroy'])->name('galleries.destroy');
+
+        Route::get('/videos', [LandingAdminController::class, 'videos'])->name('videos');
+        Route::get('/videos/create', [LandingAdminController::class, 'videoCreate'])->name('videos.create');
+        Route::post('/videos', [LandingAdminController::class, 'videoStore'])->name('videos.store');
+        Route::get('/videos/{video}/edit', [LandingAdminController::class, 'videoEdit'])->name('videos.edit');
+        Route::put('/videos/{video}', [LandingAdminController::class, 'videoUpdate'])->name('videos.update');
+        Route::delete('/videos/{video}', [LandingAdminController::class, 'videoDestroy'])->name('videos.destroy');
+
+        Route::get('/pages', [LandingAdminController::class, 'pages'])->name('pages');
+        Route::get('/pages/create', [LandingAdminController::class, 'pageCreate'])->name('pages.create');
+        Route::post('/pages', [LandingAdminController::class, 'pageStore'])->name('pages.store');
+        Route::get('/pages/{page}/edit', [LandingAdminController::class, 'pageEdit'])->name('pages.edit');
+        Route::put('/pages/{page}', [LandingAdminController::class, 'pageUpdate'])->name('pages.update');
+        Route::delete('/pages/{page}', [LandingAdminController::class, 'pageDestroy'])->name('pages.destroy');
+
+        Route::get('/events', [LandingAdminController::class, 'events'])->name('events');
+        Route::get('/events/create', [LandingAdminController::class, 'eventCreate'])->name('events.create');
+        Route::post('/events', [LandingAdminController::class, 'eventStore'])->name('events.store');
+        Route::get('/events/{event}/edit', [LandingAdminController::class, 'eventEdit'])->name('events.edit');
+        Route::put('/events/{event}', [LandingAdminController::class, 'eventUpdate'])->name('events.update');
+        Route::delete('/events/{event}', [LandingAdminController::class, 'eventDestroy'])->name('events.destroy');
+
+        Route::get('/struktur', [LandingAdminController::class, 'struktur'])->name('struktur');
+        Route::get('/struktur/create', [LandingAdminController::class, 'strukturCreate'])->name('struktur.create');
+        Route::post('/struktur', [LandingAdminController::class, 'strukturStore'])->name('struktur.store');
+        Route::get('/struktur/{item}/edit', [LandingAdminController::class, 'strukturEdit'])->name('struktur.edit');
+        Route::put('/struktur/{item}', [LandingAdminController::class, 'strukturUpdate'])->name('struktur.update');
+        Route::delete('/struktur/{item}', [LandingAdminController::class, 'strukturDestroy'])->name('struktur.destroy');
+
+        Route::get('/fasilitas', [LandingAdminController::class, 'fasilitas'])->name('fasilitas');
+        Route::get('/fasilitas/create', [LandingAdminController::class, 'fasilitasCreate'])->name('fasilitas.create');
+        Route::post('/fasilitas', [LandingAdminController::class, 'fasilitasStore'])->name('fasilitas.store');
+        Route::get('/fasilitas/{item}/edit', [LandingAdminController::class, 'fasilitasEdit'])->name('fasilitas.edit');
+        Route::put('/fasilitas/{item}', [LandingAdminController::class, 'fasilitasUpdate'])->name('fasilitas.update');
+        Route::delete('/fasilitas/{item}', [LandingAdminController::class, 'fasilitasDestroy'])->name('fasilitas.destroy');
+
+        Route::get('/profile-sections', [LandingAdminController::class, 'profileSections'])->name('profile-sections');
+        Route::get('/profile-sections/{item}/edit', [LandingAdminController::class, 'profileSectionEdit'])->name('profile-sections.edit');
+        Route::put('/profile-sections/{item}', [LandingAdminController::class, 'profileSectionUpdate'])->name('profile-sections.update');
+
+        Route::get('/ppdb-cta', [LandingAdminController::class, 'ppdbCta'])->name('ppdb-cta');
+        Route::post('/ppdb-cta', [LandingAdminController::class, 'ppdbCtaStore'])->name('ppdb-cta.store');
+
+        // Profil: sub-halaman Struktur & Fasilitas (di-link dari menu Profil).
+        Route::get('/struktur', [LandingAdminController::class, 'struktur'])->name('struktur');
+
+        Route::get('/fasilitas', [LandingAdminController::class, 'fasilitas'])->name('fasilitas');
+
+        // Kontak: pesan masuk form landing.
+        Route::get('/contact-messages', [LandingAdminController::class, 'contactMessages'])->name('contact-messages');
+        Route::post('/contact-messages/{message}/mark', [LandingAdminController::class, 'contactMessageMark'])->name('contact-messages.mark');
+        Route::delete('/contact-messages/{message}', [LandingAdminController::class, 'contactMessageDestroy'])->name('contact-messages.destroy');
+
+        // PPDB: sub-CRUD (persyaratan, tahapan, jadwal, FAQ).
+        Route::get('/ppdb/requirements', [LandingAdminController::class, 'ppdbRequirements'])->name('ppdb.requirements');
+        Route::post('/ppdb/requirements', [LandingAdminController::class, 'ppdbRequirementStore'])->name('ppdb.requirements.store');
+        Route::put('/ppdb/requirements/{item}', [LandingAdminController::class, 'ppdbRequirementUpdate'])->name('ppdb.requirements.update');
+        Route::delete('/ppdb/requirements/{item}', [LandingAdminController::class, 'ppdbRequirementDestroy'])->name('ppdb.requirements.destroy');
+
+        Route::get('/ppdb/stages', [LandingAdminController::class, 'ppdbStages'])->name('ppdb.stages');
+        Route::post('/ppdb/stages', [LandingAdminController::class, 'ppdbStageStore'])->name('ppdb.stages.store');
+        Route::put('/ppdb/stages/{item}', [LandingAdminController::class, 'ppdbStageUpdate'])->name('ppdb.stages.update');
+        Route::delete('/ppdb/stages/{item}', [LandingAdminController::class, 'ppdbStageDestroy'])->name('ppdb.stages.destroy');
+
+        Route::get('/ppdb/schedules', [LandingAdminController::class, 'ppdbSchedules'])->name('ppdb.schedules');
+        Route::post('/ppdb/schedules', [LandingAdminController::class, 'ppdbScheduleStore'])->name('ppdb.schedules.store');
+        Route::put('/ppdb/schedules/{item}', [LandingAdminController::class, 'ppdbScheduleUpdate'])->name('ppdb.schedules.update');
+        Route::delete('/ppdb/schedules/{item}', [LandingAdminController::class, 'ppdbScheduleDestroy'])->name('ppdb.schedules.destroy');
+
+        Route::get('/ppdb/faqs', [LandingAdminController::class, 'ppdbFaqs'])->name('ppdb.faqs');
+        Route::post('/ppdb/faqs', [LandingAdminController::class, 'ppdbFaqStore'])->name('ppdb.faqs.store');
+        Route::put('/ppdb/faqs/{item}', [LandingAdminController::class, 'ppdbFaqUpdate'])->name('ppdb.faqs.update');
+        Route::delete('/ppdb/faqs/{item}', [LandingAdminController::class, 'ppdbFaqDestroy'])->name('ppdb.faqs.destroy');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

@@ -6,7 +6,7 @@ use App\Http\Controllers\Tenant\BaseSchoolController;
 
 use App\Models\TahunAkademik;
 use Illuminate\Http\Request;
-use Stancl\Tenancy\Database\Models\Tenant;
+use App\Models\Tenant;
 
 class TahunAkademikController extends BaseSchoolController
 {
@@ -57,7 +57,7 @@ class TahunAkademikController extends BaseSchoolController
             }
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
-                ->with('success', "Tahun akademik diperbarui");
+                ->with('success', "Tahun akademik {$TahunAkademik->nama_tahun} diperbarui");
         });
     }
 

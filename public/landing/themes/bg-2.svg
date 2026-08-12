@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+        <linearGradient id="bg2-green" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#10b981"/>
+            <stop offset="50%" stop-color="#047857"/>
+            <stop offset="100%" stop-color="#064e3b"/>
+        </linearGradient>
+        <radialGradient id="bg2-light" cx="80%" cy="20%" r="55%">
+            <stop offset="0%" stop-color="#a7f3d0" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#064e3b" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="bg2-light2" cx="15%" cy="85%" r="50%">
+            <stop offset="0%" stop-color="#34d399" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#064e3b" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+
+    <rect width="1600" height="900" fill="url(#bg2-green)"/>
+    <rect width="1600" height="900" fill="url(#bg2-light)"/>
+    <rect width="1600" height="900" fill="url(#bg2-light2)"/>
+
+    <g opacity="0.18" fill="#ffffff">
+        <polygon points="180,180 280,250 180,320 80,250"/>
+        <polygon points="1400,560 1500,630 1400,700 1300,630"/>
+        <polygon points="900,120 980,170 900,220 820,170"/>
+    </g>
+
+    <g opacity="0.14" fill="#ffffff">
+        <circle cx="380" cy="380" r="22"/>
+        <circle cx="420" cy="420" r="14"/>
+        <circle cx="1200" cy="780" r="18"/>
+        <circle cx="1240" cy="820" r="12"/>
+        <circle cx="200" cy="700" r="16"/>
+    </g>
+
+    <g opacity="0.35" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5">
+        <path d="M 0 820 L 1600 760"/>
+        <path d="M 0 860 L 1600 800"/>
+    </g>
+
+    <g opacity="0.10" fill="#ffffff">
+        <circle cx="1100" cy="320" r="180"/>
+        <circle cx="1100" cy="320" r="120"/>
+        <circle cx="1100" cy="320" r="60"/>
+    </g>
+</svg>

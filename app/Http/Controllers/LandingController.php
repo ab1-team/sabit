@@ -68,11 +68,22 @@ class LandingController extends Controller
             ->get()
             ->keyBy('slug');
 
+        $strukturItems = \App\Models\Landing\LpStrukturOrganisasi::published()->ordered()->get();
+        $fasilitasItems = \App\Models\Landing\LpFasilitas::published()->ordered()->get();
+        $overviewSection = \App\Models\Landing\LpProfileSection::getByKey('overview');
+        $sejarahSection = \App\Models\Landing\LpProfileSection::getByKey('sejarah');
+        $akreditasiSection = \App\Models\Landing\LpProfileSection::getByKey('akreditasi');
+
         return view('landing.profil', [
             'setting' => LpSetting::current(),
             'menus' => $this->menus(),
             'pageVisiMisi' => $pages->get('visi-dan-misi'),
             'pageStruktur' => $pages->get('struktur-organisasi'),
+            'strukturItems' => $strukturItems,
+            'fasilitasItems' => $fasilitasItems,
+            'overviewSection' => $overviewSection,
+            'sejarahSection' => $sejarahSection,
+            'akreditasiSection' => $akreditasiSection,
         ]);
     }
 

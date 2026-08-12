@@ -28,7 +28,7 @@ class ProfilController extends Controller
         $data = $request->only([
             'nama',
             'nik',
-            'jabatan',
+            'id_jabatan',
             'email',
             'jenis_kelamin',
             'telepon',
@@ -39,7 +39,7 @@ class ProfilController extends Controller
         $rules = [
             'nama' => 'required',
             'email' => 'required|email',
-            'jabatan' => 'nullable|exists:jabatan,id',
+            'id_jabatan' => 'nullable|exists:jabatan,id',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'password' => 'nullable|confirmed',
         ];

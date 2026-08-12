@@ -17,7 +17,7 @@ class KelasController extends Controller
             return DataTables::eloquent($data)
                 ->addIndexColumn()
                 ->addColumn('nama_kurikulum', function ($row) {
-                    return $row->kurikulumResolve?->nama_kurikulum ?? '-';
+                    return $row->resolved_kurikulum?->nama_kurikulum ?? '-';
                 })
                 ->addColumn('action', function ($row) {
                     return '

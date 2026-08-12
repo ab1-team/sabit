@@ -7,7 +7,7 @@
     /* ====== Hero strip ====== */
     .lp-ppdb-hero {
         position: relative;
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(6, 182, 212, 0.88));
+        background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.92), rgba(6, 182, 212, 0.88));
         color: #fff;
         padding: 5rem 0 4.5rem;
         overflow: hidden;
@@ -78,13 +78,13 @@
         text-decoration: none;
     }
     .lp-ppdb-side a:hover {
-        background: rgba(79, 70, 229, 0.06);
+        background: rgba(var(--lp-primary-rgb), 0.06);
         color: var(--lp-primary);
     }
     .lp-ppdb-side a.active {
         background: var(--lp-primary);
         color: #fff;
-        box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
+        box-shadow: 0 6px 18px rgba(var(--lp-primary-rgb), 0.25);
     }
     .lp-ppdb-side a i { font-size: 1rem; }
 
@@ -141,7 +141,7 @@
         justify-content: center;
         font-weight: 800;
         font-size: 1rem;
-        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 6px 16px rgba(var(--lp-primary-rgb), 0.3);
     }
     .lp-ppdb-step h6 {
         font-weight: 700;
@@ -172,12 +172,12 @@
         border-bottom: 1px solid rgba(15, 23, 42, 0.05);
     }
     .lp-ppdb-table th {
-        background: rgba(79, 70, 229, 0.05);
+        background: rgba(var(--lp-primary-rgb), 0.05);
         font-weight: 700;
         color: var(--lp-text);
     }
     .lp-ppdb-table tbody tr:last-child td { border-bottom: 0; }
-    .lp-ppdb-table tbody tr:hover { background: rgba(79, 70, 229, 0.03); }
+    .lp-ppdb-table tbody tr:hover { background: rgba(var(--lp-primary-rgb), 0.03); }
 
     /* ====== FAQ ====== */
     .lp-faq-item {
@@ -189,8 +189,8 @@
         transition: box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .lp-faq-item.is-open {
-        border-color: rgba(79, 70, 229, 0.25);
-        box-shadow: 0 6px 18px rgba(79, 70, 229, 0.08);
+        border-color: rgba(var(--lp-primary-rgb), 0.25);
+        box-shadow: 0 6px 18px rgba(var(--lp-primary-rgb), 0.08);
     }
     .lp-faq-q {
         width: 100%;
@@ -218,19 +218,41 @@
     }
     .lp-faq-item.is-open .lp-faq-a { display: block; }
 
-    /* Jarak tombol CTA di strip bawah agar tidak mepet ke tepi card. */
-    .lp-ppdb-cta-cell {
-        padding-right: 0.5rem;
+    /* CTA bawah di halaman PPDB: versi kompak dari strip CTA home,
+       dengan padding lebih kecil agar proporsional di dalam card FAQ. */
+    .lp-ppdb-cta {
+        padding: 2rem 2rem !important;
+        border-radius: 22px !important;
     }
-    .lp-ppdb-cta-cell .lp-cta-btn {
-        margin-right: 1.5rem;
+    .lp-ppdb-cta h3 {
+        font-size: clamp(1.2rem, 2vw, 1.5rem) !important;
+        line-height: 1.25;
+    }
+    .lp-ppdb-cta p {
+        font-size: .95rem;
+        opacity: .92;
+        max-width: 520px;
+    }
+    .lp-ppdb-cta-actions {
+        max-width: 280px;
+    }
+    .lp-ppdb-cta-actions .lp-cta-btn {
+        padding: .75rem 1.5rem;
+        font-size: .92rem;
+    }
+    .lp-ppdb-cta-actions .lp-cta-btn-outline {
+        padding: .7rem 1.4rem;
+        font-size: .88rem;
+    }
+    .lp-ppdb-cta-actions .lp-cta-meta {
+        font-size: .72rem;
+    }
+    @media (max-width: 991.98px) {
+        .lp-ppdb-cta-actions { margin: 0 auto; }
     }
     @media (max-width: 767.98px) {
-        .lp-ppdb-cta-cell {
-            padding-right: 0;
-            text-align: center;
-        }
-        .lp-ppdb-cta-cell .lp-cta-btn { margin-right: 0; }
+        .lp-ppdb-cta { padding: 1.75rem 1.5rem !important; }
+        .lp-ppdb-cta-actions { max-width: 100%; }
     }
 </style>
 @endsection
@@ -387,18 +409,30 @@
                 </div>
 
                 {{-- CTA bawah --}}
-                <div class="lp-cta-strip mt-4 lp-reveal" data-from="zoom">
-                    <div class="row align-items-center g-3">
-                        <div class="col-md-8">
-                            <h3 class="mb-1" style="font-size:1.25rem;">Siap mendaftarkan putra/putri Anda?</h3>
-                            <p class="mb-0" style="font-size:0.95rem; opacity:.9;">
+                <div class="lp-cta-strip mt-4 lp-reveal lp-ppdb-cta" data-from="zoom">
+                    <div class="row align-items-center g-4">
+                        <div class="col-lg-7">
+                            <span class="lp-cta-eyebrow">
+                                <i class="bi bi-megaphone-fill"></i> PPDB {{ date('Y') }}/{{ date('Y') + 1 }}
+                            </span>
+                            <h3 class="mb-2">Siap mendaftarkan putra/putri Anda?</h3>
+                            <p class="mb-0">
                                 Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.
                             </p>
                         </div>
-                        <div class="col-md-4 text-md-end lp-ppdb-cta-cell">
-                            <a href="{{ $ppdb->cta_url ?: route('landing.kontak') }}" class="lp-cta-btn">
-                                <i class="bi bi-pencil-square"></i> Mulai Pendaftaran Online
-                            </a>
+                        <div class="col-lg-5">
+                            <div class="lp-cta-actions lp-ppdb-cta-actions">
+                                <a href="{{ $ppdb->cta_url ?: route('landing.kontak') }}" class="lp-cta-btn">
+                                    <span>Mulai Pendaftaran Online</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                                <a href="{{ route('landing.kontak') }}" class="lp-cta-btn-outline">
+                                    <i class="bi bi-telephone"></i> Hubungi Tim PPDB
+                                </a>
+                                <div class="lp-cta-meta">
+                                    <i class="bi bi-shield-check"></i> Konsultasi gratis sebelum mendaftar
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

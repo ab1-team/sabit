@@ -66,8 +66,9 @@ class LandingPageSeeder extends Seeder
             ['title' => 'Profil', 'url' => '/profil', 'sort_order' => 2],
             ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 3],
             ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 4],
-            ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 5],
-            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 6],
+            ['title' => 'Video', 'url' => '/video', 'sort_order' => 5],
+            ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 6],
+            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 7],
         ];
 
         foreach ($header as $item) {

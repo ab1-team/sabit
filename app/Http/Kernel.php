@@ -36,6 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \App\Http\Middleware\TenantContext::class,
+            \App\Http\Middleware\SetTenantLocale::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
@@ -62,6 +63,7 @@ class Kernel extends HttpKernel
         'domain.type' => \App\Http\Middleware\EnsureDomainType::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'hak.akses' => \App\Http\Middleware\EnsureHakAkses::class,
+        'tenant.locale' => \App\Http\Middleware\SetTenantLocale::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
         'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         'signed' => \App\Http\Middleware\ValidateSignature::class,

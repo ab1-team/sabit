@@ -26,7 +26,7 @@
     .lp-content blockquote {
         border-left: 4px solid var(--lp-primary);
         padding: 0.75rem 1.25rem;
-        background: rgba(79, 70, 229, 0.05);
+        background: rgba(var(--lp-primary-rgb), 0.05);
         border-radius: var(--lp-radius-sm);
         margin: 1.5rem 0;
         font-style: italic;
@@ -34,7 +34,7 @@
     .lp-tag-pill {
         display: inline-block;
         padding: 0.3rem 0.75rem;
-        background: rgba(79, 70, 229, 0.1);
+        background: rgba(var(--lp-primary-rgb), 0.1);
         color: var(--lp-primary);
         border-radius: 999px;
         font-size: 0.82rem;

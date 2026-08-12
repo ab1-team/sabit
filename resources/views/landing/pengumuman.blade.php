@@ -34,7 +34,7 @@
         border-radius: 50%;
         background: #fff;
         border: 3px solid var(--lp-primary);
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        box-shadow: 0 0 0 4px rgba(var(--lp-primary-rgb), 0.15);
     }
 </style>
 @endsection

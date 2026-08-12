@@ -17,7 +17,7 @@
         outline: none;
         border-color: var(--lp-primary);
         background: #fff;
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        box-shadow: 0 0 0 4px rgba(var(--lp-primary-rgb), 0.1);
     }
     .lp-form-label {
         font-weight: 500;
@@ -42,7 +42,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3));
         color: var(--lp-primary);
         flex-shrink: 0;
         font-size: 1rem;

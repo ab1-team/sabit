@@ -19,9 +19,10 @@
 
     <style>
         :root {
-            --lp-primary: #2563eb;
-            --lp-primary-dark: #1d4ed8;
-            --lp-primary-soft: #dbeafe;
+            --lp-primary: {{ $setting->activeThemeButtonColor() ?? '#2563eb' }};
+            --lp-primary-rgb: {{ $setting->themePrimaryRgb() ?? '37, 99, 235' }};
+            --lp-primary-dark: {{ $setting->themePrimaryDark() ?? '#1d4ed8' }};
+            --lp-primary-soft: {{ $setting->themePrimarySoft() ?? '#dbeafe' }};
             --lp-accent: #f59e0b;
             --lp-accent-soft: #fef3c7;
             --lp-accent-2: #06b6d4;
@@ -29,12 +30,12 @@
             --lp-green: #10b981;
             --lp-purple: #8b5cf6;
             --lp-bg: #f6f8fb;
-            --lp-text: #0f172a;
+            --lp-text: {{ $setting->activeThemeTextColor() ?? '#0f172a' }};
             --lp-muted: #64748b;
             --lp-card-bg: rgba(255, 255, 255, 0.7);
             --lp-card-border: rgba(255, 255, 255, 0.5);
             --lp-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
-            --lp-shadow-strong: 0 24px 60px -20px rgba(37, 99, 235, 0.25);
+            --lp-shadow-strong: 0 24px 60px -20px rgba(var(--lp-primary-rgb), 0.25);
             --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
             /* ===== Design tokens (standarisasi) ===== */
@@ -72,7 +73,7 @@
             background: linear-gradient(90deg, var(--lp-primary), var(--lp-accent-2));
             z-index: 9999;
             transition: width 0.08s linear;
-            box-shadow: 0 0 12px rgba(79, 70, 229, 0.6);
+            box-shadow: 0 0 12px rgba(var(--lp-primary-rgb), 0.6);
         }
 
         /* ============= Reveal on scroll (lightweight) ============= */
@@ -151,12 +152,12 @@
         .lp-navbar.is-page .lp-nav-link { color: #475569; }
         .lp-navbar.is-page .lp-nav-link:hover {
             color: var(--lp-primary);
-            background: rgba(79, 70, 229, 0.06);
+            background: rgba(var(--lp-primary-rgb), 0.06);
         }
         .lp-navbar.is-page .lp-nav-link.active {
             color: #fff;
             background: var(--lp-primary);
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 6px 18px rgba(var(--lp-primary-rgb), 0.35);
         }
         .lp-navbar.is-page .lp-cta {
             color: #fff;
@@ -213,12 +214,12 @@
         }
         .lp-navbar.is-scrolled .lp-nav-link:hover {
             color: var(--lp-primary);
-            background: rgba(79, 70, 229, 0.06);
+            background: rgba(var(--lp-primary-rgb), 0.06);
         }
         .lp-navbar.is-scrolled .lp-nav-link.active {
             color: #fff;
             background: var(--lp-primary);
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 6px 18px rgba(var(--lp-primary-rgb), 0.35);
         }
         .lp-nav-link .bi-chevron-down {
             font-size: 0.7rem;
@@ -261,12 +262,12 @@
             transition: background 0.2s ease, color 0.2s ease, transform 0.2s var(--lp-ease);
         }
         .lp-dropdown a:hover {
-            background: rgba(79, 70, 229, 0.08);
+            background: rgba(var(--lp-primary-rgb), 0.08);
             color: var(--lp-primary);
             transform: translateX(3px);
         }
         .lp-dropdown a.active {
-            background: rgba(79, 70, 229, 0.1);
+            background: rgba(var(--lp-primary-rgb), 0.1);
             color: var(--lp-primary);
             font-weight: 600;
         }
@@ -287,7 +288,7 @@
         .lp-cta:hover {
             color: #fff;
             transform: translateY(-2px);
-            box-shadow: 0 10px 24px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 10px 24px rgba(var(--lp-primary-rgb), 0.4);
         }
 
         .lp-nav-toggler {
@@ -303,7 +304,7 @@
             font-size: 1.25rem;
             transition: background 0.2s ease;
         }
-        .lp-nav-toggler:hover { background: rgba(79, 70, 229, 0.08); }
+        .lp-nav-toggler:hover { background: rgba(var(--lp-primary-rgb), 0.08); }
         .lp-nav-toggler:focus { box-shadow: none; }
 
         @media (max-width: 991.98px) {
@@ -319,7 +320,6 @@
                 backdrop-filter: blur(20px);
                 -webkit-backdrop-filter: blur(20px);
                 border-radius: 22px;
-                padding: 1rem;
                 gap: 0.25rem;
                 box-shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
                 max-height: 0;
@@ -339,7 +339,7 @@
                 position: static;
                 transform: none;
                 box-shadow: none;
-                background: rgba(79, 70, 229, 0.05);
+                background: rgba(var(--lp-primary-rgb), 0.05);
                 border-radius: 14px;
                 margin-top: 0.25rem;
                 opacity: 1;
@@ -487,10 +487,47 @@
         }
 
         /* ============= Sections ============= */
-        section.lp-section { padding: 5.5rem 0; position: relative; }
-        section.lp-section.lp-section-sm { padding: 4rem 0; }
-        section.lp-section + section.lp-section { padding-top: 5.5rem; }
+        section.lp-section { padding: 4rem 0; position: relative; }
+        section.lp-section.lp-section-sm { padding: 3rem 0; }
+        section.lp-section + section.lp-section { padding-top: 4rem; }
         .lp-bg-soft { background: #ffffff; }
+
+        /* ============= Section dividers ============= */
+        /* Pemisah halus antar-section: gradient line + diamond center.
+           Ditampilkan otomatis di antara section.lp-section pada halaman home.
+           Tidak menambah markup, tidak kaku, responsif. */
+        .lp-section + .lp-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: min(360px, 60%);
+            height: 18px;
+            background-image:
+                radial-gradient(circle at 50% 50%, var(--lp-primary) 0 3px, transparent 3px),
+                linear-gradient(90deg, transparent 0%, rgba(15,23,42,.08) 18%, rgba(15,23,42,.18) 50%, rgba(15,23,42,.08) 82%, transparent 100%);
+            background-repeat: no-repeat;
+            background-size: 7px 7px, 100% 1px;
+            background-position: center, center;
+            opacity: .85;
+            pointer-events: none;
+        }
+        .lp-section + .lp-section.lp-bg-soft::before,
+        .lp-bg-soft + .lp-section::before {
+            background-image:
+                radial-gradient(circle at 50% 50%, var(--lp-primary) 0 3px, transparent 3px),
+                linear-gradient(90deg, transparent 0%, rgba(37,99,235,.22) 18%, rgba(37,99,235,.45) 50%, rgba(37,99,235,.22) 82%, transparent 100%);
+        }
+        @media (max-width: 575.98px) {
+            .lp-section + .lp-section::before { width: 78%; height: 14px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .lp-section + .lp-section::before { opacity: .55; }
+        }
         .lp-section-title {
             font-weight: 800;
             font-size: clamp(1.65rem, 2.8vw, 2.1rem);
@@ -502,7 +539,7 @@
             display: inline-block;
             font-size: 0.8rem;
             font-weight: 700;
-            color: var(--lp-primary);
+            color: var(--lp-muted);
             text-transform: uppercase;
             letter-spacing: 0.12em;
             margin-bottom: 0.75rem;
@@ -562,7 +599,7 @@
             transition: transform 0.4s var(--lp-ease);
         }
         .lp-stat-card:hover .lp-stat-icon { transform: rotate(-8deg) scale(1.08); }
-        .lp-stat-icon.is-blue { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: var(--lp-primary); }
+        .lp-stat-icon.is-blue { background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3)); color: var(--lp-primary); }
         .lp-stat-icon.is-green { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #059669; }
         .lp-stat-icon.is-amber { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; }
         .lp-stat-value {
@@ -648,7 +685,7 @@
             transition: transform 0.4s var(--lp-ease);
         }
         .lp-feature-card:hover .lp-feature-icon { transform: scale(1.1) rotate(-5deg); }
-        .lp-feature-icon.is-blue { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: var(--lp-primary); }
+        .lp-feature-icon.is-blue { background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3)); color: var(--lp-primary); }
         .lp-feature-icon.is-green { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #059669; }
         .lp-feature-icon.is-amber { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; }
         .lp-feature-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.6rem; }
@@ -666,7 +703,7 @@
         }
         .lp-program-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 24px 48px -16px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 24px 48px -16px rgba(var(--lp-primary-rgb), 0.25);
         }
         .lp-program-card .lp-thumb {
             position: relative;
@@ -692,7 +729,7 @@
             display: inline-block;
             font-size: 0.72rem;
             font-weight: 700;
-            background: rgba(79, 70, 229, 0.1);
+            background: rgba(var(--lp-primary-rgb), 0.1);
             color: var(--lp-primary);
             padding: 0.3rem 0.7rem;
             border-radius: 6px;
@@ -719,7 +756,7 @@
             color: #fff;
             border-radius: 16px;
             padding: 0.75rem 0.5rem;
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 8px 20px rgba(var(--lp-primary-rgb), 0.25);
         }
         .lp-event-date .day {
             font-size: 1.6rem;
@@ -857,15 +894,18 @@
 
         /* ============= Utilities ============= */
         .lp-link-soft {
-            color: var(--lp-primary);
+            color: var(--lp-text);
             font-weight: 600;
             font-size: 0.9rem;
+            text-decoration: underline;
+            text-decoration-color: rgba(var(--lp-primary-rgb), 0.3);
+            text-underline-offset: 3px;
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
-            transition: gap 0.2s var(--lp-ease);
+            transition: gap 0.2s var(--lp-ease), color 0.2s ease;
         }
-        .lp-link-soft:hover { color: var(--lp-primary-dark); gap: 0.5rem; }
+        .lp-link-soft:hover { color: var(--lp-primary-dark); gap: 0.5rem; text-decoration-color: var(--lp-primary); }
 
         /* ============= Jenjang Pendidikan ============= */
         .lp-jenjang-card {
@@ -908,7 +948,7 @@
             transform: translateY(-6px) rotate(-6deg);
         }
         .lp-jenjang-card.tk .lp-jenjang-icon { background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: var(--lp-pink); }
-        .lp-jenjang-card.sd .lp-jenjang-icon { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: var(--lp-primary); }
+        .lp-jenjang-card.sd .lp-jenjang-icon { background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3)); color: var(--lp-primary); }
         .lp-jenjang-card.smp .lp-jenjang-icon { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: var(--lp-green); }
         .lp-jenjang-card.sma .lp-jenjang-icon { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: var(--lp-purple); }
         .lp-jenjang-age {
@@ -935,7 +975,7 @@
             padding: 3.5rem 2.5rem;
             color: #fff;
             overflow: hidden;
-            box-shadow: 0 30px 60px -20px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 30px 60px -20px rgba(var(--lp-primary-rgb), 0.4);
         }
         .lp-cta-strip::before {
             content: "";
@@ -1000,6 +1040,98 @@
             transform: translateY(-3px);
         }
 
+        /* Eyebrow kecil di atas judul — membuat CTA lebih terstruktur */
+        .lp-cta-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: .4rem .85rem;
+            border-radius: 999px;
+            margin-bottom: 1rem;
+        }
+        .lp-cta-eyebrow .bi { color: var(--lp-accent); }
+
+        /* Poin-poin singkat di bawah paragraf — memecah dinding teks panjang */
+        .lp-cta-points {
+            list-style: none;
+            padding: 0;
+            margin: 1.1rem 0 0;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .65rem 1rem;
+            max-width: 560px;
+        }
+        .lp-cta-points li {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: .88rem;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+        .lp-cta-points .bi {
+            color: var(--lp-accent);
+            font-size: 1.05rem;
+            flex: 0 0 auto;
+        }
+
+        /* Wrapper tombol: stack rapi dengan gap konsisten, center di mobile */
+        .lp-cta-actions {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: .65rem;
+            width: 100%;
+            max-width: 320px;
+            margin-left: auto;
+        }
+        .lp-cta-actions .lp-cta-btn,
+        .lp-cta-actions .lp-cta-btn-outline {
+            justify-content: center;
+            width: 100%;
+        }
+        .lp-cta-actions .lp-cta-btn {
+            gap: .65rem;
+            padding: .95rem 1.75rem;
+            font-size: 1rem;
+        }
+        .lp-cta-actions .lp-cta-btn .bi {
+            transition: transform .2s var(--lp-ease);
+        }
+        .lp-cta-actions .lp-cta-btn:hover .bi {
+            transform: translateX(4px);
+        }
+        .lp-cta-meta {
+            margin-top: .35rem;
+            text-align: center;
+            font-size: .78rem;
+            color: rgba(255, 255, 255, 0.85);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+        }
+        .lp-cta-meta .bi { color: var(--lp-accent); }
+
+        /* Responsive: tengah-tengah di tablet/mobile */
+        @media (max-width: 991.98px) {
+            .lp-cta-actions { margin: 0 auto; }
+            .lp-cta-points { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 100%; }
+        }
+        @media (max-width: 575.98px) {
+            .lp-cta-points { grid-template-columns: 1fr 1fr; }
+            .lp-cta-points li:nth-child(3) { grid-column: 1 / -1; }
+        }
+
         /* ============= Floating badge ============= */
         .lp-badge {
             display: inline-flex;
@@ -1018,7 +1150,8 @@
 
         /* ============= Responsive ============= */
         @media (max-width: 767.98px) {
-            section.lp-section { padding: 3.5rem 0; }
+            section.lp-section { padding: 2.75rem 0; }
+            section.lp-section + section.lp-section { padding-top: 2.75rem; }
             .lp-hero { min-height: 540px; }
             .lp-hero-content { padding: 7rem 0 4rem; }
             .lp-stat-card { padding: 1.25rem; }
@@ -1119,7 +1252,7 @@
                     <p class="mb-2"><i class="bi bi-envelope me-2" style="color:var(--lp-accent);"></i>{{ $setting->email }}</p>
                 @endif
                 @if ($setting->whatsapp)
-                    <p class="mb-0"><i class="bi bi-whatsapp me-2" style="color:var(--lp-accent);"></i>{{ $setting->whatsapp }}</p>
+                    <p class="mb-0"><i class="bi bi-whatsapp me-2" style="color:#22c55e;"></i>{{ $setting->whatsapp }}</p>
                 @endif
 
                 @if ($setting->facebook || $setting->instagram || $setting->youtube || $setting->tiktok)

@@ -19,7 +19,7 @@
             <div class="min-w-0">
                 <p class="text-sm font-semibold text-indigo-600">Tenant Console</p>
                 <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Bagan Akun (COA)</h2>
-                <p class="mt-1 text-sm text-slate-500">Daftar rekening untuk tenant {{ $tenant->id }}.</p>
+                <p class="mt-1 text-sm text-slate-500">Daftar rekening.</p>
             </div>
         </header>
 

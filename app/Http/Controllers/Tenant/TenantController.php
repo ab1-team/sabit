@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Tenant\BaseSchoolController;
 use App\Models\Domain;
 use App\Models\Tenant;
+use App\Models\TahunAkademik;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
-class TenantController extends Controller
+class TenantController extends BaseSchoolController
 {
     public function index(Request $request)
     {
@@ -87,6 +90,11 @@ class TenantController extends Controller
 
         return redirect()->route('tenant.tenant.index')
             ->with('success', "Tenant {$tenant->id} berhasil dibuat. Landing: {$landingDomain} | Admin: {$adminDomain}");
+    }
+
+    public function show(Tenant $tenant)
+    {
+        return redirect()->route('tenant.tenant.profil.index', $tenant);
     }
 
     public function update(Request $request, Tenant $tenant)

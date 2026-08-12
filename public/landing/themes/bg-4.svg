@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+        <linearGradient id="bg4-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a855f7"/>
+            <stop offset="50%" stop-color="#7e22ce"/>
+            <stop offset="100%" stop-color="#581c87"/>
+        </linearGradient>
+        <radialGradient id="bg4-pink" cx="80%" cy="25%" r="55%">
+            <stop offset="0%" stop-color="#f472b6" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#581c87" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="bg4-violet" cx="15%" cy="85%" r="55%">
+            <stop offset="0%" stop-color="#c084fc" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#581c87" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+
+    <rect width="1600" height="900" fill="url(#bg4-purple)"/>
+    <rect width="1600" height="900" fill="url(#bg4-pink)"/>
+    <rect width="1600" height="900" fill="url(#bg4-violet)"/>
+
+    <g opacity="0.22" fill="#ffffff">
+        <polygon points="1200,120 1340,140 1320,260 1180,240"/>
+        <polygon points="260,620 400,640 380,760 240,740"/>
+    </g>
+
+    <g opacity="0.18" fill="#ffffff">
+        <circle cx="380" cy="240" r="34"/>
+        <circle cx="430" cy="280" r="18"/>
+        <circle cx="1180" cy="700" r="40"/>
+        <circle cx="1240" cy="740" r="22"/>
+    </g>
+
+    <g opacity="0.10" fill="#ffffff">
+        <circle cx="1100" cy="300" r="180"/>
+        <circle cx="1100" cy="300" r="120"/>
+        <circle cx="1100" cy="300" r="60"/>
+    </g>
+
+    <g opacity="0.35" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5">
+        <path d="M 0 800 Q 400 720 800 780 T 1600 740"/>
+        <path d="M 0 850 Q 400 770 800 830 T 1600 790"/>
+    </g>
+
+    <g opacity="0.20" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1">
+        <line x1="100" y1="100" x2="200" y2="200"/>
+        <line x1="1500" y1="100" x2="1400" y2="200"/>
+        <line x1="100" y1="800" x2="200" y2="700"/>
+        <line x1="1500" y1="800" x2="1400" y2="700"/>
+    </g>
+</svg>

@@ -19,13 +19,13 @@
     .lp-album-pill:hover {
         transform: translateY(-2px);
         color: var(--lp-primary);
-        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.15);
+        box-shadow: 0 6px 16px rgba(var(--lp-primary-rgb), 0.15);
     }
     .lp-album-pill.active {
         background: linear-gradient(135deg, var(--lp-primary), var(--lp-accent-2));
         color: #fff;
         border-color: transparent;
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 8px 20px rgba(var(--lp-primary-rgb), 0.3);
     }
 </style>
 @endsection

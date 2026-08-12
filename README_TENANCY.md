@@ -115,6 +115,35 @@ Setelah tenant dibuat, klik tenant di daftar → halaman **Overview** (statistik
 - **Jenis Pembayaran** — CRUD master jenis pembayaran.
 - **COA** — lihat + aktifkan/nonaktifkan rekening.
 
+## Background Tema (Hero Landing)
+
+Administrator Landing dapat memilih gambar latar Hero section di halaman landing publik melalui **Pengaturan Landing Page → Background Tema**.
+
+- **4 default + 1 custom** (slot ke-5 untuk upload foto sekolah sendiri).
+- Asset default disimpan di `public/landing/themes/` sebagai SVG gradient (ringan & scalable):
+  - `bg-1.svg` — Biru Ceria (tenang & modern)
+  - `bg-2.svg` — Hijau Edukatif (segar & akademik)
+  - `bg-3.svg` — Emas Premium (prestisius)
+  - `bg-4.svg` — Ungu Kreatif (modern & kreatif)
+- **Prioritas tampilan di Hero**: setting background tema → fallback ke slide hero (`LpHeroSlide`) → fallback lagi ke default-1.
+- Penyimpanan pilihan: kolom `lp_settings.hero_background` (key `default-1`..`default-4` atau `custom:<namafile>`).
+- File custom upload disimpan di `storage/app/public/tenant/<id>/landing/` dan dilayani oleh `TenantStorageServiceProvider` di path `/storage/landing/<file>`.
+- Definisi & URL gambar: `App\Models\Landing\LpSetting::themeBackgroundDefaults()` dan `LpSetting::heroBackgroundUrl()`.
+
+### Custom Upload — Ketentuan & Aksi
+
+Slot ke-5 (custom) di `/app/landing/pengaturan` punya fitur:
+
+- **Validasi client + server**:
+  - Format: JPG / JPEG / PNG / WEBP.
+  - Ukuran file: maksimal **5 MB**.
+  - Dimensi minimum: **1200×600 piksel** (agar tidak pecah di Hero section lebar).
+- **Preview langsung** saat pilih file (sebelum simpan) — lewat `FileReader` di form pengaturan.
+- **Info metadata**: setelah upload tersimpan, card custom menampilkan nama file + ukuran (KB/MB).
+- **Tombol "Lihat Full"** — buka modal preview ukuran besar dengan latar gelap.
+- **Tombol "Hapus Custom"** — endpoint AJAX `DELETE /app/landing/pengaturan/custom-background` (`LandingAdminController@hapusCustomBackground`) untuk menghapus file custom + kembalikan ke `default-1`. Hanya tersedia bila admin pernah upload custom.
+- **Backend**: `LandingAdminController::pengaturanStore()` (simpan) + `hapusCustomBackground()` (hapus).
+
 ## Default Akun Setiap Tenant
 
 | Username     | Password   | Jabatan                  | Hak Akses (menu ID)                                           | Domain Login |

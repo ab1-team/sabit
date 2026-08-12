@@ -6,7 +6,7 @@ use App\Http\Controllers\Tenant\BaseSchoolController;
 
 use App\Models\Profil;
 use Illuminate\Http\Request;
-use Stancl\Tenancy\Database\Models\Tenant;
+use App\Models\Tenant;
 
 class ProfilSekolahController extends BaseSchoolController
 {

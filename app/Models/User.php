@@ -17,7 +17,7 @@ class User extends Authenticatable
     protected $fillable = [
         'nama',
         'nik',
-        'jabatan',
+        'id_jabatan',
         'jenis_kelamin',
         'telepon',
         'alamat',
@@ -47,5 +47,10 @@ class User extends Authenticatable
     public function profil()
     {
         return $this->hasOne(Profil::class);
+    }
+
+    public function jabatan()
+    {
+        return $this->belongsTo(Jabatan::class, 'id_jabatan');
     }
 }

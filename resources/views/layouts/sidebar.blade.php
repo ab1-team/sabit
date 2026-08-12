@@ -24,6 +24,26 @@
             ->where('status', 'aktif')
             ->pluck('id')->all());
 
+        // Pastikan parent dari child yang accessible ikut di-load, agar dropdown
+        // tetap muncul walau parent ID tidak tercantum di hak_akses user.
+        $childParentIds = DB::table('menu')
+            ->whereIn('id', array_unique($childIds))
+            ->whereNotNull('parent_id')
+            ->pluck('parent_id')
+            ->all();
+        $missingParents = array_diff(array_unique($childParentIds), $childExistingParents);
+        if (!empty($missingParents)) {
+            $parents = $parents->merge(DB::table('menu')
+                ->whereIn('id', $missingParents)
+                ->where('status', 'aktif')
+                ->get());
+        }
+        $childExistingParents = $parents->whereNull('parent_id')->pluck('id')->all();
+        $childIds = array_merge($childIds, DB::table('menu')
+            ->whereIn('parent_id', $childExistingParents)
+            ->where('status', 'aktif')
+            ->pluck('id')->all());
+
         $children = collect();
         if (!empty($childIds)) {
             $children = DB::table('menu')
@@ -42,6 +62,7 @@
     }
 
     $beranda = $menus->firstWhere('nama_menu', 'Beranda');
+    $berandaLayanan = $menus->firstWhere('nama_menu', 'Beranda Layanan');
 
     $currentPath = trim(request()->path(), '/');
     $isActive = function ($route) use ($currentPath) {
@@ -60,12 +81,17 @@
         'Master Data' => null,
         'Transaksi' => null,
         'Pelaporan' => null,
+        'landing' => 'submenu_landing',
     ];
 
     // Kelompokkan parent menu berdasarkan group. Parent akan di-render di
     // section group-nya; child yang menempel pada parent diambil via
     // $menus->where('parent_id', ...).
-    $parentsByGroup = $menus->whereNull('parent_id')->groupBy('group');
+    // Beranda & Beranda Layanan di-render terpisah di atas sebagai menu
+    // utama, jadi kecualikan dari pengelompokan group agar tidak double.
+    $parentsByGroup = $menus->whereNull('parent_id')
+        ->reject(fn ($m) => in_array($m->nama_menu, ['Beranda', 'Beranda Layanan'], true))
+        ->groupBy('group');
 @endphp
 
 <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main" style="height: calc(100vh - 120px); overflow-y: auto;">
@@ -75,6 +101,15 @@
                 <a class="nav-link {{ $isActive($beranda->route) ? 'active nav-active' : 'text-dark' }}" href="{{ $safeUrl($beranda->route) }}">
                     <span class="material-symbols-rounded opacity-5">{{ $beranda->icon }}</span>
                     <span class="nav-link-text ms-1">{{ $beranda->nama_menu }}</span>
+                </a>
+            </li>
+        @endif
+
+        @if($berandaLayanan)
+            <li class="nav-item">
+                <a class="nav-link {{ $isActive($berandaLayanan->route) ? 'active nav-active' : 'text-dark' }} py-2 my-1" href="{{ $safeUrl($berandaLayanan->route) }}">
+                    <span class="material-symbols-rounded opacity-5">{{ $berandaLayanan->icon }}</span>
+                    <span class="nav-link-text ms-1">{{ $berandaLayanan->nama_menu }}</span>
                 </a>
             </li>
         @endif

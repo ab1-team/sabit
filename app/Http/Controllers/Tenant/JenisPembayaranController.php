@@ -6,7 +6,7 @@ use App\Http\Controllers\Tenant\BaseSchoolController;
 
 use App\Models\JenisPembayaran;
 use Illuminate\Http\Request;
-use Stancl\Tenancy\Database\Models\Tenant;
+use App\Models\Tenant;
 
 class JenisPembayaranController extends BaseSchoolController
 {
@@ -30,6 +30,7 @@ class JenisPembayaranController extends BaseSchoolController
                 'kode_akun' => ['nullable', 'string', 'max:30'],
                 'jumlah'    => ['nullable', 'numeric', 'min:0'],
             ]);
+            $data['jumlah'] = $this->normalizeJumlah($data['jumlah'] ?? null);
 
             $item = JenisPembayaran::create($data);
 
@@ -46,12 +47,28 @@ class JenisPembayaranController extends BaseSchoolController
                 'kode_akun' => ['nullable', 'string', 'max:30'],
                 'jumlah'    => ['nullable', 'numeric', 'min:0'],
             ]);
+            $data['jumlah'] = $this->normalizeJumlah($data['jumlah'] ?? null);
 
             $jenis_pembayaran->update($data);
 
             return redirect()->route('tenant.tenant.jenis-pembayaran.index', $tenant)
-                ->with('success', "Jenis Pembayaran diperbarui");
+                ->with('success', "Jenis Pembayaran {$jenis_pembayaran->nama} diperbarui");
         });
+    }
+
+    /**
+     * Normalisasi nilai jumlah: terima "1.500.000" (dari maskMoney) atau
+     * "1500000" (native) dan kembalikan float.
+     */
+    protected function normalizeJumlah($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_string($value)) {
+            $value = str_replace(['.', ','], ['', '.'], $value);
+        }
+        return (float) $value;
     }
 
     public function destroy(Tenant $tenant, JenisPembayaran $jenis_pembayaran)

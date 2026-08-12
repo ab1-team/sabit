@@ -35,9 +35,18 @@ class HakAksesPusatController extends Controller
                         ->get();
 
                     $byId = $menus->keyBy('id');
+
+                    // Untuk tampilan hak-akses, tempatkan child selalu di bawah
+                    // parent-nya (abaikan group child jika parent ada). Group
+                    // child tetap dipakai pada logika middleware (lihat
+                    // EnsureHakAkses), sehingga opsi hak-akses tetap konsisten
+                    // dengan akses route yang sebenarnya.
                     $menus = $menus->map(function ($m) use ($byId) {
-                        if (is_null($m->group) && $m->parent_id && isset($byId[$m->parent_id])) {
-                            $m->group = $byId[$m->parent_id]->group;
+                        if ($m->parent_id && isset($byId[$m->parent_id])) {
+                            $parentGroup = $byId[$m->parent_id]->group;
+                            // Selalu pakai group parent untuk konsistensi UI,
+                            // termasuk jika parent tidak punya group (null).
+                            $m->group = $parentGroup;
                         }
 
                         return $m;
@@ -61,7 +70,7 @@ class HakAksesPusatController extends Controller
                                 'username' => $u->username,
                                 'email' => $u->email,
                                 'telepon' => $u->telepon,
-                                'jabatan' => $u->jabatan,
+                                'id_jabatan' => $u->id_jabatan,
                                 'hak_akses' => collect($u->hak_akses ?? [])->map(fn ($v) => (int) $v)->all(),
                             ];
                         })->all(),
@@ -315,7 +324,15 @@ class HakAksesPusatController extends Controller
                     $items = [];
                     foreach ($menus as $m) {
                         $parentId = $m->parent_id ? (int) $m->parent_id : null;
-                        $group = $m->group ?: ($parentId && isset($byId[$parentId]) ? $byId[$parentId]->group : null) ?: 'Lainnya';
+                        // Untuk konsistensi UI, group child mengikuti group parent
+                        // (sama dengan logika index()). Group asli child tetap
+                        // dipakai oleh middleware EnsureHakAkses.
+                        $group = null;
+                        if ($parentId && isset($byId[$parentId])) {
+                            $group = $byId[$parentId]->group;
+                        } else {
+                            $group = $m->group;
+                        }
                         $items[] = [
                             'id' => (int) $m->id,
                             'nama' => $m->nama_menu,

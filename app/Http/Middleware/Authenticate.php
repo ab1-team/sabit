@@ -9,9 +9,14 @@ class Authenticate extends Middleware
 {
     protected function redirectTo(Request $request): ?string
     {
-        if (! $request->expectsJson()) {
-            return '/login';
+        if ($request->routeIs('tenant.*') || $request->getHost() === config('tenancy.central_domains')[0] ?? false) {
+            return route('tenant.login');
         }
+
+        if (! $request->expectsJson()) {
+            return route('login');
+        }
+
         return null;
     }
 }

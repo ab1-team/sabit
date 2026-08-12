@@ -25,6 +25,7 @@ class AuthController extends Controller
 
         if (Auth::guard('tenant')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $request->session()->put('auth_portal', 'central');
             $request->session()->forget('central_tenant_id');
             return redirect()->intended(route('tenant.dashboard'));
         }
@@ -42,7 +43,8 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::guard('tenant')->logout();
-        $request->session()->invalidate();
+        $request->session()->forget('auth_portal');
+        $request->session()->regenerate();
         $request->session()->regenerateToken();
         return redirect()->route('tenant.login');
     }

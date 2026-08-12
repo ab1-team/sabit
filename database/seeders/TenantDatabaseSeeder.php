@@ -25,6 +25,14 @@ class TenantDatabaseSeeder extends Seeder
         $namaSekolah = $tenant?->nama_sekolah ?: 'Sekolah';
         $emailAdmin  = $tenant?->email;
 
+        // Menu default harus di-seed PALING AWAL agar kumpulan ID menu yang
+        // dipakai untuk hak_akses user di bawah sudah ter-populasi. Jika
+        // dipanggil setelah user dibuat, semua user akan dapat hak_akses = [].
+        $this->call([
+            MenuSeeder::class,
+            MenuStructureSeeder::class,
+        ]);
+
         // Profil sekolah (tenant)
         Profil::firstOrCreate(['nama' => $namaSekolah], [
             'alamat' => null,
@@ -57,7 +65,7 @@ class TenantDatabaseSeeder extends Seeder
             ['username' => 'admin'],
             [
                 'nama'      => 'Administrator',
-                'jabatan'   => 'Administrator',
+                'id_jabatan' => 3,
                 'email'     => $emailAdmin ?? 'admin@local.test',
                 'password'  => Hash::make('password'),
                 'hak_akses' => array_values($allMenuIds),
@@ -69,7 +77,7 @@ class TenantDatabaseSeeder extends Seeder
             ['username' => 'bendahara'],
             [
                 'nama'      => 'Bendahara',
-                'jabatan'   => 'Bendahara',
+                'id_jabatan' => 2,
                 'email'     => 'bendahara@local.test',
                 'password'  => Hash::make('password'),
                 'hak_akses' => $bendaharaMenuIds,
@@ -82,7 +90,7 @@ class TenantDatabaseSeeder extends Seeder
             ['username' => 'landing'],
             [
                 'nama'      => 'Administrator Landing',
-                'jabatan'   => 'Administrator Landing Page',
+                'id_jabatan' => 5,
                 'email'     => 'landing@local.test',
                 'password'  => Hash::make('password'),
                 'hak_akses' => array_values($landingMenuIds),
@@ -229,13 +237,6 @@ class TenantDatabaseSeeder extends Seeder
 </tr>
 </tbody>
 </table>',
-        ]);
-
-        // Menu default: panggil MenuSeeder + MenuStructureSeeder agar struktur
-        // menu + sub-menu lengkap (Pengaturan, Transaksi, Pelaporan, dll).
-        $this->call([
-            MenuSeeder::class,
-            MenuStructureSeeder::class,
         ]);
 
         // Konten default landing page publik sekolah (lp_* tables) agar tenant

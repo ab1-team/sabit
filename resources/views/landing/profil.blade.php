@@ -42,12 +42,12 @@
         height: 64px;
         margin: 0 auto 0.85rem;
         border-radius: 18px;
-        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3));
         display: inline-flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.18);
+        box-shadow: 0 8px 20px rgba(var(--lp-primary-rgb), 0.18);
     }
     .lp-side-logo img { width: 100%; height: 100%; object-fit: cover; }
     .lp-side-logo i { font-size: 1.75rem; color: var(--lp-primary); }
@@ -82,12 +82,12 @@
         transition: background 0.2s ease, color 0.2s ease;
     }
     .lp-side-link i { font-size: 1rem; color: #94a3b8; transition: color 0.2s ease; }
-    .lp-side-link:hover { background: rgba(79, 70, 229, 0.06); color: var(--lp-primary); }
+    .lp-side-link:hover { background: rgba(var(--lp-primary-rgb), 0.06); color: var(--lp-primary); }
     .lp-side-link:hover i { color: var(--lp-primary); }
     .lp-side-link.is-active {
         background: linear-gradient(135deg, var(--lp-primary), var(--lp-accent-2));
         color: #fff;
-        box-shadow: 0 8px 18px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 8px 18px rgba(var(--lp-primary-rgb), 0.3);
     }
     .lp-side-link.is-active i { color: #fff; }
 
@@ -96,7 +96,7 @@
         align-items: center;
         gap: 0.65rem;
         padding: 0.75rem 0.9rem;
-        background: rgba(79, 70, 229, 0.06);
+        background: rgba(var(--lp-primary-rgb), 0.06);
         color: var(--lp-primary);
         border-radius: 12px;
         font-weight: 600;
@@ -105,7 +105,7 @@
     }
     .lp-side-cta i { font-size: 1rem; }
     .lp-side-cta:hover {
-        background: rgba(79, 70, 229, 0.12);
+        background: rgba(var(--lp-primary-rgb), 0.12);
         color: var(--lp-primary);
         transform: translateY(-1px);
     }
@@ -128,7 +128,7 @@
         width: 180px;
         height: 180px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(79, 70, 229, 0.12), transparent 70%);
+        background: radial-gradient(circle, rgba(var(--lp-primary-rgb), 0.12), transparent 70%);
     }
     .lp-hero-card::after {
         content: "";
@@ -144,7 +144,7 @@
     .lp-hero-card h1 {
         font-size: clamp(1.4rem, 2.6vw, 1.85rem);
         font-weight: 800;
-        color: var(--lp-primary);
+        color: var(--lp-text);
         line-height: 1.2;
         margin-bottom: 0.85rem;
         letter-spacing: -0.02em;
@@ -185,7 +185,7 @@
         margin: 2.25rem 0 1rem;
         color: var(--lp-text);
     }
-    .lp-section-title-row i { font-size: 1.4rem; color: var(--lp-primary); }
+    .lp-section-title-row i { font-size: 1.4rem; color: var(--lp-muted); }
     .lp-section-title-row h2 {
         font-weight: 800;
         font-size: 1.35rem;
@@ -231,14 +231,14 @@
         font-size: 1.25rem;
         margin-bottom: 0.85rem;
     }
-    .lp-vm-card.is-visi .lp-vm-icon { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: var(--lp-primary); }
+    .lp-vm-card.is-visi .lp-vm-icon { background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3)); color: var(--lp-primary); }
     .lp-vm-card.is-misi  .lp-vm-icon { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; }
     .lp-vm-card h3 {
         font-weight: 800;
         font-size: 1.1rem;
         margin-bottom: 0.6rem;
     }
-    .lp-vm-card.is-visi h3 { color: var(--lp-primary); }
+    .lp-vm-card.is-visi h3 { color: var(--lp-text); }
     .lp-vm-card.is-misi  h3 { color: #d97706; }
     .lp-vm-text {
         color: #334155;
@@ -294,7 +294,7 @@
         height: 64px;
         margin: 0 auto 0.7rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -304,6 +304,12 @@
         font-weight: 700;
     }
     .lp-org-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .lp-org-card .avatar .lp-org-initials {
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .lp-org-card .avatar .lp-org-photo { display: block; }
     .lp-org-card.is-lead .avatar { background: linear-gradient(135deg, #fde68a, #fcd34d); color: #b45309; }
     .lp-org-card.is-lead { border-color: rgba(217, 119, 6, 0.25); }
     .lp-org-name {
@@ -318,7 +324,7 @@
         font-weight: 600;
         padding: 0.2rem 0.55rem;
         border-radius: 999px;
-        background: rgba(79, 70, 229, 0.08);
+        background: rgba(var(--lp-primary-rgb), 0.08);
         color: var(--lp-primary);
     }
     .lp-org-card.is-lead .lp-org-role { background: rgba(217, 119, 6, 0.12); color: #b45309; }
@@ -380,13 +386,10 @@
         }
     }
 
-    // ---- Struktur Organisasi: statis (sesuai mockup) ----
-    $struktur = [
-        ['name' => 'Dr. Sarah Wijaya',  'role' => 'Kepala Sekolah',  'lead' => true],
-        ['name' => 'Bpk. Budi Santoso', 'role' => 'Wakil Kurikulum', 'lead' => false],
-        ['name' => 'Ibu Rina Pertiwi',  'role' => 'Wakil Kesiswaan', 'lead' => false],
-        ['name' => 'Bpk. Ahmad Fauzi',  'role' => 'Wakil Sarpras',   'lead' => false],
-    ];
+    // ---- Struktur Organisasi: dari DB, fallback statis ----
+    $strukturLeads = $strukturItems->where('is_lead', true)->values();
+    $strukturMembers = $strukturItems->where('is_lead', false)->values();
+    $hasDbStruktur = $strukturItems->isNotEmpty();
 @endphp
 
 <section class="lp-profile">
@@ -434,24 +437,51 @@
             <main>
                 {{-- Hero / Overview --}}
                 <div class="lp-hero-card" id="overview">
-                    <h1>Nurturing Future Leaders Since 1995</h1>
-                    <div class="lp-hero-body">
-                        <p>
-                            Sejarah Singkat: Elite Elementary School was founded with a vision to provide
-                            world-class education rooted in strong moral values. Over the decades, we have
-                            grown into a premier institution dedicated to academic excellence and
-                            character building.
-                        </p>
-                    </div>
-
-                    <div class="lp-hero-badges">
-                        <span class="lp-hero-badge is-green">
-                            <i class="bi bi-patch-check-fill"></i> Akreditasi A
-                        </span>
-                        <span class="lp-hero-badge">
-                            <i class="bi bi-hash"></i> NPSN: 20212345
-                        </span>
-                    </div>
+                    @if ($overviewSection && $overviewSection->is_active)
+                        <h1>{{ $overviewSection->title ?: 'Profil Sekolah' }}</h1>
+                        @if ($overviewSection->subtitle)
+                            <div class="lp-hero-body">
+                                <p class="lp-text-muted-soft">{{ $overviewSection->subtitle }}</p>
+                            </div>
+                        @endif
+                        @if ($overviewSection->content)
+                            <div class="lp-hero-body">
+                                {!! $overviewSection->content !!}
+                            </div>
+                        @endif
+                        @if ($overviewSection->badge_text || $overviewSection->badge_extra)
+                            <div class="lp-hero-badges">
+                                @if ($overviewSection->badge_text)
+                                    <span class="lp-hero-badge is-green">
+                                        <i class="bi {{ $overviewSection->badge_icon ?: 'bi-patch-check-fill' }}"></i> {{ $overviewSection->badge_text }}
+                                    </span>
+                                @endif
+                                @if ($overviewSection->badge_extra)
+                                    <span class="lp-hero-badge">
+                                        <i class="bi bi-hash"></i> {{ $overviewSection->extra_label ?: 'NPSN' }}: {{ $overviewSection->badge_extra }}
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+                    @else
+                        <h1>Nurturing Future Leaders Since 1995</h1>
+                        <div class="lp-hero-body">
+                            <p>
+                                Sejarah Singkat: Elite Elementary School was founded with a vision to provide
+                                world-class education rooted in strong moral values. Over the decades, we have
+                                grown into a premier institution dedicated to academic excellence and
+                                character building.
+                            </p>
+                        </div>
+                        <div class="lp-hero-badges">
+                            <span class="lp-hero-badge is-green">
+                                <i class="bi bi-patch-check-fill"></i> Akreditasi A
+                            </span>
+                            <span class="lp-hero-badge">
+                                <i class="bi bi-hash"></i> NPSN: 20212345
+                            </span>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Visi & Misi --}}
@@ -487,61 +517,115 @@
                     <h2>Struktur Organisasi</h2>
                 </div>
 
-                <div class="lp-org">
-                    <div class="lp-org-row is-top">
-                        @foreach (array_slice($struktur, 0, 1) as $p)
-                            <div class="lp-org-card {{ $p['lead'] ? 'is-lead' : '' }}">
-                                <div class="avatar">
-                                    <i class="bi bi-person-fill"></i>
-                                </div>
-                                <div class="lp-org-name">{{ $p['name'] }}</div>
-                                <span class="lp-org-role">{{ $p['role'] }}</span>
+                @if ($hasDbStruktur)
+                    <div class="lp-org">
+                        @if ($strukturLeads->isNotEmpty())
+                            <div class="lp-org-row is-top">
+                                @foreach ($strukturLeads as $p)
+                                    <div class="lp-org-card is-lead">
+                                        <div class="avatar">
+                                            @if ($p->photoUrl())
+                                                <img src="{{ $p->photoUrl() }}" alt="{{ $p->name }}" class="lp-org-photo">
+                                            @else
+                                                <span class="lp-org-initials">{{ $p->initials() }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="lp-org-name">{{ $p->name }}</div>
+                                        <span class="lp-org-role">{{ $p->role }}</span>
+                                    </div>
+                                @endforeach
                             </div>
-                        @endforeach
-                    </div>
+                        @endif
 
-                    <div class="lp-org-row multi">
-                        @foreach (array_slice($struktur, 1) as $p)
-                            <div class="lp-org-card {{ $p['lead'] ? 'is-lead' : '' }}">
-                                <div class="avatar">
-                                    <i class="bi bi-person-fill"></i>
-                                </div>
-                                <div class="lp-org-name">{{ $p['name'] }}</div>
-                                <span class="lp-org-role">{{ $p['role'] }}</span>
+                        @if ($strukturMembers->isNotEmpty())
+                            <div class="lp-org-row multi">
+                                @foreach ($strukturMembers as $p)
+                                    <div class="lp-org-card">
+                                        <div class="avatar">
+                                            @if ($p->photoUrl())
+                                                <img src="{{ $p->photoUrl() }}" alt="{{ $p->name }}" class="lp-org-photo">
+                                            @else
+                                                <span class="lp-org-initials">{{ $p->initials() }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="lp-org-name">{{ $p->name }}</div>
+                                        <span class="lp-org-role">{{ $p->role }}</span>
+                                    </div>
+                                @endforeach
                             </div>
-                        @endforeach
+                        @endif
                     </div>
-                </div>
+                @else
+                    {{-- Fallback statis (4 anggota default) --}}
+                    @php $struktur = [
+                        ['name' => 'Dr. Sarah Wijaya',  'role' => 'Kepala Sekolah',  'lead' => true],
+                        ['name' => 'Bpk. Budi Santoso', 'role' => 'Wakil Kurikulum', 'lead' => false],
+                        ['name' => 'Ibu Rina Pertiwi',  'role' => 'Wakil Kesiswaan', 'lead' => false],
+                        ['name' => 'Bpk. Ahmad Fauzi',  'role' => 'Wakil Sarpras',   'lead' => false],
+                    ]; @endphp
+                    <div class="lp-org">
+                        <div class="lp-org-row is-top">
+                            @foreach (array_slice($struktur, 0, 1) as $p)
+                                <div class="lp-org-card is-lead">
+                                    <div class="avatar">
+                                        <span class="lp-org-initials">{{ mb_substr($p['name'], 0, 2) }}</span>
+                                    </div>
+                                    <div class="lp-org-name">{{ $p['name'] }}</div>
+                                    <span class="lp-org-role">{{ $p['role'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="lp-org-row multi">
+                            @foreach (array_slice($struktur, 1) as $p)
+                                <div class="lp-org-card">
+                                    <div class="avatar">
+                                        <span class="lp-org-initials">{{ mb_substr($p['name'], 0, 2) }}</span>
+                                    </div>
+                                    <div class="lp-org-name">{{ $p['name'] }}</div>
+                                    <span class="lp-org-role">{{ $p['role'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Sejarah --}}
                 <div class="lp-section-title-row" id="history">
                     <i class="bi bi-clock-history"></i>
-                    <h2>Sejarah</h2>
+                    <h2>{{ $sejarahSection && $sejarahSection->is_active ? $sejarahSection->title : 'Sejarah' }}</h2>
                 </div>
 
                 <div class="lp-hero-card" style="padding: 1.5rem 1.85rem;">
-                    <p style="margin:0; color:#334155; font-size:0.96rem; line-height:1.7;">
-                        Didirikan sejak tahun 1995, {{ $schoolName }} telah berkembang menjadi lembaga
-                        pendidikan yang dipercaya masyarakat. Perjalanan panjang ini ditandai dengan
-                        berbagai inovasi pembelajaran dan pencapaian prestasi di tingkat kota, provinsi,
-                        hingga nasional.
-                    </p>
+                    @if ($sejarahSection && $sejarahSection->is_active)
+                        {!! $sejarahSection->content ?: '<p class="lp-text-muted-soft" style="margin:0; font-size:0.96rem;">Belum ada konten sejarah.</p>' !!}
+                    @else
+                        <p class="lp-text-muted-soft" style="margin:0; font-size:0.96rem;">
+                            Didirikan sejak tahun 1995, {{ $schoolName }} telah berkembang menjadi lembaga
+                            pendidikan yang dipercaya masyarakat. Perjalanan panjang ini ditandai dengan
+                            berbagai inovasi pembelajaran dan pencapaian prestasi di tingkat kota, provinsi,
+                            hingga nasional.
+                        </p>
+                    @endif
                 </div>
 
                 {{-- Akreditasi --}}
                 <div class="lp-section-title-row" id="akreditasi">
                     <i class="bi bi-patch-check-fill"></i>
-                    <h2>Akreditasi</h2>
+                    <h2>{{ $akreditasiSection && $akreditasiSection->is_active ? $akreditasiSection->title : 'Akreditasi' }}</h2>
                 </div>
 
                 <div class="lp-vm-card is-visi" style="padding: 1.5rem 1.6rem;">
                     <div class="lp-vm-icon"><i class="bi bi-award-fill"></i></div>
-                    <h3>Terakreditasi A</h3>
-                    <p style="margin:0; color:#334155; font-size:0.94rem; line-height:1.7;">
-                        Status akreditasi A (Sangat Baik) diberikan oleh BAN-SM, mencerminkan
-                        komitmen kami terhadap mutu pendidikan, manajemen sekolah, dan
-                        pencapaian lulusan yang berkualitas.
-                    </p>
+                    <h3>{{ $akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->badge_text ? $akreditasiSection->badge_text : 'Terakreditasi A' }}</h3>
+                    @if ($akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->content)
+                        {!! $akreditasiSection->content !!}
+                    @else
+                        <p class="lp-text-muted-soft" style="margin:0; font-size:0.94rem;">
+                            Status akreditasi A (Sangat Baik) diberikan oleh BAN-SM, mencerminkan
+                            komitmen kami terhadap mutu pendidikan, manajemen sekolah, dan
+                            pencapaian lulusan yang berkualitas.
+                        </p>
+                    @endif
                 </div>
 
                 {{-- Fasilitas --}}
@@ -550,20 +634,33 @@
                     <h2>Fasilitas</h2>
                 </div>
 
-                <div class="lp-vm-grid">
-                    <div class="lp-vm-card is-visi">
-                        <div class="lp-vm-icon"><i class="bi bi-easel"></i></div>
-                        <h3>Ruang Kelas Modern</h3>
-                        <p class="lp-vm-text">Ruang belajar nyaman dengan pendingin ruangan, proyektor,
-                        dan akses internet untuk mendukung pembelajaran digital.</p>
+                @if ($fasilitasItems->isNotEmpty())
+                    @php $fasColors = ['is-visi', 'is-misi']; @endphp
+                    <div class="lp-vm-grid">
+                        @foreach ($fasilitasItems as $i => $f)
+                            <div class="lp-vm-card {{ $fasColors[$i % 2] }}">
+                                <div class="lp-vm-icon"><i class="bi {{ $f->iconClass() }}"></i></div>
+                                <h3>{{ $f->title }}</h3>
+                                <p class="lp-vm-text">{{ $f->description }}</p>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="lp-vm-card is-misi">
-                        <div class="lp-vm-icon"><i class="bi bi-cpu"></i></div>
-                        <h3>Laboratorium &amp; Perpustakaan</h3>
-                        <p class="lp-vm-text">Laboratorium IPA, komputer, dan perpustakaan digital
-                        dengan koleksi buku yang lengkap untuk mendukung eksplorasi siswa.</p>
+                @else
+                    <div class="lp-vm-grid">
+                        <div class="lp-vm-card is-visi">
+                            <div class="lp-vm-icon"><i class="bi bi-easel"></i></div>
+                            <h3>Ruang Kelas Modern</h3>
+                            <p class="lp-vm-text">Ruang belajar nyaman dengan pendingin ruangan, proyektor,
+                            dan akses internet untuk mendukung pembelajaran digital.</p>
+                        </div>
+                        <div class="lp-vm-card is-misi">
+                            <div class="lp-vm-icon"><i class="bi bi-cpu"></i></div>
+                            <h3>Laboratorium &amp; Perpustakaan</h3>
+                            <p class="lp-vm-text">Laboratorium IPA, komputer, dan perpustakaan digital
+                            dengan koleksi buku yang lengkap untuk mendukung eksplorasi siswa.</p>
+                        </div>
                     </div>
-                </div>
+                @endif
 
             </main>
         </div>

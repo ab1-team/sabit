@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
-use Stancl\Tenancy\Database\Models\Tenant;
 use Stancl\Tenancy\Tenancy;
 
 abstract class BaseSchoolController extends Controller
 {
-    protected function runInTenant(Tenant $tenant, callable $callback)
+    protected function runInTenant(TenantContract $tenant, callable $callback)
     {
         /** @var Tenancy $tenancy */
         $tenancy = app(Tenancy::class);
