@@ -1,10 +1,18 @@
-@once
-@push('script')
 <script>
 (function () {
     function getCsrf() {
         var meta = document.querySelector('meta[name="csrf-token"]');
         return meta ? meta.getAttribute('content') : '';
+    }
+
+    function notify(opts) {
+        // Fallback kalau SweetAlert2 gagal dimuat: pakai alert() standar.
+        if (typeof Swal === 'undefined' || !Swal || !Swal.fire) {
+            var text = (opts && opts.title ? opts.title + ': ' : '') + (opts && (opts.text || opts.html) || '');
+            try { window.alert(text); } catch (e) {}
+            return Promise.resolve();
+        }
+        return Swal.fire(opts);
     }
 
     function fillFromOld(el, oldValue) {
@@ -163,34 +171,31 @@
                 }).then(function (out) {
                     if (!out) return;
                     if (out.status === 422 && out.data && out.data.errors) {
-                        // Tampilkan error validasi
+                        // Tampilkan error validasi sebagai toast ringkas (pojok kanan atas).
                         var errs = out.data.errors;
-                        var list = Object.keys(errs).map(function (field) {
-                            var labelEl = form.querySelector('[name="' + field + '"]');
-                            var label = field;
-                            if (labelEl) {
-                                var wrap = labelEl.closest('.input-group-outline');
-                                if (wrap) {
-                                    var lbl = wrap.querySelector('.form-label');
-                                    if (lbl) label = lbl.textContent.replace('*', '').trim() || field;
-                                }
-                            }
-                            return '<li><b>' + label + '</b>: ' + errs[field].join(', ') + '</li>';
-                        }).join('');
-                        Swal.fire({
+                        var firstField = Object.keys(errs)[0];
+                        var firstMsg = firstField ? errs[firstField][0] : 'Data tidak valid';
+                        notify({
                             icon: 'error',
                             title: 'Data belum lengkap',
-                            html: '<ul class="text-start mb-0">' + list + '</ul>',
+                            text: firstMsg,
+                            toast: true,
+                            position: 'top-end',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
                         });
                         return;
                     }
                     if (out.data && out.data.success) {
-                        Swal.fire({
+                        notify({
                             icon: 'success',
                             title: out.data.msg || 'Tersimpan',
+                            toast: true,
+                            position: 'top-end',
                             timer: 1800,
-                            showConfirmButton: false,
                             timerProgressBar: true,
+                            showConfirmButton: false,
                         }).then(function () {
                             if (out.data.redirect) {
                                 window.location.href = out.data.redirect;
@@ -204,17 +209,27 @@
                             }
                         });
                     } else {
-                        Swal.fire({
+                        notify({
                             icon: 'error',
                             title: 'Gagal',
                             text: (out.data && out.data.msg) || 'Terjadi kesalahan',
+                            toast: true,
+                            position: 'top-end',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
                         });
                     }
                 }).catch(function (err) {
-                    Swal.fire({
+                    notify({
                         icon: 'error',
                         title: 'Galat',
                         text: 'Cek koneksi / input Anda.',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
                     });
                     console.error(err);
                 }).finally(function () {
@@ -228,12 +243,12 @@
         });
 
         // ============== SweetAlert delete confirmation ==============
-        document.querySelectorAll('form.lp-delete, form[onsubmit*="confirm"]').forEach(function (form) {
-            form.removeAttribute('onsubmit');
+        document.querySelectorAll('form.lp-delete, form[onsubmit*="confirm"], form[data-confirm]').forEach(function (form) {
+            if (form.hasAttribute('onsubmit')) form.removeAttribute('onsubmit');
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 var msg = form.getAttribute('data-confirm') || 'Yakin ingin menghapus data ini?';
-                Swal.fire({
+                notify({
                     title: 'Hapus data?',
                     text: msg,
                     icon: 'warning',
@@ -258,7 +273,7 @@
                             var ct = resp.headers.get('content-type') || '';
                             if (ct.includes('application/json')) {
                                 return resp.json().then(function (data) {
-                                    Swal.fire({
+                                    notify({
                                         icon: 'success',
                                         title: data.msg || 'Berhasil dihapus',
                                         timer: 1500,
@@ -268,7 +283,7 @@
                             }
                             window.location.reload();
                         }).catch(function () {
-                            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan.' });
+                            notify({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan.' });
                         });
                     }
                 });
@@ -328,5 +343,3 @@
     });
 })();
 </script>
-@endpush
-@endonce

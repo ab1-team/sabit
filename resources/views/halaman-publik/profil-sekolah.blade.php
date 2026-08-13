@@ -254,104 +254,6 @@
         margin-bottom: 0.45rem;
     }
     .lp-vm-text p:last-child { margin-bottom: 0; }
-
-    /* ---------- Struktur Organisasi (tree-like) ---------- */
-    .lp-org {
-        background: #ffffff;
-        border: 1px solid rgba(15, 23, 42, 0.06);
-        border-radius: var(--lp-radius-lg);
-        padding: 1.85rem 1.5rem 2.25rem;
-        box-shadow: 0 10px 28px -16px rgba(15, 23, 42, 0.1);
-    }
-    .lp-org-row {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-        position: relative;
-    }
-    .lp-org-row + .lp-org-row { margin-top: 2rem; }
-    .lp-org-row.is-top::before { display: none; }
-
-    .lp-org-card {
-        background: #ffffff;
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: var(--lp-radius-md);
-        padding: 0.95rem 1rem;
-        text-align: center;
-        min-width: 180px;
-        max-width: 220px;
-        flex: 1;
-        box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
-        transition: transform 0.25s var(--lp-ease), box-shadow 0.25s var(--lp-ease);
-        position: relative;
-    }
-    .lp-org-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 14px 28px -10px rgba(15, 23, 42, 0.15);
-    }
-    .lp-org-card .avatar {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 0.7rem;
-        border-radius: 50%;
-        background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        font-size: 1.5rem;
-        color: var(--lp-primary);
-        font-weight: 700;
-    }
-    .lp-org-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .lp-org-card .avatar .lp-org-initials {
-        font-size: 1.15rem;
-        font-weight: 700;
-        line-height: 1;
-    }
-    .lp-org-card .avatar .lp-org-photo { display: block; }
-    .lp-org-card.is-lead .avatar { background: linear-gradient(135deg, #fde68a, #fcd34d); color: #b45309; }
-    .lp-org-card.is-lead { border-color: rgba(217, 119, 6, 0.25); }
-    .lp-org-name {
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: var(--lp-text);
-        margin-bottom: 0.15rem;
-    }
-    .lp-org-role {
-        display: inline-block;
-        font-size: 0.74rem;
-        font-weight: 600;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-        background: rgba(var(--lp-primary-rgb), 0.08);
-        color: var(--lp-primary);
-    }
-    .lp-org-card.is-lead .lp-org-role { background: rgba(217, 119, 6, 0.12); color: #b45309; }
-
-    /* Connector lines between rows */
-    .lp-org-row:not(.is-top) .lp-org-card::before {
-        content: "";
-        position: absolute;
-        top: -1rem;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 2px;
-        height: 1rem;
-        background: #cbd5e1;
-    }
-
-    /* When row has 3+ cards, draw horizontal connector */
-    .lp-org-row.multi::after {
-        content: "";
-        position: absolute;
-        top: -1rem;
-        left: 16.66%;
-        right: 16.66%;
-        height: 2px;
-        background: #cbd5e1;
-    }
 </style>
 @endsection
 
@@ -394,11 +296,6 @@
     } elseif ($pageVisiMisi && $pageVisiMisi->content) {
         $parseVisiMisiHtml($pageVisiMisi->content);
     }
-
-    // ---- Struktur Organisasi: dari DB, fallback statis ----
-    $strukturLeads = $strukturItems->where('is_lead', true)->values();
-    $strukturMembers = $strukturItems->where('is_lead', false)->values();
-    $hasDbStruktur = $strukturItems->isNotEmpty();
 @endphp
 
 <section class="lp-profile">
@@ -521,84 +418,6 @@
                     </div>
                 @endif
 
-                {{-- Struktur Organisasi --}}
-                <div class="lp-section-title-row" id="struktur">
-                    <i class="bi bi-diagram-3-fill"></i>
-                    <h2>Struktur Organisasi</h2>
-                </div>
-
-                @if ($hasDbStruktur)
-                    <div class="lp-org">
-                        @if ($strukturLeads->isNotEmpty())
-                            <div class="lp-org-row is-top">
-                                @foreach ($strukturLeads as $p)
-                                    <div class="lp-org-card is-lead">
-                                        <div class="avatar">
-                                            @if ($p->photoUrl())
-                                                <img src="{{ $p->photoUrl() }}" alt="{{ $p->name }}" class="lp-org-photo">
-                                            @else
-                                                <span class="lp-org-initials">{{ $p->initials() }}</span>
-                                            @endif
-                                        </div>
-                                        <div class="lp-org-name">{{ $p->name }}</div>
-                                        <span class="lp-org-role">{{ $p->role }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-
-                        @if ($strukturMembers->isNotEmpty())
-                            <div class="lp-org-row multi">
-                                @foreach ($strukturMembers as $p)
-                                    <div class="lp-org-card">
-                                        <div class="avatar">
-                                            @if ($p->photoUrl())
-                                                <img src="{{ $p->photoUrl() }}" alt="{{ $p->name }}" class="lp-org-photo">
-                                            @else
-                                                <span class="lp-org-initials">{{ $p->initials() }}</span>
-                                            @endif
-                                        </div>
-                                        <div class="lp-org-name">{{ $p->name }}</div>
-                                        <span class="lp-org-role">{{ $p->role }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    {{-- Fallback statis (4 anggota default) --}}
-                    @php $struktur = [
-                        ['name' => 'Dr. Sarah Wijaya',  'role' => 'Kepala Sekolah',  'lead' => true],
-                        ['name' => 'Bpk. Budi Santoso', 'role' => 'Wakil Kurikulum', 'lead' => false],
-                        ['name' => 'Ibu Rina Pertiwi',  'role' => 'Wakil Kesiswaan', 'lead' => false],
-                        ['name' => 'Bpk. Ahmad Fauzi',  'role' => 'Wakil Sarpras',   'lead' => false],
-                    ]; @endphp
-                    <div class="lp-org">
-                        <div class="lp-org-row is-top">
-                            @foreach (array_slice($struktur, 0, 1) as $p)
-                                <div class="lp-org-card is-lead">
-                                    <div class="avatar">
-                                        <span class="lp-org-initials">{{ mb_substr($p['name'], 0, 2) }}</span>
-                                    </div>
-                                    <div class="lp-org-name">{{ $p['name'] }}</div>
-                                    <span class="lp-org-role">{{ $p['role'] }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                        <div class="lp-org-row multi">
-                            @foreach (array_slice($struktur, 1) as $p)
-                                <div class="lp-org-card">
-                                    <div class="avatar">
-                                        <span class="lp-org-initials">{{ mb_substr($p['name'], 0, 2) }}</span>
-                                    </div>
-                                    <div class="lp-org-name">{{ $p['name'] }}</div>
-                                    <span class="lp-org-role">{{ $p['role'] }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
                 {{-- Sejarah --}}
                 @if (!$sejarahSection || $sejarahSection->is_active)
                     <div class="lp-section-title-row" id="history">
@@ -660,6 +479,9 @@
                         @endforeach
                     </div>
                 @else
+                    {{-- Seharusnya tidak pernah kosong karena controller menyisipkan
+                       default seragam dengan halaman admin. Fallback ini hanya
+                       pengaman bila tabel lp_fasilitas benar-benar kosong. --}}
                     <div class="lp-vm-grid">
                         <div class="lp-vm-card is-visi">
                             <div class="lp-vm-icon"><i class="bi bi-easel"></i></div>

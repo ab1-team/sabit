@@ -242,7 +242,7 @@
         }
         .lp-ps-empty .material-symbols-rounded { font-size: 42px; opacity: .55; }
 
-        /* ============ Sub-section divider (Fasilitas & Struktur) ============ */
+        /* ============ Sub-section divider (Fasilitas) ============ */
         .lp-ps-divider {
             display: flex;
             align-items: center;
@@ -260,7 +260,6 @@
             font-size: 1rem;
             flex-shrink: 0;
         }
-        .lp-ps-divider-icon.is-amber { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #b45309; }
         .lp-ps-divider-title {
             font-weight: 700;
             font-size: .98rem;
@@ -275,254 +274,476 @@
         }
         .lp-ps-divider-spacer { flex: 1; }
 
-        /* ============ Struktur Diagram Preview ============ */
-        .lp-org-preview {
-            background: linear-gradient(180deg, #f6f8fb 0%, #ffffff 100%);
-            border: 1px solid #e2e8f0;
-            border-radius: .85rem;
-            padding: 1.25rem 1rem 1.5rem;
-            margin-bottom: .85rem;
+        /* ============ Fasilitas accordion (pola PPDB Jadwal) ============ */
+        .lp-fas-card .lp-rep-icon {
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+            color: #6d28d9;
         }
-        .lp-org-row {
-            display: flex;
-            justify-content: center;
-            gap: .65rem;
-            flex-wrap: wrap;
-            position: relative;
-        }
-        .lp-org-row + .lp-org-row { margin-top: 1.5rem; }
-        .lp-org-row.is-top::before { display: none; }
-        .lp-org-card-mini {
-            background: #fff;
-            border: 1px solid rgba(15, 23, 42, .08);
-            border-radius: .55rem;
-            padding: .55rem .65rem;
-            text-align: center;
-            min-width: 130px;
-            max-width: 160px;
-            flex: 1;
-            box-shadow: 0 4px 10px -8px rgba(15, 23, 42, .12);
-        }
-        .lp-org-card-mini.is-lead {
-            border-color: rgba(217, 119, 6, .25);
-            background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
-        }
-        .lp-org-card-mini .avatar {
-            width: 36px; height: 36px;
-            margin: 0 auto .35rem;
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(var(--bs-primary-rgb, 25, 135, 84), .15), rgba(var(--bs-primary-rgb, 25, 135, 84), .3));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            font-size: .82rem;
-            color: var(--bs-primary, #198754);
-            font-weight: 700;
-        }
-        .lp-org-card-mini.is-lead .avatar {
-            background: linear-gradient(135deg, #fde68a, #fcd34d);
-            color: #b45309;
-        }
-        .lp-org-card-mini .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .lp-org-card-mini .name { font-weight: 700; font-size: .78rem; color: #1f2937; }
-        .lp-org-card-mini .role {
-            font-size: .68rem;
-            color: #475569;
-            margin-top: 2px;
-            display: block;
-        }
-        .lp-org-row:not(.is-top) .lp-org-card-mini::before {
-            content: "";
-            position: absolute;
-            top: -.75rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 2px;
-            height: .75rem;
-            background: #cbd5e1;
-        }
-        .lp-org-row.multi::after {
-            content: "";
-            position: absolute;
-            top: -.75rem;
-            left: 16.66%;
-            right: 16.66%;
-            height: 2px;
-            background: #cbd5e1;
+        .lp-fas-card.is-new .lp-rep-icon {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            color: #0369a1;
         }
 
-        /* ============ List items (Fasilitas & Struktur) ============ */
-        .lp-ps-list-card {
+        /* === Outer card yang membungkus seluruh section Fasilitas === */
+        .lp-fas-section-card {
             background: #fff;
             border: 1px solid #e2e8f0;
-            border-radius: .85rem;
-            padding: .85rem 1rem;
-            transition: border-color .15s ease, box-shadow .15s ease;
-            margin-bottom: .65rem;
+            border-radius: .95rem;
+            padding: 1.1rem 1.25rem 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 2px 6px -4px rgba(15, 23, 42, .08);
         }
-        .lp-ps-list-card.is-inactive { background: #f8fafc; opacity: .92; }
-        .lp-ps-list-card:hover {
-            border-color: #cbd5e1;
-        }
-        .lp-ps-list-head {
+        .lp-fas-section-head {
             display: flex;
             align-items: center;
-            gap: .65rem;
-            padding-bottom: .55rem;
-            margin-bottom: .55rem;
+            gap: .85rem;
+            padding: .25rem .25rem 1rem;
+            margin-bottom: 1rem;
             border-bottom: 1px dashed #e2e8f0;
         }
-        .lp-ps-list-avatar {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-            color: #475569;
+        .lp-fas-section-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ecfeff, #cffafe);
+            color: #0e7490;
             display: inline-flex; align-items: center; justify-content: center;
-            font-weight: 700;
-            font-size: .85rem;
+            font-size: 1.2rem;
             flex-shrink: 0;
-            overflow: hidden;
+            box-shadow: 0 3px 8px -4px rgba(15, 23, 42, .12);
         }
-        .lp-ps-list-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .lp-ps-list-avatar.is-lead { background: linear-gradient(135deg, #fde68a, #fcd34d); color: #b45309; }
-        .lp-ps-list-name {
+        .lp-fas-section-title {
             font-weight: 700;
-            font-size: .92rem;
+            font-size: 1rem;
+            color: #1f2937;
+            margin: 0;
+            line-height: 1.25;
+            letter-spacing: -.005em;
+        }
+        .lp-fas-section-sub {
+            font-size: .76rem;
+            color: #64748b;
+            margin-top: 3px;
+            line-height: 1.45;
+        }
+        .lp-fas-list {
+            margin: 0;
+        }
+        .lp-fas-head {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .85rem 1.1rem;
+            border-bottom: 1px dashed #e2e8f0;
+            background: #fafbfc;
+            cursor: pointer;
+            user-select: none;
+            border-radius: .85rem .85rem 0 0;
+        }
+        .lp-fas-card.is-collapsed .lp-fas-head {
+            border-bottom: none;
+            border-radius: .85rem;
+        }
+        .lp-fas-card.is-open .lp-fas-head {
+            border-radius: .85rem .85rem 0 0;
+        }
+        .lp-fas-head-title {
+            font-weight: 700;
+            font-size: .98rem;
             color: #1f2937;
             margin: 0;
             line-height: 1.2;
         }
-        .lp-ps-list-role {
-            font-size: .72rem;
-            color: #64748b;
-            margin-top: 1px;
-        }
-        .lp-ps-list-status {
-            margin-left: auto;
-            flex-shrink: 0;
-        }
-        .lp-ps-list-fields {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: .6rem .75rem;
-        }
-        .lp-ps-list-fields .input-group { margin-bottom: 0; }
-        .lp-ps-list-fields .input-group .form-control { padding-top: .75rem; padding-bottom: .3rem; font-size: .85rem; }
-        .lp-ps-list-fields textarea.form-control { min-height: 38px; }
-        .lp-ps-list-fields .lp-ps-full { grid-column: 1 / -1; }
-        .lp-ps-list-foot {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: .55rem;
-            margin-top: .7rem;
-            padding-top: .55rem;
-            border-top: 1px dashed #e2e8f0;
-            flex-wrap: wrap;
-        }
-        .lp-ps-list-foot .btn {
-            min-width: 95px;
+        .lp-fas-head-key {
+            font-size: .66rem;
             font-weight: 600;
-            padding: .38rem .85rem;
-            font-size: .82rem;
-            border-radius: .5rem;
+            letter-spacing: .06em;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+        .lp-fas-head-meta {
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .35rem;
+            margin-left: .5rem;
+        }
+        .lp-fas-head-meta .lp-fas-pill {
             display: inline-flex;
             align-items: center;
             gap: .3rem;
+            padding: .2rem .55rem;
+            background: #f1f5f9;
+            border-radius: 999px;
+            font-size: .72rem;
+            color: #334155;
+            font-weight: 600;
         }
-        .lp-ps-list-foot .btn .material-symbols-rounded { font-size: 15px; line-height: 1; }
-        .lp-ps-list-foot-info {
+        .lp-fas-head-meta .lp-fas-pill .material-symbols-rounded { font-size: 13px; }
+        .lp-fas-head-meta .lp-fas-pill.is-empty { color: #94a3b8; font-weight: 500; }
+        .lp-fas-head-meta .lp-fas-pill.is-draft { background: #fef3c7; color: #92400e; }
+        .lp-fas-head-meta .lp-fas-pill.is-pub   { background: #dcfce7; color: #15803d; }
+        .lp-fas-status { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; gap: .5rem; }
+        .lp-fas-chev {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #475569;
+            transition: transform .2s ease, background .15s ease;
+        }
+        .lp-fas-card.is-open .lp-fas-chev {
+            transform: rotate(180deg);
+            background: rgba(25, 135, 84, .12);
+            color: #15803d;
+            border-color: rgba(25, 135, 84, .25);
+        }
+        .lp-fas-body-wrap {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows .25s ease;
+        }
+        .lp-fas-card.is-open .lp-fas-body-wrap { grid-template-rows: 1fr; }
+        .lp-fas-body-inner { overflow: hidden; }
+
+        .lp-fas-body .lp-fas-full { grid-column: 1 / -1; }
+
+        /* === Override .lp-rep-body khusus Fasilitas: form grid 2 kolom konsisten === */
+        .lp-fas-body {
+            padding: 1rem 1.1rem 1.1rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: .85rem 1rem;
+        }
+        @media (min-width: 768px) {
+            .lp-fas-body {
+                grid-template-columns: 1.6fr .9fr;
+                gap: .85rem 1rem;
+            }
+            .lp-fas-body .lp-fas-full { grid-column: 1 / -1; }
+        }
+        .lp-fas-body .input-group { margin-bottom: 0; }
+        .lp-fas-body .input-group .form-control {
+            padding-top: 1rem;
+            padding-bottom: .35rem;
+            font-size: .88rem;
+            line-height: 1.4;
+        }
+        .lp-fas-body .input-group .form-label {
+            font-size: .72rem;
+            font-weight: 600;
+            color: #334155;
+            letter-spacing: .01em;
+            margin-bottom: 0;
+        }
+        .lp-fas-body textarea.form-control { min-height: 92px; line-height: 1.55; padding: .65rem .85rem; }
+
+        /* Toggle "Tampilkan di halaman publik" — seragam dengan lp-ps-toggle */
+        .lp-fas-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            padding: .42rem .7rem .42rem .55rem;
+            background: #f1f5f9;
+            border-radius: .65rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background .2s ease;
+            border: 1px solid transparent;
+            height: 44px;
+            width: 100%;
+        }
+        .lp-fas-toggle:hover { background: #e2e8f0; }
+        .lp-fas-toggle.is-on {
+            background: rgba(25, 135, 84, .12);
+            border-color: rgba(25, 135, 84, .25);
+        }
+        .lp-fas-toggle.is-off {
+            background: rgba(100, 116, 139, .12);
+            border-color: rgba(100, 116, 139, .2);
+        }
+        .lp-fas-toggle input[type="checkbox"] {
+            position: absolute; opacity: 0; pointer-events: none;
+        }
+        .lp-fas-toggle-track {
+            position: relative;
+            width: 34px; height: 18px;
+            background: #94a3b8;
+            border-radius: 999px;
+            transition: background .2s ease;
+            flex-shrink: 0;
+        }
+        .lp-fas-toggle-track::after {
+            content: "";
+            position: absolute; top: 2px; left: 2px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,.2);
+            transition: transform .2s ease;
+        }
+        .lp-fas-toggle.is-on .lp-fas-toggle-track { background: #198754; }
+        .lp-fas-toggle.is-on .lp-fas-toggle-track::after { transform: translateX(16px); }
+        .lp-fas-toggle-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px;
+            border-radius: 50%; font-size: 13px;
+            flex-shrink: 0;
+        }
+        .lp-fas-toggle.is-on  .lp-fas-toggle-icon { background: #198754; color: #fff; }
+        .lp-fas-toggle.is-off .lp-fas-toggle-icon { background: #64748b; color: #fff; }
+        .lp-fas-toggle-text { font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
+        .lp-fas-toggle.is-on  .lp-fas-toggle-text { color: #15803d; }
+        .lp-fas-toggle.is-off .lp-fas-toggle-text { color: #475569; }
+
+        /* === Icon select + Toggle publish jadi 1 baris kanan-kiri (full-width) === */
+        .lp-fas-body .lp-fas-icon-toggle-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: .75rem;
+            align-items: end;
+        }
+        @media (min-width: 768px) {
+            .lp-fas-body .lp-fas-icon-toggle-row {
+                grid-template-columns: 1fr auto;
+                gap: 1rem;
+                align-items: end;
+            }
+            .lp-fas-body .lp-fas-icon-toggle-row .lp-fas-toggle {
+                min-width: 240px;
+            }
+        }
+        .lp-fas-body .lp-fas-icon-toggle-row .lp-icon-select-wrap {
+            grid-column: auto;
+        }
+        .lp-fas-body .lp-fas-icon-toggle-row .lp-fas-toggle {
+            margin-top: 0;
+            width: 100%;
+        }
+        .lp-fas-body .lp-icon-select-wrap .form-label {
+            font-size: .72rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0;
+            letter-spacing: .01em;
+        }
+        .lp-fas-body .lp-icon-select-wrap .select2-container {
+            width: 100% !important;
+        }
+        .lp-fas-body .lp-icon-select-wrap .select2-selection {
+            min-height: 42px;
+            padding: .25rem .55rem;
+            border: 1px solid #e2e8f0;
+            border-radius: .55rem;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+        }
+        .lp-fas-body .lp-icon-select-wrap .select2-selection--single .select2-selection__rendered {
+            padding-left: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            color: #1f2937;
+            font-weight: 500;
+            font-size: .88rem;
+            line-height: 1.2;
+        }
+        .lp-fas-body .lp-icon-select-wrap .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .lp-fas-body .lp-icon-select-wrap .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+            right: .5rem;
+        }
+        .lp-fas-body .lp-icon-select-wrap.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .lp-fas-body .lp-icon-select-wrap.select2-container--bootstrap-5 .select2-selection:focus-within {
+            border-color: #1f9d57;
+            box-shadow: 0 0 0 2px rgba(31, 157, 87, .12);
+        }
+
+        /* Icon preview di opsi & selection */
+        .lp-icon-preview {
+            width: 22px; height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+            color: #6d28d9;
+            flex-shrink: 0;
+            font-size: 13px;
+        }
+        .lp-fas-card.is-new .lp-icon-preview {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            color: #0369a1;
+        }
+        .select2-results__option .lp-icon-preview {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: #475569;
+        }
+        .select2-results__option--highlighted .lp-icon-preview {
+            background: rgba(255,255,255,.18);
+            color: #fff;
+        }
+
+        /* Wrapper "Urutan" di kolom kedua */
+        .lp-fas-body .lp-fas-side {
+            display: flex;
+            flex-direction: column;
+            gap: .35rem;
+        }
+
+        /* === Background pembeda tiap accordion (alternating warna) === */
+        .lp-fas-card:nth-of-type(6n+1) { background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%); }
+        .lp-fas-card:nth-of-type(6n+2) { background: linear-gradient(180deg, #ecfeff 0%, #ffffff 100%); }
+        .lp-fas-card:nth-of-type(6n+3) { background: linear-gradient(180deg, #fef3c7 0%, #ffffff 100%); }
+        .lp-fas-card:nth-of-type(6n+4) { background: linear-gradient(180deg, #dcfce7 0%, #ffffff 100%); }
+        .lp-fas-card:nth-of-type(6n+5) { background: linear-gradient(180deg, #fee2e2 0%, #ffffff 100%); }
+        .lp-fas-card:nth-of-type(6n+6) { background: linear-gradient(180deg, #e0e7ff 0%, #ffffff 100%); }
+
+        .lp-fas-card.is-new { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important; border-style: dashed; }
+        .lp-fas-card.is-inactive { background: #f8fafc !important; opacity: .94; }
+
+        /* === Card lebih lengkung + jarak antar accordion diperbesar === */
+        #lpFasList {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .lp-fas-card + .lp-fas-card {
+            margin-top: 0;
+        }
+        .lp-fas-card {
+            margin-bottom: 0.5rem;
+        }
+        .lp-fas-card:last-child {
+            margin-bottom: 0;
+        }
+        .lp-fas-card {
+            border-radius: 1.15rem !important;
+            box-shadow: 0 4px 14px -8px rgba(15, 23, 42, .14);
+            border: 1px solid #e2e8f0;
+            transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+        }
+        .lp-fas-card:hover {
+            box-shadow: 0 8px 20px -8px rgba(15, 23, 42, .18);
+            border-color: #cbd5e1;
+        }
+        .lp-fas-card .lp-fas-head {
+            border-radius: 1.15rem 1.15rem 0 0;
+        }
+        .lp-fas-card.is-collapsed .lp-fas-head {
+            border-radius: 1.15rem;
+        }
+        .lp-fas-card.is-open .lp-fas-head {
+            border-radius: 1.15rem 1.15rem 0 0;
+        }
+        .lp-fas-card .lp-rep-icon {
+            border-radius: 12px;
+        }
+        .lp-fas-card .lp-fas-chev {
+            border-radius: 50%;
+        }
+        .lp-fas-card .lp-fas-foot {
+            border-radius: 0;
+        }
+        .lp-fas-card.is-open .lp-fas-foot {
+            border-bottom-left-radius: 1.15rem;
+            border-bottom-right-radius: 1.15rem;
+        }
+
+        .lp-fas-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .65rem;
+            flex-wrap: wrap;
+            padding: .65rem 1.1rem;
+            border-top: 1px dashed #e2e8f0;
+            background: #fafbfc;
+        }
+        .lp-fas-foot-info {
             font-size: .72rem;
             color: #94a3b8;
             display: inline-flex;
             align-items: center;
-            gap: .25rem;
-        }
-
-        /* ============ Add new row inline form ============ */
-        .lp-ps-add {
-            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-            border: 1px dashed #94a3b8;
-            border-radius: .85rem;
-            padding: .85rem 1rem;
-            margin-bottom: .85rem;
-            display: none;
-        }
-        .lp-ps-add.is-open { display: block; }
-        .lp-ps-add-head {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            font-weight: 700;
-            font-size: .85rem;
-            color: #334155;
-            margin-bottom: .65rem;
-        }
-        .lp-ps-add-head .material-symbols-rounded { font-size: 18px; color: #198754; }
-        .lp-ps-add-fields {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: .6rem .75rem;
-        }
-        .lp-ps-add-fields .input-group { margin-bottom: 0; }
-        .lp-ps-add-fields .input-group .form-control { padding-top: .75rem; padding-bottom: .3rem; font-size: .85rem; }
-        .lp-ps-add-fields textarea.form-control { min-height: 38px; }
-        .lp-ps-add-fields .lp-ps-full { grid-column: 1 / -1; }
-        .lp-ps-add-foot {
-            display: flex;
-            gap: .55rem;
-            justify-content: flex-end;
-            margin-top: .65rem;
-        }
-        .lp-ps-add-foot .btn {
-            font-size: .82rem;
-            font-weight: 600;
-            padding: .38rem .85rem;
-            border-radius: .5rem;
-            display: inline-flex;
-            align-items: center;
             gap: .3rem;
         }
-        .lp-ps-add-foot .btn .material-symbols-rounded { font-size: 15px; }
+        .lp-fas-foot-info .material-symbols-rounded { font-size: 13px; }
+        .lp-fas-foot .btn .material-symbols-rounded { font-size: 16px; line-height: 1; }
 
-        /* Toggle "is_lead" / "is_published" — pill style */
-        .lp-ps-mini-toggle {
+        /* Toolbar repeater untuk Fasilitas — flow normal di bawah list, tombol rata kanan */
+        .lp-fas-section-card {
+            position: relative;
+        }
+        .lp-fas-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .55rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+            padding: 0 1.1rem;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 0.6rem;
+            padding-bottom: .25rem;
+        }
+        .lp-fas-toolbar .lp-fas-toolbar-info {
+            display: none;
+        }
+        .lp-fas-toolbar .lp-fas-toolbar-actions {
+            display: inline-flex;
+            gap: .55rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .lp-fas-toolbar .btn {
+            border-radius: .6rem;
+            padding: .45rem .95rem;
+            font-weight: 600;
+            font-size: .82rem;
             display: inline-flex;
             align-items: center;
-            gap: .4rem;
-            padding: .25rem .5rem;
-            border-radius: 999px;
-            cursor: pointer;
-            user-select: none;
-            font-size: .72rem;
-            font-weight: 700;
-            letter-spacing: .02em;
-            transition: background .2s ease;
-            border: 1px solid transparent;
+            gap: .35rem;
+            box-shadow: 0 4px 10px -4px rgba(15, 23, 42, .25);
         }
-        .lp-ps-mini-toggle input { position: absolute; opacity: 0; pointer-events: none; }
-        .lp-ps-mini-toggle .lp-ps-toggle-track {
-            position: relative;
-            width: 26px; height: 14px;
-            background: #94a3b8;
-            border-radius: 999px;
-            flex-shrink: 0;
+        .lp-fas-toolbar .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px -4px rgba(15, 23, 42, .3);
         }
-        .lp-ps-mini-toggle .lp-ps-toggle-track::after {
-            content: "";
-            position: absolute;
-            top: 2px; left: 2px;
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            background: #fff;
-            transition: transform .2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        .lp-fas-toolbar .btn .material-symbols-rounded {
+            font-size: 16px !important;
         }
-        .lp-ps-mini-toggle.is-on .lp-ps-toggle-track { background: #198754; }
-        .lp-ps-mini-toggle.is-on .lp-ps-toggle-track::after { transform: translateX(12px); }
-        .lp-ps-mini-toggle.is-on { background: rgba(25, 135, 84, .12); color: #15803d; }
-        .lp-ps-mini-toggle.is-off { background: rgba(100, 116, 139, .12); color: #475569; }
+
+        /* Tombol Simpan Semua: pakai biru primer (override Material Kit hijau) */
+        .lp-btn-primary {
+            --bs-btn-color: #fff;
+            --bs-btn-bg: #2563eb;
+            --bs-btn-border-color: #2563eb;
+            --bs-btn-hover-color: #fff;
+            --bs-btn-hover-bg: #1d4ed8;
+            --bs-btn-hover-border-color: #1d4ed8;
+            --bs-btn-active-color: #fff;
+            --bs-btn-active-bg: #1e40af;
+            --bs-btn-active-border-color: #1e40af;
+            background-color: var(--bs-btn-bg);
+            border-color: var(--bs-btn-border-color);
+            color: var(--bs-btn-color);
+        }
+        .lp-btn-primary:hover,
+        .lp-btn-primary:focus {
+            background-color: var(--bs-btn-hover-bg);
+            border-color: var(--bs-btn-hover-border-color);
+            color: var(--bs-btn-hover-color);
+        }
     </style>
 @endsection
 
@@ -658,349 +879,236 @@
         </div>
     @endif
 
-    <div class="lp-ps-divider" id="struktur-section">
-        <div class="lp-ps-divider-icon is-amber">
-            <i class="bi bi-diagram-3-fill"></i>
-        </div>
-        <div>
-            <h6 class="lp-ps-divider-title">Struktur Organisasi</h6>
-            <div class="lp-ps-divider-sub">Kotak & garis, urut sesuai sort_order. Toggle "Pimpinan" untuk baris atas.</div>
-        </div>
-        <div class="lp-ps-divider-spacer"></div>
-        <button type="button" class="btn btn-sm btn-primary" data-lp-add-toggle="struktur">
-            <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">add</span>
-            Tambah
-        </button>
-    </div>
-
-    @php
-        $strukturLeads = $strukturItems->where('is_lead', true)->values();
-        $strukturMembers = $strukturItems->where('is_lead', false)->values();
-    @endphp
-
-    {{-- Preview diagram (read-only, selalu tampil) --}}
-    <div class="lp-org-preview" id="lp-org-preview" data-empty="{{ $strukturItems->isEmpty() ? '1' : '0' }}">
-        @if ($strukturItems->isEmpty())
-            <div class="text-center text-muted py-3" style="font-size:.82rem;">
-                <span class="material-symbols-rounded" style="font-size:32px;opacity:.4;display:block;">groups</span>
-                Diagram akan muncul setelah Anda menambahkan anggota struktur.
+    {{-- ============ FASILITAS (accordion repeater) ============ --}}
+    <div class="lp-fas-section-card" id="fasilitas-section">
+        <div class="lp-fas-section-head">
+            <div class="lp-fas-section-icon">
+                <i class="bi bi-building"></i>
             </div>
-        @else
-            @if ($strukturLeads->isNotEmpty())
-                <div class="lp-org-row is-top" id="lp-org-row-leads">
-                    @foreach ($strukturLeads as $p)
-                        <div class="lp-org-card-mini is-lead" data-struktur-id="{{ $p->id }}">
-                            <div class="avatar">
-                                @if ($p->photoUrl())
-                                    <img src="{{ $p->photoUrl() }}" alt="{{ $p->name }}">
-                                @else
-                                    {{ mb_substr($p->name, 0, 1) }}
-                                @endif
+            <div class="min-w-0">
+                <h6 class="lp-fas-section-title">Fasilitas Sekolah</h6>
+                <div class="lp-fas-section-sub">Daftar fasilitas tampil di section Fasilitas halaman profil. Klik kartu untuk membuka form edit.</div>
+            </div>
+        </div>
+
+        <div id="lpFasList" class="lp-rep-stack lp-fas-list">
+            @forelse ($fasilitasItems as $row)
+                @php
+                    $rowIndex = $loop->iteration;
+                    $rowId = (int) $row->id;
+                    $titleVal = $row->title ?? '';
+                    $iconVal = $row->icon ?? '';
+                    $sortVal = (int) ($row->sort_order ?: 0);
+                    $descVal = $row->description ?? '';
+                    $pub = (bool) $row->is_published;
+                    $descShort = $descVal !== '' ? \Illuminate\Support\Str::limit($descVal, 50) : null;
+                @endphp
+                <div class="lp-rep-card lp-fas-card is-collapsed {{ $pub ? '' : 'is-inactive' }}" data-id="{{ $rowId }}" data-row-index="{{ $rowIndex }}">
+                    <div class="lp-fas-head" data-role="toggle">
+                        <div class="lp-rep-icon"><span class="material-symbols-rounded">apartment</span></div>
+                        <div class="min-w-0">
+                            <h6 class="lp-fas-head-title">{{ $titleVal ?: 'Fasilitas #' . $rowIndex }}</h6>
+                            <div class="lp-fas-head-key">
+                                fasilitas #{{ $rowIndex }}
+                                @if ($rowId) · id {{ $rowId }} @endif
+                                · {{ $iconVal ?: 'bi-building' }}
                             </div>
-                            <div class="name">{{ $p->name }}</div>
-                            <span class="role">{{ $p->role }}</span>
                         </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="lp-org-row is-top" id="lp-org-row-leads" style="display:none;"></div>
-            @endif
-            @if ($strukturMembers->isNotEmpty())
-                <div class="lp-org-row multi" id="lp-org-row-members">
-                    @foreach ($strukturMembers as $p)
-                        <div class="lp-org-card-mini" data-struktur-id="{{ $p->id }}">
-                            <div class="avatar">
-                                @if ($p->photoUrl())
-                                    <img src="{{ $p->photoUrl() }}" alt="{{ $p->name }}">
-                                @else
-                                    {{ mb_substr($p->name, 0, 1) }}
-                                @endif
+                        <div class="lp-fas-head-meta">
+                            <span class="lp-fas-pill {{ $descShort ? '' : 'is-empty' }}">
+                                <span class="material-symbols-rounded">subject</span>
+                                {{ $descShort ?: 'Belum ada deskripsi' }}
+                            </span>
+                            <span class="lp-fas-pill {{ $pub ? 'is-pub' : 'is-draft' }}">
+                                <span class="material-symbols-rounded">{{ $pub ? 'cloud_done' : 'edit_note' }}</span>
+                                {{ $pub ? 'Aktif' : 'Draft' }}
+                            </span>
+                        </div>
+                        <div class="lp-fas-status">
+                            <span class="lp-fas-chev" aria-hidden="true">
+                                <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="lp-fas-body-wrap" data-role="body-wrap">
+                        <div class="lp-fas-body-inner">
+                            <div class="lp-fas-body">
+                                <div class="input-group input-group-outline mb-0 @if ($titleVal) is-filled @endif">
+                                    <label class="form-label">Judul <span class="text-danger">*</span></label>
+                                    <input type="text" name="rows[{{ $rowIndex }}][title]" class="form-control" required maxlength="150" value="{{ $titleVal }}" placeholder="Cth: Ruang Kelas Modern">
+                                </div>
+
+                                <div class="lp-fas-side">
+                                    <div class="input-group input-group-outline mb-0 @if ($sortVal > 0) is-filled @endif">
+                                        <label class="form-label">Urutan</label>
+                                        <input type="number" name="rows[{{ $rowIndex }}][sort_order]" class="form-control" min="0" value="{{ $sortVal }}">
+                                    </div>
+                                </div>
+
+                                <div class="lp-fas-icon-toggle-row">
+                                    <div class="lp-icon-select-wrap">
+                                        <label class="form-label">Icon</label>
+                                        @include('admin-landing._komponen._pilih-icon', ['selectId' => 'lpFasIcon' . $rowIndex, 'selected' => $iconVal])
+                                        <input type="hidden" name="rows[{{ $rowIndex }}][icon]" value="{{ $iconVal }}" data-role="icon-value">
+                                    </div>
+
+                                    <label class="lp-fas-toggle {{ $pub ? 'is-on' : 'is-off' }}"
+                                           for="is_published_{{ $rowId }}">
+                                        <input type="checkbox"
+                                               name="rows[{{ $rowIndex }}][is_published]"
+                                               id="is_published_{{ $rowId }}"
+                                               value="1"
+                                               {{ $pub ? 'checked' : '' }}
+                                               data-role="published-toggle">
+                                        <span class="lp-fas-toggle-track" aria-hidden="true"></span>
+                                        <span class="lp-fas-toggle-icon" aria-hidden="true">
+                                            <i class="bi {{ $pub ? 'bi-check-lg' : 'bi-x-lg' }}"></i>
+                                        </span>
+                                        <span class="lp-fas-toggle-text">{{ $pub ? 'Tampil di publik' : 'Disimpan draft' }}</span>
+                                    </label>
+                                </div>
+
+                                <div class="lp-fas-full">
+                                    <div class="input-group input-group-outline mb-0 @if ($descVal) is-filled @endif">
+                                        <label class="form-label">Deskripsi</label>
+                                        <textarea name="rows[{{ $rowIndex }}][description]" class="form-control" rows="2" placeholder="Cth: Ruang belajar nyaman dengan AC, proyektor...">{{ $descVal }}</textarea>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="name">{{ $p->name }}</div>
-                            <span class="role">{{ $p->role }}</span>
+
+                            <div class="lp-fas-foot">
+                                <div class="lp-fas-foot-info">
+                                    <span class="material-symbols-rounded">{{ $pub ? 'cloud_done' : 'edit_note' }}</span>
+                                    {{ $pub ? 'Fasilitas ini tampil di halaman publik.' : 'Disimpan sebagai draft.' }}
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-lp-fas-delete
+                                            data-url="{{ route('app.admin-landing.fasilitas.destroy', $rowId) }}"
+                                            data-name="{{ $titleVal }}">
+                                        <span class="material-symbols-rounded">delete</span>
+                                        Hapus
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
-            @else
-                <div class="lp-org-row multi" id="lp-org-row-members"></div>
-            @endif
-        @endif
+            @empty
+                <div class="lp-rep-card lp-rep-empty" id="lpFasEmpty">
+                    <span class="material-symbols-rounded">apartment</span>
+                    <div class="mt-2 mb-2">Belum ada fasilitas.</div>
+                    <div class="small text-muted">Tambah baris pertama di bawah untuk mulai.</div>
+                </div>
+            @endforelse
+        </div>
+
+        <div class="lp-rep-toolbar lp-fas-toolbar">
+            <div class="lp-fas-toolbar-info">
+                <span class="material-symbols-rounded">tips_and_updates</span>
+                Tambah baris baru lalu klik <strong>Simpan Semua</strong> untuk mengirim perubahan.
+            </div>
+            <div class="lp-fas-toolbar-actions">
+                <button type="button" class="btn btn-sm btn-outline-success" id="lpFasAddBtn">
+                    <span class="material-symbols-rounded">add</span>
+                    Tambah Baris
+                </button>
+                <button type="button" class="btn btn-sm lp-btn-primary" id="lpFasSaveAll">
+                    <span class="material-symbols-rounded">save</span>
+                    Simpan Semua
+                </button>
+            </div>
+        </div>
     </div>
 
-    {{-- Form tambah baru (inline) --}}
-    <form action="{{ route('app.admin-landing.struktur.store') }}" method="POST"
-          class="lp-ajax lp-ps-add" enctype="multipart/form-data" data-lp-add-form="struktur">
-        @csrf
-        <div class="lp-ps-add-head">
-            <span class="material-symbols-rounded">person_add</span>
-            Tambah Anggota Struktur
-        </div>
-        <div class="lp-ps-add-fields">
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Nama <span class="text-danger">*</span></label>
-                <input type="text" name="name" required maxlength="150" class="form-control" placeholder="Cth: Dr. Sarah Wijaya">
-            </div>
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Jabatan <span class="text-danger">*</span></label>
-                <input type="text" name="role" required maxlength="150" class="form-control" placeholder="Cth: Kepala Sekolah">
-            </div>
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Urutan</label>
-                <input type="number" name="sort_order" min="0" class="form-control" placeholder="0">
-            </div>
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Foto (opsional)</label>
-                <input type="file" name="photo" accept="image/*" class="form-control">
-            </div>
-            <div class="lp-ps-full" style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;">
-                <label class="lp-ps-mini-toggle is-off" for="new_struktur_lead" style="position:relative;">
-                    <input type="checkbox" name="is_lead" id="new_struktur_lead" value="1">
-                    <span class="lp-ps-toggle-track"></span>
-                    <span>Pimpinan (baris atas)</span>
-                </label>
-                <label class="lp-ps-mini-toggle is-on" for="new_struktur_published" style="position:relative;">
-                    <input type="checkbox" name="is_published" id="new_struktur_published" value="1" checked>
-                    <span class="lp-ps-toggle-track"></span>
-                    <span>Tampilkan</span>
-                </label>
-            </div>
-        </div>
-        <div class="lp-ps-add-foot">
-            <button type="button" class="btn btn-light" data-lp-add-cancel="struktur">Batal</button>
-            <button type="submit" class="btn btn-info">
-                <span class="material-symbols-rounded">save</span>
-                Simpan
-            </button>
-        </div>
-    </form>
-
-    {{-- List struktur existing --}}
-    @if ($strukturItems->isEmpty())
-        <div class="lp-ps-empty">
-            <span class="material-symbols-rounded">groups</span>
-            <div class="mt-2">Belum ada anggota struktur.</div>
-        </div>
-    @else
-        @foreach ($strukturItems as $row)
-            @php
-                $initials = mb_substr($row->name, 0, 1);
-                $hasPhoto = (bool) $row->photo;
-            @endphp
-            <form action="{{ route('app.admin-landing.struktur.update', $row->id) }}" method="POST"
-                  class="lp-ajax lp-ps-list-card {{ $row->is_published ? '' : 'is-inactive' }}"
-                  enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <div class="lp-ps-list-head">
-                    <div class="lp-ps-list-avatar {{ $row->is_lead ? 'is-lead' : '' }}">
-                        @if ($hasPhoto)
-                            <img src="{{ Storage::disk('public')->url('landing/' . $row->photo) }}" alt="{{ $row->name }}">
-                        @else
-                            {{ $initials }}
-                        @endif
-                    </div>
-                    <div class="min-w-0">
-                        <div class="lp-ps-list-name">{{ $row->name }}</div>
-                        <div class="lp-ps-list-role">{{ $row->role }}</div>
-                    </div>
-                    <div class="lp-ps-list-status" style="display:flex;gap:.35rem;flex-wrap:wrap;">
-                        <label class="lp-ps-mini-toggle {{ $row->is_published ? 'is-on' : 'is-off' }}"
-                               for="struktur_published_{{ $row->id }}" style="position:relative;">
-                            <input type="checkbox" name="is_published" id="struktur_published_{{ $row->id }}"
-                                   value="1" {{ $row->is_published ? 'checked' : '' }}>
-                            <span class="lp-ps-toggle-track"></span>
-                            <span>{{ $row->is_published ? 'Aktif' : 'Non-aktif' }}</span>
-                        </label>
-                    </div>
+    <template id="lpFasRowTemplate">
+        <div class="lp-rep-card lp-fas-card is-new is-collapsed" data-id="">
+            <div class="lp-fas-head" data-role="toggle">
+                <div class="lp-rep-icon"><span class="material-symbols-rounded">add_business</span></div>
+                <div class="min-w-0">
+                    <h6 class="lp-fas-head-title">Fasilitas Baru</h6>
+                    <div class="lp-fas-head-key">fasilitas baru · akan tersimpan sebagai draf</div>
                 </div>
-
-                <div class="lp-ps-list-fields">
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Nama <span class="text-danger">*</span></label>
-                        <input type="text" name="name" required maxlength="150"
-                               value="{{ $row->name }}" class="form-control">
-                    </div>
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Jabatan <span class="text-danger">*</span></label>
-                        <input type="text" name="role" required maxlength="150"
-                               value="{{ $row->role }}" class="form-control">
-                    </div>
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Urutan</label>
-                        <input type="number" name="sort_order" min="0"
-                               value="{{ $row->sort_order }}" class="form-control">
-                    </div>
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Foto</label>
-                        <input type="file" name="photo" accept="image/*" class="form-control">
-                    </div>
-                    <div class="lp-ps-full" style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;">
-                        <label class="lp-ps-mini-toggle {{ $row->is_lead ? 'is-on' : 'is-off' }}"
-                               for="struktur_lead_{{ $row->id }}" style="position:relative;">
-                            <input type="checkbox" name="is_lead" id="struktur_lead_{{ $row->id }}"
-                                   value="1" {{ $row->is_lead ? 'checked' : '' }}>
-                            <span class="lp-ps-toggle-track"></span>
-                            <span>Pimpinan</span>
-                        </label>
-                    </div>
+                <div class="lp-fas-head-meta">
+                    <span class="lp-fas-pill is-empty">
+                        <span class="material-symbols-rounded">subject</span>
+                        Belum ada deskripsi
+                    </span>
+                    <span class="lp-fas-pill is-draft">
+                        <span class="material-symbols-rounded">edit_note</span>
+                        Draft
+                    </span>
                 </div>
-
-                <div class="lp-ps-list-foot">
-                    <div class="lp-ps-list-foot-info">
-                        <span class="material-symbols-rounded" style="font-size:13px;">cloud_done</span>
-                        Perubahan langsung tersinkron.
-                    </div>
-                    <div style="display:flex;gap:.35rem;">
-                        <button type="submit" class="btn btn-info">
-                            <span class="material-symbols-rounded">save</span>
-                            Simpan
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" data-lp-delete
-                                data-url="{{ route('app.admin-landing.struktur.destroy', $row->id) }}"
-                                data-msg="Hapus anggota struktur '{{ $row->name }}'?">
-                            <span class="material-symbols-rounded">delete</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        @endforeach
-    @endif
-
-    {{-- ============ FASILITAS ============ --}}
-    <div class="lp-ps-divider" id="fasilitas-section">
-        <div class="lp-ps-divider-icon">
-            <i class="bi bi-building"></i>
-        </div>
-        <div>
-            <h6 class="lp-ps-divider-title">Fasilitas Sekolah</h6>
-            <div class="lp-ps-divider-sub">Daftar fasilitas tampil di section Fasilitas halaman profil.</div>
-        </div>
-        <div class="lp-ps-divider-spacer"></div>
-        <button type="button" class="btn btn-sm btn-primary" data-lp-add-toggle="fasilitas">
-            <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">add</span>
-            Tambah
-        </button>
-    </div>
-
-    {{-- Form tambah baru (inline) --}}
-    <form action="{{ route('app.admin-landing.fasilitas.store') }}" method="POST"
-          class="lp-ajax lp-ps-add" data-lp-add-form="fasilitas">
-        @csrf
-        <div class="lp-ps-add-head">
-            <span class="material-symbols-rounded">add_business</span>
-            Tambah Fasilitas
-        </div>
-        <div class="lp-ps-add-fields">
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Judul <span class="text-danger">*</span></label>
-                <input type="text" name="title" required maxlength="150" class="form-control" placeholder="Cth: Ruang Kelas Modern">
-            </div>
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Icon</label>
-                <input type="text" name="icon" maxlength="80" class="form-control" placeholder="bi-easel">
-            </div>
-            <div class="input-group input-group-outline mb-0">
-                <label class="form-label">Urutan</label>
-                <input type="number" name="sort_order" min="0" class="form-control" placeholder="0">
-            </div>
-            <div class="lp-ps-full">
-                <div class="input-group input-group-outline mb-0">
-                    <label class="form-label">Deskripsi</label>
-                    <textarea name="description" rows="2" class="form-control" placeholder="Cth: Ruang belajar nyaman dengan AC, proyektor..."></textarea>
+                <div class="lp-fas-status">
+                    <span class="lp-fas-chev" aria-hidden="true">
+                        <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
+                    </span>
                 </div>
             </div>
-            <div class="lp-ps-full" style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;">
-                <label class="lp-ps-mini-toggle is-on" for="new_fas_published" style="position:relative;">
-                    <input type="checkbox" name="is_published" id="new_fas_published" value="1" checked>
-                    <span class="lp-ps-toggle-track"></span>
-                    <span>Tampilkan</span>
-                </label>
-            </div>
-        </div>
-        <div class="lp-ps-add-foot">
-            <button type="button" class="btn btn-light" data-lp-add-cancel="fasilitas">Batal</button>
-            <button type="submit" class="btn btn-info">
-                <span class="material-symbols-rounded">save</span>
-                Simpan
-            </button>
-        </div>
-    </form>
 
-    {{-- List fasilitas existing --}}
-    @if ($fasilitasItems->isEmpty())
-        <div class="lp-ps-empty">
-            <span class="material-symbols-rounded">apartment</span>
-            <div class="mt-2">Belum ada fasilitas.</div>
-        </div>
-    @else
-        @foreach ($fasilitasItems as $row)
-            <form action="{{ route('app.admin-landing.fasilitas.update', $row->id) }}" method="POST"
-                  class="lp-ajax lp-ps-list-card {{ $row->is_published ? '' : 'is-inactive' }}">
-                @csrf
-                @method('PUT')
-                <div class="lp-ps-list-head">
-                    <div class="lp-ps-list-avatar">
-                        <i class="bi {{ $row->icon ?: 'bi-building' }}" style="font-size:1.1rem;"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="lp-ps-list-name">{{ $row->title }}</div>
-                        <div class="lp-ps-list-role">#{{ $row->sort_order }} · {{ $row->icon ?: 'bi-building' }}</div>
-                    </div>
-                    <div class="lp-ps-list-status">
-                        <label class="lp-ps-mini-toggle {{ $row->is_published ? 'is-on' : 'is-off' }}"
-                               for="fas_published_{{ $row->id }}" style="position:relative;">
-                            <input type="checkbox" name="is_published" id="fas_published_{{ $row->id }}"
-                                   value="1" {{ $row->is_published ? 'checked' : '' }}>
-                            <span class="lp-ps-toggle-track"></span>
-                            <span>{{ $row->is_published ? 'Aktif' : 'Non-aktif' }}</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="lp-ps-list-fields">
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Judul <span class="text-danger">*</span></label>
-                        <input type="text" name="title" required maxlength="150"
-                               value="{{ $row->title }}" class="form-control">
-                    </div>
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Icon</label>
-                        <input type="text" name="icon" maxlength="80"
-                               value="{{ $row->icon }}" class="form-control" placeholder="bi-easel">
-                    </div>
-                    <div class="input-group input-group-outline mb-0">
-                        <label class="form-label">Urutan</label>
-                        <input type="number" name="sort_order" min="0"
-                               value="{{ $row->sort_order }}" class="form-control">
-                    </div>
-                    <div class="lp-ps-full">
+            <div class="lp-fas-body-wrap" data-role="body-wrap">
+                <div class="lp-fas-body-inner">
+                    <div class="lp-fas-body">
                         <div class="input-group input-group-outline mb-0">
-                            <label class="form-label">Deskripsi</label>
-                            <textarea name="description" rows="2" class="form-control">{{ $row->description }}</textarea>
+                            <label class="form-label">Judul <span class="text-danger">*</span></label>
+                            <input type="text" name="rows[__INDEX__][title]" class="form-control" required maxlength="150" value="" placeholder="Cth: Ruang Kelas Modern">
+                        </div>
+
+                        <div class="lp-fas-side">
+                            <div class="input-group input-group-outline mb-0">
+                                <label class="form-label">Urutan</label>
+                                <input type="number" name="rows[__INDEX__][sort_order]" class="form-control" min="0" value="__SORT__">
+                            </div>
+                        </div>
+
+                        <div class="lp-fas-icon-toggle-row">
+                            <div class="lp-icon-select-wrap">
+                                <label class="form-label">Icon</label>
+                                <select class="form-select lp-icon-select" id="lpFasIconTemplate__INDEX__" data-placeholder="Pilih icon...">
+                                    <option value=""></option>
+                                </select>
+                                <input type="hidden" name="rows[__INDEX__][icon]" value="bi-building" data-role="icon-value">
+                            </div>
+
+                            <label class="lp-fas-toggle is-on" for="is_published_new___INDEX__">
+                                <input type="checkbox"
+                                       name="rows[__INDEX__][is_published]"
+                                       id="is_published_new___INDEX__"
+                                       value="1"
+                                       checked
+                                       data-role="published-toggle">
+                                <span class="lp-fas-toggle-track" aria-hidden="true"></span>
+                                <span class="lp-fas-toggle-icon" aria-hidden="true">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
+                                <span class="lp-fas-toggle-text">Tampil di publik</span>
+                            </label>
+                        </div>
+
+                        <div class="lp-fas-full">
+                            <div class="input-group input-group-outline mb-0">
+                                <label class="form-label">Deskripsi</label>
+                                <textarea name="rows[__INDEX__][description]" class="form-control" rows="2" placeholder="Cth: Ruang belajar nyaman dengan AC, proyektor..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lp-fas-foot">
+                        <div class="lp-fas-foot-info">
+                            <span class="material-symbols-rounded">edit_note</span>
+                            Baris baru — belum tersimpan.
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-remove-row" data-role="remove">
+                                <span class="material-symbols-rounded" style="font-size:16px;">close</span>
+                                Hapus Baris
+                            </button>
                         </div>
                     </div>
                 </div>
-
-                <div class="lp-ps-list-foot">
-                    <div class="lp-ps-list-foot-info">
-                        <span class="material-symbols-rounded" style="font-size:13px;">cloud_done</span>
-                        Perubahan langsung tersinkron.
-                    </div>
-                    <div style="display:flex;gap:.35rem;">
-                        <button type="submit" class="btn btn-info">
-                            <span class="material-symbols-rounded">save</span>
-                            Simpan
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" data-lp-delete
-                                data-url="{{ route('app.admin-landing.fasilitas.destroy', $row->id) }}"
-                                data-msg="Hapus fasilitas '{{ $row->title }}'?">
-                            <span class="material-symbols-rounded">delete</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        @endforeach
-    @endif
+            </div>
+        </div>
+    </template>
 </div>
 @endsection
 
@@ -1046,16 +1154,15 @@ document.addEventListener('DOMContentLoaded', function () {
         update();
     });
 
-    // Mini toggle untuk is_published / is_lead
+    // Mini toggle untuk is_published / is_lead (khusus Fasilitas, jika masih ada)
     document.querySelectorAll('.lp-ps-mini-toggle input[type="checkbox"]').forEach(function (el) {
         var wrap = el.closest('.lp-ps-mini-toggle');
-        var card = el.closest('.lp-ps-list-card');
+        var card = el.closest('.lp-ps-list-card, .lp-fas-card');
         var text = wrap.querySelector('span:last-child');
         var update = function () {
             if (el.checked) {
                 wrap.classList.remove('is-off');
                 wrap.classList.add('is-on');
-                // Update label text kalau parent tidak punya label khusus
                 if (text && wrap.dataset.dynamic !== '0') {
                     if (wrap.querySelector('[id$="_published"]') || wrap.querySelector('[id^="new_"][id$="_published"]')) {
                         text.textContent = 'Aktif';
@@ -1072,98 +1179,290 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 if (card && el.name === 'is_published') card.classList.add('is-inactive');
             }
-
-            // Live update preview struktur saat is_lead berubah
-            if (el.name === 'is_lead' && card) {
-                var id = card.querySelector('[data-lp-delete]')?.getAttribute('data-url')?.match(/\/(\d+)$/)?.[1];
-                if (!id) {
-                    var inp = card.querySelector('input[name="name"]');
-                    id = inp ? 'new_' + Math.random().toString(36).slice(2, 8) : null;
-                }
-                var preview = document.getElementById('lp-org-preview');
-                if (!preview || preview.dataset.empty === '1') {
-                    // Preview masih kosong (placeholder) → reload halaman setelah save
-                    return;
-                }
-                var rowLeads = document.getElementById('lp-org-row-leads');
-                var rowMembers = document.getElementById('lp-org-row-members');
-                if (!rowLeads || !rowMembers) return;
-
-                var avatar = card.querySelector('.lp-ps-list-avatar');
-                var name = card.querySelector('input[name="name"]')?.value || '?';
-                var role = card.querySelector('input[name="role"]')?.value || '';
-                var isLead = el.checked;
-
-                // Cari card mini yang terkait (kalau ada)
-                var mini = rowLeads.querySelector('[data-struktur-id="' + id + '"]') ||
-                           rowMembers.querySelector('[data-struktur-id="' + id + '"]');
-                var newMini = document.createElement('div');
-                newMini.className = 'lp-org-card-mini' + (isLead ? ' is-lead' : '');
-                newMini.setAttribute('data-struktur-id', id);
-                var avatarHtml = avatar && avatar.querySelector('img')
-                    ? '<img src="' + avatar.querySelector('img').getAttribute('src') + '" alt="' + name + '">'
-                    : name.charAt(0).toUpperCase();
-                newMini.innerHTML = '<div class="avatar">' + avatarHtml + '</div><div class="name">' +
-                    name.replace(/</g, '&lt;') + '</div><span class="role">' +
-                    role.replace(/</g, '&lt;') + '</span>';
-
-                if (mini) {
-                    mini.replaceWith(newMini);
-                } else {
-                    // Card baru (just added, belum ke-save)
-                    (isLead ? rowLeads : rowMembers).appendChild(newMini);
-                }
-
-                // Show/hide rows
-                rowLeads.style.display = rowLeads.children.length ? '' : 'none';
-                if (!document.getElementById('lp-org-row-members').classList.contains('multi') &&
-                    document.getElementById('lp-org-row-members').children.length > 0) {
-                    document.getElementById('lp-org-row-members').classList.add('multi');
-                }
-            }
         };
         el.addEventListener('change', update);
         update();
     });
 
-    // Toggle form tambah (inline)
-    document.querySelectorAll('[data-lp-add-toggle]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var key = btn.getAttribute('data-lp-add-toggle');
-            var form = document.querySelector('[data-lp-add-form="' + key + '"]');
-            if (!form) return;
-            var isOpen = form.classList.toggle('is-open');
-            if (isOpen) {
-                var first = form.querySelector('input, textarea');
-                if (first) first.focus();
-            }
+    // ============ FASILITAS — Icon Select2 (daftar icon Bootstrap + FontAwesome) ============
+    var ICON_OPTIONS = [
+        // Bootstrap Icons
+        { id: 'bi-building',           text: 'Gedung / Bangunan (bi-building)' },
+        { id: 'bi-apartment',          text: 'Apartemen (bi-apartment)' },
+        { id: 'bi-house',              text: 'Rumah (bi-house)' },
+        { id: 'bi-easel',              text: 'Papan / Kelas (bi-easel)' },
+        { id: 'bi-mortarboard',        text: 'Topi Toga (bi-mortarboard)' },
+        { id: 'bi-book',               text: 'Buku (bi-book)' },
+        { id: 'bi-books',              text: 'Koleksi Buku (bi-books)' },
+        { id: 'bi-library',            text: 'Perpustakaan (bi-library)' },
+        { id: 'bi-journal-text',       text: 'Jurnal (bi-journal-text)' },
+        { id: 'bi-cpu',                text: 'CPU / Lab Komputer (bi-cpu)' },
+        { id: 'bi-pc-display',         text: 'PC Desktop (bi-pc-display)' },
+        { id: 'bi-laptop',             text: 'Laptop (bi-laptop)' },
+        { id: 'bi-wifi',               text: 'Wi-Fi (bi-wifi)' },
+        { id: 'bi-globe',              text: 'Internet / Global (bi-globe)' },
+        { id: 'bi-lightbulb',          text: 'Lampu / Ide (bi-lightbulb)' },
+        { id: 'bi-lamp',               text: 'Lampu (bi-lamp)' },
+        { id: 'bi-thermometer',        text: 'AC / Suhu (bi-thermometer)' },
+        { id: 'bi-fan',                text: 'Kipas / Ventilasi (bi-fan)' },
+        { id: 'bi-droplet',            text: 'Air (bi-droplet)' },
+        { id: 'bi-cup-hot',            text: 'Kantin / Minuman (bi-cup-hot)' },
+        { id: 'bi-cup-straw',          text: 'Minuman (bi-cup-straw)' },
+        { id: 'bi-basket',             text: 'Basket (bi-basket)' },
+        { id: 'bi-trophy',             text: 'Trofi / Prestasi (bi-trophy)' },
+        { id: 'bi-medal',              text: 'Medali (bi-medal)' },
+        { id: 'bi-star-fill',          text: 'Bintang (bi-star-fill)' },
+        { id: 'bi-flag',               text: 'Bendera (bi-flag)' },
+        { id: 'bi-megaphone',          text: 'Pengumuman (bi-megaphone)' },
+        { id: 'bi-mic',                text: 'Mikrofon (bi-mic)' },
+        { id: 'bi-camera',             text: 'Kamera (bi-camera)' },
+        { id: 'bi-palette',            text: 'Seni / Warna (bi-palette)' },
+        { id: 'bi-music-note-beamed',  text: 'Musik (bi-music-note-beamed)' },
+        { id: 'bi-people',             text: 'Orang / Siswa (bi-people)' },
+        { id: 'bi-person-arms-up',     text: 'Aktivitas (bi-person-arms-up)' },
+        { id: 'bi-bicycle',            text: 'Sepeda (bi-bicycle)' },
+        { id: 'bi-bus-front',          text: 'Bus / Transport (bi-bus-front)' },
+        { id: 'bi-tree',               text: 'Pohon / Taman (bi-tree)' },
+        { id: 'bi-flower1',            text: 'Bunga / Taman (bi-flower1)' },
+        { id: 'bi-geo-alt',            text: 'Lokasi (bi-geo-alt)' },
+        { id: 'bi-shield-check',       text: 'Keamanan (bi-shield-check)' },
+        { id: 'bi-first-aid',          text: 'P3K / UKS (bi-first-aid)' },
+        { id: 'bi-hospital',           text: 'Ruang UKS (bi-hospital)' },
+        { id: 'bi-piggy-bank',         text: 'Tabungan (bi-piggy-bank)' },
+        { id: 'bi-cash-coin',          text: 'Keuangan (bi-cash-coin)' },
+        { id: 'bi-calculator',         text: 'Kalkulator (bi-calculator)' },
+        { id: 'bi-clipboard-data',     text: 'Data / Nilai (bi-clipboard-data)' },
+
+        // FontAwesome 6 Solid
+        { id: 'fa-solid fa-school',           text: 'Sekolah (fa-school)' },
+        { id: 'fa-solid fa-graduation-cap',   text: 'Wisuda (fa-graduation-cap)' },
+        { id: 'fa-solid fa-chalkboard',       text: 'Papan Tulis (fa-chalkboard)' },
+        { id: 'fa-solid fa-chalkboard-user',  text: 'Pengajar (fa-chalkboard-user)' },
+        { id: 'fa-solid fa-book-open',        text: 'Buku Terbuka (fa-book-open)' },
+        { id: 'fa-solid fa-flask',            text: 'Lab IPA (fa-flask)' },
+        { id: 'fa-solid fa-microscope',       text: 'Mikroskop (fa-microscope)' },
+        { id: 'fa-solid fa-laptop-code',      text: 'Lab Komputer (fa-laptop-code)' },
+        { id: 'fa-solid fa-wifi',             text: 'Wi-Fi (fa-wifi)' },
+        { id: 'fa-solid fa-bolt',             text: 'Listrik (fa-bolt)' },
+        { id: 'fa-solid fa-faucet',           text: 'Air (fa-faucet)' },
+        { id: 'fa-solid fa-fire-extinguisher',text: 'Pemadam (fa-fire-extinguisher)' },
+        { id: 'fa-solid fa-medkit',           text: 'P3K (fa-medkit)' },
+        { id: 'fa-solid fa-bus-school',       text: 'Bus Sekolah (fa-bus-school)' },
+        { id: 'fa-solid fa-bicycle',          text: 'Sepeda (fa-bicycle)' },
+        { id: 'fa-solid fa-futbol',           text: 'Olahraga Bola (fa-futbol)' },
+        { id: 'fa-solid fa-basketball',       text: 'Basket (fa-basketball)' },
+        { id: 'fa-solid fa-volleyball',       text: 'Voli (fa-volleyball)' },
+        { id: 'fa-solid fa-person-running',   text: 'Lari (fa-person-running)' },
+        { id: 'fa-solid fa-music',            text: 'Musik (fa-music)' },
+        { id: 'fa-solid fa-palette',          text: 'Seni (fa-palette)' },
+        { id: 'fa-solid fa-camera',           text: 'Kamera (fa-camera)' },
+        { id: 'fa-solid fa-couch',            text: 'Ruang Tamu (fa-couch)' },
+        { id: 'fa-solid fa-utensils',         text: 'Kantin (fa-utensils)' },
+        { id: 'fa-solid fa-mug-hot',          text: 'Minuman (fa-mug-hot)' },
+        { id: 'fa-solid fa-tree',             text: 'Pohon (fa-tree)' },
+        { id: 'fa-solid fa-leaf',             text: 'Daun / Hijau (fa-leaf)' },
+        { id: 'fa-solid fa-shield-halved',    text: 'Keamanan (fa-shield-halved)' },
+        { id: 'fa-solid fa-door-open',        text: 'Pintu (fa-door-open)' },
+        { id: 'fa-solid fa-lightbulb',        text: 'Lampu (fa-lightbulb)' },
+        { id: 'fa-solid fa-trophy',           text: 'Trofi (fa-trophy)' },
+        { id: 'fa-solid fa-medal',            text: 'Medali (fa-medal)' },
+        { id: 'fa-solid fa-star',             text: 'Bintang (fa-star)' },
+        { id: 'fa-solid fa-flag',             text: 'Bendera (fa-flag)' },
+        { id: 'fa-solid fa-users',            text: 'Siswa (fa-users)' },
+        { id: 'fa-solid fa-user-graduate',    text: 'Alumni (fa-user-graduate)' },
+        { id: 'fa-solid fa-globe',            text: 'Global (fa-globe)' },
+        { id: 'fa-solid fa-map-location-dot', text: 'Lokasi (fa-map-location-dot)' },
+        { id: 'fa-solid fa-comments',         text: 'Diskusi (fa-comments)' },
+        { id: 'fa-solid fa-megaphone',        text: 'Pengumuman (fa-megaphone)' },
+        { id: 'fa-solid fa-calculator',       text: 'Kalkulator (fa-calculator)' },
+        { id: 'fa-solid fa-coins',            text: 'Keuangan (fa-coins)' },
+    ];
+
+    function makeIconEl(value) {
+        var span = document.createElement('span');
+        span.className = 'lp-icon-preview';
+        var cls = value || '';
+        var i = document.createElement('i');
+        if (cls.indexOf('fa-') === 0) {
+            i.className = cls;
+        } else if (cls.indexOf('bi-') === 0) {
+            i.className = 'bi ' + cls;
+        }
+        span.appendChild(i);
+        return span;
+    }
+
+    function iconLabelText(value) {
+        var found = ICON_OPTIONS.filter(function (o) { return o.id === value; })[0];
+        return found ? found.text : value;
+    }
+
+    function initIconSelect2($el, currentValue) {
+        if (!$el.length) return;
+        var initVal = currentValue !== undefined ? currentValue : $el.val();
+        var data = [{ id: '', text: '' }];
+        ICON_OPTIONS.forEach(function (o) {
+            data.push({ id: o.id, text: o.text, icon: o.id });
         });
-    });
-    document.querySelectorAll('[data-lp-add-cancel]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var key = btn.getAttribute('data-lp-add-cancel');
-            var form = document.querySelector('[data-lp-add-form="' + key + '"]');
-            if (form) {
-                form.classList.remove('is-open');
-                form.reset();
-                // Reset mini toggle defaults
-                form.querySelectorAll('.lp-ps-mini-toggle input[type="checkbox"]').forEach(function (cb) {
-                    cb.checked = cb.defaultChecked;
-                    cb.dispatchEvent(new Event('change'));
-                });
-            }
+        $el.empty();
+        $el.select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            data: data,
+            placeholder: $el.data('placeholder') || 'Pilih icon...',
+            allowClear: true,
+            minimumResultsForSearch: 0,
+            templateResult: function (state) {
+                if (!state.id) return state.text || '';
+                var $wrap = jQuery('<span style="display:inline-flex;align-items:center;gap:.55rem;"></span>');
+                $wrap.append(makeIconEl(state.id));
+                $wrap.append(jQuery('<span></span>').text(state.text || iconLabelText(state.id)));
+                return $wrap;
+            },
+            templateSelection: function (state) {
+                if (!state.id) {
+                    return jQuery('<span style="color:#94a3b8;font-weight:500;"></span>').text('Pilih icon...');
+                }
+                var $wrap = jQuery('<span style="display:inline-flex;align-items:center;gap:.55rem;"></span>');
+                $wrap.append(makeIconEl(state.id));
+                $wrap.append(jQuery('<span></span>').text(state.text || iconLabelText(state.id)));
+                return $wrap;
+            },
         });
+        if (initVal) {
+            $el.val(initVal).trigger('change');
+        }
+    }
+
+    // Init semua select icon yang sudah ada di DOM (existing rows)
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery('#lpFasList .lp-icon-select').each(function () {
+            var $sel = jQuery(this);
+            // Cari hidden input untuk nilai awal
+            var wrap = $sel.closest('.lp-icon-select-wrap');
+            var hidden = wrap.find('input[data-role="icon-value"]');
+            var initVal = hidden.length ? hidden.val() : '';
+            initIconSelect2($sel, initVal);
+            $sel.on('change', function () {
+                if (hidden.length) hidden.val($sel.val() || '');
+            });
+        });
+    }
+
+    // ============ FASILITAS — Accordion toggle (collapse header) ============
+    function bindFasToggle(card) {
+        var head = card.querySelector('[data-role="toggle"]');
+        if (!head || head.__lpFasBound) return;
+        head.__lpFasBound = true;
+        head.addEventListener('click', function (e) {
+            if (e.target.closest('input, button, label, select, textarea, a, .select2')) return;
+            card.classList.toggle('is-collapsed');
+            card.classList.toggle('is-open');
+        });
+    }
+    document.querySelectorAll('#lpFasList .lp-fas-card').forEach(function (card) {
+        if (!card.classList.contains('is-open')) card.classList.add('is-collapsed');
+        bindFasToggle(card);
     });
 
-    // Delete handler (custom — pakai Swal modal, AJAX DELETE)
-    document.querySelectorAll('[data-lp-delete]').forEach(function (btn) {
+    // ============ FASILITAS — Toggle publish (konsisten dengan lp-ps-toggle) ============
+    function bindFasPublishToggle(scope) {
+        scope.querySelectorAll('.lp-fas-toggle input[type="checkbox"][data-role="published-toggle"]').forEach(function (el) {
+            if (el.__lpFasPubBound) return;
+            el.__lpFasPubBound = true;
+            var wrap = el.closest('.lp-fas-toggle');
+            var icon = wrap.querySelector('.lp-fas-toggle-icon i');
+            var text = wrap.querySelector('.lp-fas-toggle-text');
+            var update = function () {
+                if (el.checked) {
+                    wrap.classList.remove('is-off');
+                    wrap.classList.add('is-on');
+                    if (icon) icon.className = 'bi bi-check-lg';
+                    if (text) text.textContent = 'Tampil di publik';
+                } else {
+                    wrap.classList.remove('is-on');
+                    wrap.classList.add('is-off');
+                    if (icon) icon.className = 'bi bi-x-lg';
+                    if (text) text.textContent = 'Disimpan draft';
+                }
+            };
+            el.addEventListener('change', update);
+            update();
+        });
+    }
+    bindFasPublishToggle(document);
+
+    // ============ FASILITAS — Repeater (Tambah Baris + Simpan Semua) ============
+    if (typeof lpRep !== 'undefined' && document.getElementById('lpFasList')) {
+        lpRep.init({
+            listId: 'lpFasList',
+            addBtnId: 'lpFasAddBtn',
+            saveBtnId: 'lpFasSaveAll',
+            emptyId: 'lpFasEmpty',
+            templateId: 'lpFasRowTemplate',
+            storeUrl: @json(route('app.admin-landing.fasilitas.store')),
+            updateUrlTpl: @json(route('app.admin-landing.fasilitas.update', ['item' => '__ID__'])),
+            cardClass: 'lp-fas-card',
+            removeBtnSelector: '[data-role="remove"], .btn-remove-row',
+            wysiwyg: false,
+            afterAppend: function (row) {
+                row.classList.remove('is-open');
+                row.classList.add('is-collapsed');
+                bindFasToggle(row);
+                bindFasPublishToggle(row);
+                // Auto-fill is-filled class untuk Material Kit floating label
+                row.querySelectorAll('.input-group-outline input, .input-group-outline textarea').forEach(function (el) {
+                    if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
+                    var wrap = el.closest('.input-group-outline');
+                    if (!wrap) return;
+                    var hasValue = el.value !== null && el.value !== '';
+                    wrap.classList.toggle('is-filled', hasValue);
+                });
+                // Init Select2 untuk icon-select di baris baru
+                if (window.jQuery && jQuery.fn.select2) {
+                    row.querySelectorAll('.lp-icon-select').forEach(function (el) {
+                        var $sel = jQuery(el);
+                        var wrap = $sel.closest('.lp-icon-select-wrap');
+                        var hidden = wrap.find('input[data-role="icon-value"]');
+                        var initVal = hidden.length ? hidden.val() : 'bi-building';
+                        initIconSelect2($sel, initVal);
+                        $sel.on('change', function () {
+                            if (hidden.length) hidden.val($sel.val() || '');
+                        });
+                    });
+                }
+            },
+            gatherPayload: function (row) {
+                var title = row.querySelector('input[name*="[title]"]');
+                if (!title || !title.value.trim()) return null;
+                return {
+                    fd: lpRep.buildFormData(row, [
+                        { name: 'title' },
+                        { name: 'icon' },
+                        { name: 'description' },
+                        { name: 'sort_order' },
+                        { name: 'is_published', type: 'checkbox' },
+                    ])
+                };
+            },
+        });
+    }
+
+    // ============ FASILITAS — Delete per-baris (existing item) ============
+    document.querySelectorAll('[data-lp-fas-delete]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var url = btn.getAttribute('data-url');
-            var msg = btn.getAttribute('data-msg') || 'Yakin ingin menghapus data ini?';
-            if (typeof Swal === 'undefined') return;
+            var name = btn.getAttribute('data-name') || 'ini';
+            if (typeof Swal === 'undefined' || !Swal.fire) {
+                if (confirm('Hapus fasilitas "' + name + '"?')) {
+                    fetch(url, { method: 'POST', body: (function(){var fd=new FormData();fd.append('_method','DELETE');return fd;})(), headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'} })
+                        .then(function(){ window.location.reload(); });
+                }
+                return;
+            }
             Swal.fire({
-                title: 'Hapus data?',
-                text: msg,
+                title: 'Hapus fasilitas?',
+                text: 'Fasilitas "' + name + '" akan dihapus permanen.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
@@ -1189,20 +1488,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     })(),
                 }).then(function (resp) {
                     if (resp.ok || resp.status === 200 || resp.status === 204) {
-                        // Hapus card dari DOM
-                        var card = btn.closest('.lp-ps-list-card');
+                        var card = btn.closest('.lp-fas-card');
                         if (card) {
                             card.style.transition = 'opacity .2s ease, transform .2s ease';
                             card.style.opacity = '0';
                             card.style.transform = 'translateX(-20px)';
-                            setTimeout(function () { card.remove(); }, 200);
+                            setTimeout(function () {
+                                card.remove();
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1500, showConfirmButton: false });
+                                }
+                            }, 200);
+                        } else {
+                            window.location.reload();
                         }
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil dihapus',
-                            timer: 1500,
-                            showConfirmButton: false,
-                        });
                     } else {
                         Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan.' });
                     }
@@ -1264,5 +1563,6 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 .swal2-top-end { margin-top: 78px !important; }
 </style>
+@include('admin-landing._komponen._repeater-skrip')
 @include('admin-landing._skrip')
 @endsection

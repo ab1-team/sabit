@@ -8,7 +8,7 @@
     $inputId = $inputId ?? ($name . '_switch');
 @endphp
 
-<div class="{{ $colClass }} d-flex align-items-end pb-3">
+<div class="{{ $colClass }} d-flex align-items-end mb-3">
     <div class="form-check form-switch m-0">
         <input class="form-check-input" type="checkbox" name="{{ $name }}" value="1"
                id="{{ $inputId }}"

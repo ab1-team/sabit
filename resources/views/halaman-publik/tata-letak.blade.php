@@ -34,8 +34,8 @@
             --lp-muted: #64748b;
             --lp-card-bg: rgba(255, 255, 255, 0.7);
             --lp-card-border: rgba(255, 255, 255, 0.5);
-            --lp-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
-            --lp-shadow-strong: 0 24px 60px -20px rgba(var(--lp-primary-rgb), 0.25);
+            --lp-shadow: 0 14px 44px -10px rgba(15, 23, 42, 0.14);
+            --lp-shadow-strong: 0 28px 64px -16px rgba(var(--lp-primary-rgb), 0.35);
             --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
             /* ===== Design tokens (standarisasi) ===== */
@@ -463,7 +463,9 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.4rem;
+            text-align: center;
         }
         .lp-btn-light:hover {
             color: var(--lp-primary);
@@ -479,6 +481,11 @@
             border-radius: 999px;
             border: 1.5px solid rgba(255, 255, 255, 0.4);
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            text-align: center;
         }
         .lp-btn-outline-light:hover {
             background: rgba(255, 255, 255, 0.2);
@@ -561,13 +568,13 @@
         /* ============= Card (shared) ============= */
         .lp-glass {
             background: #ffffff;
-            border: 1px solid rgba(15, 23, 42, 0.06);
+            border: 0;
             border-radius: var(--lp-radius-lg);
             box-shadow: var(--lp-shadow);
             transition: transform 0.3s var(--lp-ease), box-shadow 0.3s var(--lp-ease);
         }
         .lp-glass:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
             box-shadow: var(--lp-shadow-strong);
         }
 
@@ -697,7 +704,7 @@
         /* ============= Program ============= */
         .lp-program-card {
             background: #ffffff;
-            border: 1px solid rgba(15, 23, 42, 0.06);
+            border: 0;
             border-radius: var(--lp-radius-lg);
             overflow: hidden;
             transition: transform 0.3s var(--lp-ease), box-shadow 0.3s var(--lp-ease);
@@ -705,8 +712,8 @@
             box-shadow: var(--lp-shadow);
         }
         .lp-program-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 24px 48px -16px rgba(var(--lp-primary-rgb), 0.25);
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px -16px rgba(var(--lp-primary-rgb), 0.35);
         }
         .lp-program-card .lp-thumb {
             position: relative;
@@ -1018,7 +1025,9 @@
             border: 0;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
+            text-align: center;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             white-space: nowrap;
         }
@@ -1036,6 +1045,11 @@
             border-radius: 999px;
             border: 1.5px solid rgba(255, 255, 255, 0.4);
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-align: center;
         }
         .lp-cta-btn-outline:hover {
             background: rgba(255, 255, 255, 0.25);

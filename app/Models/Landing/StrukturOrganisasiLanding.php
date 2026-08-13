@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Models\Landing;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StrukturOrganisasiLanding extends Model
 {
     protected $table = 'lp_struktur_organisasi';
 
     protected $fillable = [
+        'parent_id',
         'name',
         'role',
         'photo',
@@ -23,7 +26,18 @@ class StrukturOrganisasiLanding extends Model
         'is_lead' => 'boolean',
         'is_published' => 'boolean',
         'sort_order' => 'integer',
+        'parent_id' => 'integer',
     ];
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->ordered();
+    }
 
     public function scopePublished($q)
     {

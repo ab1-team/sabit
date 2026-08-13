@@ -7,6 +7,44 @@
 @section('content')
 <div class="row">
 
+    {{-- ============ CARD: HERO BERANDA ============ --}}
+    <div class="col-12">
+        <form id="FormHero" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
+              class="text-start lp-card-form" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="section" value="hero-utama">
+            <div class="card mt-1 mb-3 shadow-sm">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">image</span> Hero Beranda</h6>
+                    <p class="text-muted small mb-3">Atur judul dan subjudul utama di section Hero halaman Beranda (publik).</p>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="input-group input-group-outline mb-3 @if(old('hero_title', $heroUtama->title ?? null)) is-filled @endif">
+                                <label class="form-label">Judul Hero Beranda</label>
+                                <input type="text" name="hero_title" class="form-control" maxlength="150"
+                                       placeholder="Selamat Datang di {{ $setting->school_name ?? 'Sekolah' }}"
+                                       value="{{ old('hero_title', $heroUtama->title ?? null) }}">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="input-group input-group-outline mb-3 @if(old('hero_subtitle', $heroUtama->subtitle ?? null)) is-filled @endif">
+                                <label class="form-label">Subjudul / Deskripsi Hero</label>
+                                <input type="text" name="hero_subtitle" class="form-control" maxlength="255"
+                                       value="{{ old('hero_subtitle', $heroUtama->subtitle ?? null) }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top p-2 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormHero" id="simpan-hero">
+                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
+                        <span class="lp-btn-label">Simpan Hero Beranda</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     {{-- ============ CARD: IDENTITAS SEKOLAH ============ --}}
     <div class="col-12">
         <form id="FormIdentitas" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
@@ -375,28 +413,57 @@
     {{-- ============ CARD: SAMBUTAN KEPALA SEKOLAH ============ --}}
     @php
         $welcome = $setting->welcome ?: [];
+        $welcomeDefaults = [
+            'photo'       => 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80',
+            'quote'       => 'Mendidik dengan Hati, Membentuk dengan Karakter.',
+            'paragraph_1' => 'Selamat datang di {{school}}. Kami berkomitmen untuk memberikan pengalaman belajar terbaik bagi putra-putri Anda. Di era digital ini, kami memadukan kurikulum nasional dengan standar internasional untuk membentuk karakter yang kuat dan pemikiran yang kritis.',
+            'paragraph_2' => 'Lingkungan belajar kami dirancang untuk menumbuhkan kreativitas, kolaborasi, dan kemandirian. Bersama-sama, mari kita wujudkan potensi maksimal setiap anak.',
+            'head_name'   => 'Dr. Budi Santoso, M.Pd.',
+            'head_role'   => 'Kepala Sekolah, {{school}}',
+        ];
+        // Resolve foto (uploaded:xxx -> URL storage; kalau kosong pakai default).
         $welcomePhotoUrl = null;
-        if (!empty($welcome['photo']) && is_string($welcome['photo']) && str_starts_with($welcome['photo'], 'uploaded:')) {
-            $wf = substr($welcome['photo'], strlen('uploaded:'));
-            if ($wf !== '') {
-                $welcomePhotoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url('landing/' . $wf);
+        $welcomeHasUploadedPhoto = !empty($welcome['photo']) && is_string($welcome['photo']) && str_starts_with($welcome['photo'], 'uploaded:');
+        $welcomeUploadedFilename = null;
+        if ($welcomeHasUploadedPhoto) {
+            $welcomeUploadedFilename = substr($welcome['photo'], strlen('uploaded:'));
+            if ($welcomeUploadedFilename !== '') {
+                $welcomePhotoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url('landing/' . $welcomeUploadedFilename);
             }
-        } elseif (!empty($welcome['photo'])) {
+        }
+        if (!$welcomePhotoUrl && !empty($welcome['photo']) && is_string($welcome['photo']) && !str_starts_with($welcome['photo'], 'uploaded:')) {
             $welcomePhotoUrl = $welcome['photo'];
         }
+        // Fallback ke default kalau DB kosong — agar admin bisa langsung lihat foto bawaan.
+        if (!$welcomePhotoUrl) {
+            $welcomePhotoUrl = $welcomeDefaults['photo'];
+        }
+        // Helper: ambil nilai untuk input — kalau kosong di DB, pakai default agar input aktif.
+        $val = static function (string $key) use ($welcome, $welcomeDefaults) {
+            $cur = $welcome[$key] ?? null;
+            return ($cur !== null && $cur !== '') ? $cur : $welcomeDefaults[$key];
+        };
     @endphp
     <div class="col-12">
         <form id="FormSambutan" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="section" value="sambutan">
-            <div class="card my-4 shadow-sm">
+            <div class="card mt-1 mb-3 shadow-sm">
                 <div class="card-body p-3">
-                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">person_celebrate</span> Sambutan Kepala Sekolah</h6>
-                    <p class="text-muted small mb-3">Teks & foto yang tampil di section "Sambutan Kepala Sekolah" di halaman beranda. Gunakan <code>&#123;&#123;school&#125;&#125;</code> di paragraf untuk otomatis diganti nama sekolah.</p>
+                    <h6 class="fw-bold mb-1">
+                        <span class="material-symbols-rounded align-middle">person_celebrate</span>
+                        Sambutan Kepala Sekolah
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        <span class="material-symbols-rounded align-middle" style="font-size:14px;">info</span>
+                        Token <code>&#123;&#123;school&#125;&#125;</code> akan otomatis diganti nama sekolah.
+                        Mengganti foto akan menghapus foto lama di storage.
+                    </p>
+
                     <div class="row">
+                        {{-- Foto --}}
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">Foto Kepala Sekolah</label>
                             <label for="welcomePhotoInput" class="lp-preview-box d-block" id="welcomePhotoPreviewBox">
                                 @if ($welcomePhotoUrl)
                                     <img src="{{ $welcomePhotoUrl }}" alt="Foto" id="welcomePhotoPreviewImg">
@@ -406,41 +473,38 @@
                                 <span class="lp-preview-hint">Klik untuk pilih foto</span>
                             </label>
                             <input type="file" name="welcome_photo_upload" class="d-none" accept="image/*" id="welcomePhotoInput">
-                            @if (!empty($welcome['photo']) && str_starts_with((string) $welcome['photo'], 'uploaded:'))
-                                <div class="form-check mt-1 text-center">
-                                    <input type="checkbox" name="welcome_photo_clear" value="1" class="form-check-input" id="welcomePhotoClear">
-                                    <label class="form-check-label small" for="welcomePhotoClear">Hapus foto, pakai default</label>
-                                </div>
-                            @endif
                         </div>
+
+                        {{-- Teks identitas --}}
                         <div class="col-md-8">
-                            <div class="input-group input-group-outline mb-3 @if(old('welcome_quote', $welcome['quote'] ?? '')) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 is-filled">
                                 <label class="form-label">Quote (kutipan singkat)</label>
                                 <input type="text" name="welcome_quote" class="form-control" maxlength="255"
-                                       value="{{ old('welcome_quote', $welcome['quote'] ?? '') }}">
+                                       value="{{ old('welcome_quote', $val('quote')) }}">
                             </div>
-                            <div class="input-group input-group-outline mb-3 @if(old('welcome_head_name', $welcome['head_name'] ?? '')) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 is-filled">
                                 <label class="form-label">Nama Kepala Sekolah</label>
                                 <input type="text" name="welcome_head_name" class="form-control" maxlength="150"
-                                       value="{{ old('welcome_head_name', $welcome['head_name'] ?? '') }}">
+                                       value="{{ old('welcome_head_name', $val('head_name')) }}">
                             </div>
-                            <div class="input-group input-group-outline mb-3 @if(old('welcome_head_role', $welcome['head_role'] ?? '')) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 is-filled">
                                 <label class="form-label">Jabatan</label>
                                 <input type="text" name="welcome_head_role" class="form-control" maxlength="200"
-                                       placeholder="Kepala Sekolah, &#123;&#123;school&#125;&#125;"
-                                       value="{{ old('welcome_head_role', $welcome['head_role'] ?? '') }}">
+                                       value="{{ old('welcome_head_role', $val('head_role')) }}">
                             </div>
                         </div>
+
+                        {{-- Paragraf --}}
                         <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 @if(old('welcome_paragraph_1', $welcome['paragraph_1'] ?? '')) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 is-filled">
                                 <label class="form-label">Paragraf 1</label>
-                                <textarea name="welcome_paragraph_1" rows="3" class="form-control">{{ old('welcome_paragraph_1', $welcome['paragraph_1'] ?? '') }}</textarea>
+                                <textarea name="welcome_paragraph_1" rows="3" class="form-control">{{ old('welcome_paragraph_1', $val('paragraph_1')) }}</textarea>
                             </div>
                         </div>
                         <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 @if(old('welcome_paragraph_2', $welcome['paragraph_2'] ?? '')) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 is-filled">
                                 <label class="form-label">Paragraf 2</label>
-                                <textarea name="welcome_paragraph_2" rows="3" class="form-control">{{ old('welcome_paragraph_2', $welcome['paragraph_2'] ?? '') }}</textarea>
+                                <textarea name="welcome_paragraph_2" rows="3" class="form-control">{{ old('welcome_paragraph_2', $val('paragraph_2')) }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -449,290 +513,6 @@
                     <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormSambutan" id="simpan-sambutan">
                         <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
                         <span class="lp-btn-label">Simpan Sambutan</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- ============ CARD: STATISTIK ============ --}}
-    @php
-        $statsExisting = $setting->stats ?: [];
-        $statColorOptions = ['blue', 'green', 'amber', 'pink', 'purple', 'cyan'];
-    @endphp
-    <div class="col-12">
-        <form id="FormStatistik" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
-              class="text-start lp-card-form" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="section" value="statistik">
-            <div class="card my-4 shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">monitoring</span> Statistik (3 Kartu)</h6>
-                    <p class="text-muted small mb-3">Tiga kartu statistik di section "Stats" halaman beranda. Icon menggunakan Bootstrap Icon class (mis. <code>bi-people-fill</code>).</p>
-                    @for ($i = 1; $i <= 3; $i++)
-                        @php $cur = $statsExisting[$i - 1] ?? []; @endphp
-                        <div class="row border rounded p-2 mb-2 mx-0 bg-light">
-                            <div class="col-md-12"><small class="fw-bold text-muted">Kartu {{ $i }}</small></div>
-                            <div class="col-md-3">
-                                <div class="input-group input-group-outline mb-0 @if(old('stats_icon_'.$i, $cur['icon'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Icon (bi-xxx)</label>
-                                    <input type="text" name="stats_icon_{{ $i }}" class="form-control"
-                                           placeholder="bi-people-fill"
-                                           value="{{ old('stats_icon_'.$i, $cur['icon'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small mb-1 d-block">Warna</label>
-                                <select name="stats_color_{{ $i }}" class="form-select form-select-sm">
-                                    @foreach ($statColorOptions as $c)
-                                        <option value="{{ $c }}" @selected(old('stats_color_'.$i, $cur['color'] ?? 'blue') === $c)>{{ ucfirst($c) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="input-group input-group-outline mb-0 @if(old('stats_value_'.$i, $cur['value'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Nilai</label>
-                                    <input type="text" name="stats_value_{{ $i }}" class="form-control"
-                                           placeholder="1.200+"
-                                           value="{{ old('stats_value_'.$i, $cur['value'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="input-group input-group-outline mb-0 @if(old('stats_label_'.$i, $cur['label'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Label</label>
-                                    <input type="text" name="stats_label_{{ $i }}" class="form-control"
-                                           placeholder="Siswa Aktif"
-                                           value="{{ old('stats_label_'.$i, $cur['label'] ?? '') }}">
-                                </div>
-                            </div>
-                        </div>
-                    @endfor
-                </div>
-                <div class="card-footer bg-white border-top p-2 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormStatistik" id="simpan-statistik">
-                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                        <span class="lp-btn-label">Simpan Statistik</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- ============ CARD: JENJANG ============ --}}
-    @php
-        $jenjangExisting = $setting->jenjang ?: [];
-    @endphp
-    <div class="col-12">
-        <form id="FormJenjang" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
-              class="text-start lp-card-form" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="section" value="jenjang">
-            <div class="card my-4 shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">school</span> Jenjang Pendidikan (4 Kartu)</h6>
-                    <p class="text-muted small mb-3">Empat kartu jenjang (TK, SD, SMP, SMA) yang tampil di halaman beranda.</p>
-                    @for ($i = 1; $i <= 4; $i++)
-                        @php $cur = $jenjangExisting[$i - 1] ?? []; @endphp
-                        <div class="row border rounded p-2 mb-2 mx-0 bg-light">
-                            <div class="col-md-12"><small class="fw-bold text-muted">Jenjang {{ $i }}</small></div>
-                            <div class="col-md-3">
-                                <div class="input-group input-group-outline mb-0 @if(old('jenjang_age_'.$i, $cur['age'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Rentang Usia/Kelas</label>
-                                    <input type="text" name="jenjang_age_{{ $i }}" class="form-control"
-                                           placeholder="KELAS 1–6"
-                                           value="{{ old('jenjang_age_'.$i, $cur['age'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="input-group input-group-outline mb-0 @if(old('jenjang_title_'.$i, $cur['title'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Judul</label>
-                                    <input type="text" name="jenjang_title_{{ $i }}" class="form-control"
-                                           placeholder="Sekolah Dasar"
-                                           value="{{ old('jenjang_title_'.$i, $cur['title'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="input-group input-group-outline mb-0 @if(old('jenjang_icon_'.$i, $cur['icon'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Icon (bi-xxx)</label>
-                                    <input type="text" name="jenjang_icon_{{ $i }}" class="form-control"
-                                           placeholder="bi-mortarboard-fill"
-                                           value="{{ old('jenjang_icon_'.$i, $cur['icon'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="input-group input-group-outline mb-0 @if(old('jenjang_desc_'.$i, $cur['desc'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Deskripsi</label>
-                                    <input type="text" name="jenjang_desc_{{ $i }}" class="form-control"
-                                           placeholder="Deskripsi singkat"
-                                           value="{{ old('jenjang_desc_'.$i, $cur['desc'] ?? '') }}">
-                                </div>
-                            </div>
-                        </div>
-                    @endfor
-                </div>
-                <div class="card-footer bg-white border-top p-2 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormJenjang" id="simpan-jenjang">
-                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                        <span class="lp-btn-label">Simpan Jenjang</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- ============ CARD: KEUNGGULAN ============ --}}
-    @php
-        $keunggulanExisting = $setting->keunggulan ?: [];
-    @endphp
-    <div class="col-12">
-        <form id="FormKeunggulan" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
-              class="text-start lp-card-form" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="section" value="keunggulan">
-            <div class="card my-4 shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">workspace_premium</span> Keunggulan Sekolah (6 Kartu)</h6>
-                    <p class="text-muted small mb-3">Enam kartu keunggulan yang tampil di section "Mengapa Kami" halaman beranda.</p>
-                    @for ($i = 1; $i <= 6; $i++)
-                        @php $cur = $keunggulanExisting[$i - 1] ?? []; @endphp
-                        <div class="row border rounded p-2 mb-2 mx-0 bg-light">
-                            <div class="col-md-12"><small class="fw-bold text-muted">Kartu {{ $i }}</small></div>
-                            <div class="col-md-3">
-                                <label class="form-label small mb-1 d-block">Warna</label>
-                                <select name="keunggulan_color_{{ $i }}" class="form-select form-select-sm">
-                                    @foreach ($statColorOptions as $c)
-                                        <option value="{{ $c }}" @selected(old('keunggulan_color_'.$i, $cur['color'] ?? 'blue') === $c)>{{ ucfirst($c) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="input-group input-group-outline mb-0 @if(old('keunggulan_icon_'.$i, $cur['icon'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Icon (bi-xxx)</label>
-                                    <input type="text" name="keunggulan_icon_{{ $i }}" class="form-control"
-                                           placeholder="bi-book-fill"
-                                           value="{{ old('keunggulan_icon_'.$i, $cur['icon'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="input-group input-group-outline mb-0 @if(old('keunggulan_title_'.$i, $cur['title'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Judul</label>
-                                    <input type="text" name="keunggulan_title_{{ $i }}" class="form-control"
-                                           placeholder="Kurikulum Merdeka"
-                                           value="{{ old('keunggulan_title_'.$i, $cur['title'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="input-group input-group-outline mb-0 @if(old('keunggulan_desc_'.$i, $cur['desc'] ?? '')) is-filled @endif">
-                                    <label class="form-label small">Deskripsi</label>
-                                    <textarea name="keunggulan_desc_{{ $i }}" rows="2" class="form-control"
-                                              placeholder="Penjelasan singkat keunggulan">{{ old('keunggulan_desc_'.$i, $cur['desc'] ?? '') }}</textarea>
-                                </div>
-                            </div>
-                        </div>
-                    @endfor
-                </div>
-                <div class="card-footer bg-white border-top p-2 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormKeunggulan" id="simpan-keunggulan">
-                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                        <span class="lp-btn-label">Simpan Keunggulan</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- ============ CARD: BADGE HERO ============ --}}
-    <div class="col-12">
-        <form id="FormBadge" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
-              class="text-start lp-card-form" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="section" value="badge">
-            @php
-                $currentBadges = old('badges', $setting->hero_badges ?: []);
-                if (empty($currentBadges)) {
-                    $currentBadges = [
-                        ['icon' => 'bi-patch-check-fill', 'text' => ''],
-                        ['icon' => 'bi-trophy-fill', 'text' => ''],
-                    ];
-                }
-            @endphp
-            <div class="card my-4 shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">verified</span> Badge Hero</h6>
-                    <p class="text-muted small mb-3">Badge kecil di pojok bawah Hero (mis. "Terakreditasi A", "50+ Prestasi"). Maksimal 6 badge. Kosongkan baris untuk menghapus.</p>
-                    <div id="lp-badges-wrap">
-                        @foreach ($currentBadges as $i => $b)
-                            <div class="row g-2 align-items-center lp-badge-row mb-2" data-index="{{ $i }}">
-                                <div class="col-md-4">
-                                    <div class="input-group input-group-outline mb-0 @if($b['icon'] ?? '') is-filled @endif">
-                                        <label class="form-label">Icon (Bootstrap Icon class)</label>
-                                        <input type="text" name="badges[{{ $i }}][icon]" class="form-control"
-                                               value="{{ $b['icon'] ?? '' }}" placeholder="bi-patch-check-fill">
-                                    </div>
-                                </div>
-                                <div class="col-md-7">
-                                    <div class="input-group input-group-outline mb-0 @if($b['text'] ?? '') is-filled @endif">
-                                        <label class="form-label">Teks Badge</label>
-                                        <input type="text" name="badges[{{ $i }}][text]" class="form-control" maxlength="120"
-                                               value="{{ $b['text'] ?? '' }}" placeholder="Terakreditasi A">
-                                    </div>
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-danger lp-badge-remove" title="Hapus baris">
-                                        <span class="material-symbols-rounded" style="font-size:18px;">delete</span>
-                                    </button>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="lp-badge-add">
-                            <span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>
-                            Tambah Badge
-                        </button>
-                        <span class="text-muted small ms-2">Maksimal 6 badge.</span>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-top p-2 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormBadge" id="simpan-badge">
-                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                        <span class="lp-btn-label">Simpan Badge</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- ============ CARD: SEO ============ --}}
-    <div class="col-12">
-        <form id="FormSeo" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
-              class="text-start lp-card-form" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="section" value="seo">
-            <div class="card my-4 shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">search</span> SEO</h6>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 @if(old('meta_description', $setting->meta_description)) is-filled @endif">
-                                <label class="form-label">Meta Description</label>
-                                <input type="text" name="meta_description" class="form-control" maxlength="255"
-                                       value="{{ old('meta_description', $setting->meta_description) }}">
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 @if(old('meta_keywords', $setting->meta_keywords)) is-filled @endif">
-                                <label class="form-label">Meta Keywords</label>
-                                <input type="text" name="meta_keywords" class="form-control" maxlength="255"
-                                       value="{{ old('meta_keywords', $setting->meta_keywords) }}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-top p-2 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-info mb-0 lp-save-btn" data-form="FormSeo" id="simpan-seo">
-                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                        <span class="lp-btn-label">Simpan SEO</span>
                     </button>
                 </div>
             </div>
@@ -800,81 +580,24 @@ $(function () {
                 if (result.success) {
                     Toast.fire({ icon: 'success', title: result.msg || 'Tersimpan' });
 
-                    // Untuk card background, sinkronkan ulang meta bila server mengembalikan info.
-                    if (result.hero_background_url) {
-                        var heroUrl = result.hero_background_url;
-                        var meta = result.hero_background_meta || null;
+                    // Untuk card background, sinkronkan label ukuran file (tanpa popup/modal).
+                    if (result.hero_background_meta && result.hero_background_meta.size_label) {
                         var $customMeta = $('#heroBackgroundCustomMeta');
-                        if ($customMeta.length && meta && meta.size_label) {
-                            $customMeta.text(meta.size_label);
+                        if ($customMeta.length) {
+                            $customMeta.text(result.hero_background_meta.size_label);
                         }
-
-                        // Tampilkan detail background yang baru di-update.
-                        var isCustom = result.hero_background_key
-                            && String(result.hero_background_key).indexOf('custom:') === 0;
-
-                        var presetLabels = {
-                            'default-1': 'Standar 1 — Biru Ceria',
-                            'default-2': 'Standar 2 — Hijau Edukatif',
-                            'default-3': 'Standar 3 — Emas Premium',
-                            'default-4': 'Standar 4 — Ungu Kreatif',
-                        };
-                        var activeKey = result.hero_background_key || '';
-                        var presetLabel = presetLabels[activeKey] || null;
-
-                        var html = '';
-                        if (heroUrl) {
-                            html += '<div style="border-radius:.5rem;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:.75rem;background:#0f172a;">'
-                                + '<img src="' + heroUrl + '?v=' + Date.now() + '" alt="Background" style="width:100%;max-height:220px;object-fit:cover;display:block;">'
-                                + '</div>';
-                        }
-                        if (isCustom) {
-                            html += '<div class="text-start mb-2" style="font-size:.85rem;">'
-                                + '<div class="d-flex align-items-center gap-1 mb-1">'
-                                +   '<span class="material-symbols-rounded" style="font-size:16px;color:#1f9d57;">check_circle</span>'
-                                +   '<b>Custom Upload</b>'
-                                + '</div>';
-                            if (meta && meta.size_label) {
-                                html += '<div class="text-muted">Ukuran file: <b>' + meta.size_label + '</b></div>';
-                            }
-                            if (meta && meta.width && meta.height) {
-                                html += '<div class="text-muted">Resolusi: <b>' + meta.width + ' × ' + meta.height + ' px</b></div>';
-                            }
-                            html += '</div>';
-                        } else if (presetLabel) {
-                            html += '<div class="text-start mb-2" style="font-size:.85rem;">'
-                                + '<div class="d-flex align-items-center gap-1 mb-1">'
-                                +   '<span class="material-symbols-rounded" style="font-size:16px;color:#1f9d57;">check_circle</span>'
-                                +   '<b>' + presetLabel + '</b>'
-                                + '</div>'
-                                + '<div class="text-muted">Background tema standar aktif.</div>'
-                                + '</div>';
-                        }
-
-                        var landingUrl = result.landing_url || null;
-                        html += '<div class="d-flex gap-2 justify-content-center flex-wrap mt-3">';
-                        if (landingUrl) {
-                            html += '<a href="' + landingUrl + '" target="_blank" rel="noopener" class="btn btn-sm btn-success">'
-                                + '<span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;">open_in_new</span> '
-                                + 'Lihat Landing'
-                                + '</a>';
-                        }
-                        html += '<button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>';
-                        html += '</div>';
-
-                        Swal.fire({
-                            title: 'Background Berhasil Diperbarui',
-                            html: html,
-                            icon: 'success',
-                            showConfirmButton: false,
-                            showCloseButton: true,
-                            width: 520,
-                        });
                     }
 
                     clearPendingCustom();
+
+                    // Reload agar preview foto & nilai DB yang baru langsung tampil di card.
+                    // (Tanpa ini, foto hasil upload tetap di DOM sebagai preview base64
+                    //  dan admin tidak melihat foto baru sampai refresh manual.)
+                    if (result.redirect) {
+                        setTimeout(function () { window.location.href = result.redirect; }, 600);
+                    }
                 } else {
-                    Swal.fire('Gagal', result.msg || 'Terjadi kesalahan', 'error');
+                    Toast.fire({ icon: 'error', title: result.msg || 'Terjadi kesalahan' });
                 }
             },
             error: function (xhr) {
@@ -883,18 +606,19 @@ $(function () {
 
                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     var errors = xhr.responseJSON.errors;
-                    var list = Object.keys(errors)
-                        .map(function (field) {
-                            var label = $form.find('[name="' + field + '"]')
-                                .closest('.input-group')
-                                .find('.form-label').text().trim();
-                            return '<li>' + (label || field) + '</li>';
-                        })
-                        .join('');
-                    Swal.fire({
+                    var fieldNames = Object.keys(errors);
+                    var firstLabel = '';
+                    if (fieldNames.length) {
+                        firstLabel = $form.find('[name="' + fieldNames[0] + '"]')
+                            .closest('.input-group')
+                            .find('.form-label').text().trim() || fieldNames[0];
+                    }
+                    var titleSuffix = fieldNames.length > 1
+                        ? ' (' + fieldNames.length + ' field)'
+                        : (firstLabel ? ': ' + firstLabel : '');
+                    Toast.fire({
                         icon: 'error',
-                        title: 'Data belum lengkap',
-                        html: 'Inputan berikut masih kosong / tidak valid:<ul class="text-start">' + list + '</ul>'
+                        title: 'Data belum lengkap' + titleSuffix,
                     });
                     $.each(errors, function (key) {
                         var el = $form.find('[name="' + key + '"]');
@@ -902,9 +626,9 @@ $(function () {
                         el.closest('.input-group').addClass('is-invalid');
                     });
                 } else if (xhr.responseJSON && xhr.responseJSON.msg) {
-                    Swal.fire('Gagal', xhr.responseJSON.msg, 'error');
+                    Toast.fire({ icon: 'error', title: xhr.responseJSON.msg });
                 } else {
-                    Swal.fire('Galat', 'Cek kembali input yang anda masukkan', 'error');
+                    Toast.fire({ icon: 'error', title: 'Cek kembali input yang anda masukkan' });
                 }
             }
         });
@@ -1044,16 +768,13 @@ $(function () {
                     data: { _method: 'DELETE', _token: '{{ csrf_token() }}' },
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     success: function (result) {
-                        Swal.fire({
-                            title: result.msg || 'Berhasil',
-                            icon: 'success',
-                            confirmButtonText: 'OK',
-                        }).then(function () {
-                            window.location.reload();
-                        });
+                        Toast.fire({ icon: result.success ? 'success' : 'error', title: result.msg || (result.success ? 'Berhasil' : 'Gagal') });
+                        if (result.success) {
+                            setTimeout(function () { window.location.reload(); }, 600);
+                        }
                     },
                     error: function () {
-                        Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus.', 'error');
+                        Toast.fire({ icon: 'error', title: 'Terjadi kesalahan saat menghapus.' });
                     },
                 });
             });
@@ -1474,62 +1195,4 @@ $(function () {
     /* ===== Badge Hero (tambah/hapus baris) ===== */
     .lp-badge-row .lp-badge-remove { padding: .35rem .55rem; }
 </style>
-
-<script>
-(function () {
-    var wrap = document.getElementById('lp-badges-wrap');
-    var addBtn = document.getElementById('lp-badge-add');
-    if (!wrap || !addBtn) return;
-
-    function nextIndex() {
-        var max = -1;
-        wrap.querySelectorAll('.lp-badge-row').forEach(function (r) {
-            var idx = parseInt(r.getAttribute('data-index') || '-1', 10);
-            if (!isNaN(idx) && idx > max) max = idx;
-        });
-        return max + 1;
-    }
-
-    function buildRow(idx) {
-        var row = document.createElement('div');
-        row.className = 'row g-2 align-items-center lp-badge-row mb-2';
-        row.setAttribute('data-index', idx);
-        row.innerHTML = ''
-            + '<div class="col-md-4">'
-            +   '<div class="input-group input-group-outline mb-0">'
-            +     '<label class="form-label">Icon (Bootstrap Icon class)</label>'
-            +     '<input type="text" name="badges[' + idx + '][icon]" class="form-control" placeholder="bi-patch-check-fill">'
-            +   '</div>'
-            + '</div>'
-            + '<div class="col-md-7">'
-            +   '<div class="input-group input-group-outline mb-0">'
-            +     '<label class="form-label">Teks Badge</label>'
-            +     '<input type="text" name="badges[' + idx + '][text]" class="form-control" maxlength="120" placeholder="Terakreditasi A">'
-            +   '</div>'
-            + '</div>'
-            + '<div class="col-md-1 text-end">'
-            +   '<button type="button" class="btn btn-sm btn-outline-danger lp-badge-remove" title="Hapus baris">'
-            +     '<span class="material-symbols-rounded" style="font-size:18px;">delete</span>'
-            +   '</button>'
-            + '</div>';
-        return row;
-    }
-
-    addBtn.addEventListener('click', function () {
-        if (wrap.querySelectorAll('.lp-badge-row').length >= 6) return;
-        var row = buildRow(nextIndex());
-        wrap.appendChild(row);
-        // Trigger material filled state untuk input baru
-        var firstInput = row.querySelector('input');
-        if (firstInput) firstInput.focus();
-    });
-
-    wrap.addEventListener('click', function (e) {
-        var btn = e.target.closest('.lp-badge-remove');
-        if (!btn) return;
-        var row = btn.closest('.lp-badge-row');
-        if (row) row.remove();
-    });
-})();
-</script>
 @endsection

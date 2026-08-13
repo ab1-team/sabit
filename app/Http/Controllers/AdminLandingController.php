@@ -654,11 +654,43 @@ class AdminLandingController extends Controller
                 : 'Tidak ada background custom yang tersimpan.');
     }
 
-    public function posts()
+    public function posts(Request $request)
     {
+        $q = trim((string) $request->query('q', ''));
+        $status = $request->query('status', 'all');
+        $category = trim((string) $request->query('category', ''));
+
+        $posts = ArtikelLanding::query()
+            ->when($q !== '', function ($w) use ($q) {
+                $w->where(function ($x) use ($q) {
+                    $x->where('title', 'like', "%{$q}%")
+                        ->orWhere('category', 'like', "%{$q}%")
+                        ->orWhere('tags', 'like', "%{$q}%")
+                        ->orWhere('excerpt', 'like', "%{$q}%");
+                });
+            })
+            ->when($status === 'published', fn ($w) => $w->where('is_published', true))
+            ->when($status === 'draft', fn ($w) => $w->where('is_published', false))
+            ->when($category !== '', fn ($w) => $w->where('category', $category))
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->paginate(12)
+            ->withQueryString();
+
+        $categories = ArtikelLanding::query()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
         return view('admin-landing.artikel.indeks', [
             'title' => 'Program / Berita',
-            'posts' => ArtikelLanding::orderByDesc('published_at')->orderByDesc('id')->paginate(15)->withQueryString(),
+            'posts' => $posts,
+            'q' => $q,
+            'status' => $status,
+            'category' => $category,
+            'categories' => $categories,
         ]);
     }
 
@@ -833,11 +865,31 @@ class AdminLandingController extends Controller
         return $this->deleteSuccess($request, 'Pengumuman berhasil dihapus.', 'app.admin-landing.announcements');
     }
 
-    public function galleries()
+    public function galleries(Request $request)
     {
+        $q = trim((string) $request->query('q', ''));
+        $status = $request->query('status', 'all');
+
+        $galleries = GaleriLanding::query()
+            ->when($q !== '', function ($w) use ($q) {
+                $w->where(function ($x) use ($q) {
+                    $x->where('title', 'like', "%{$q}%")
+                        ->orWhere('album', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%");
+                });
+            })
+            ->when($status === 'published', fn ($w) => $w->where('is_published', true))
+            ->when($status === 'draft', fn ($w) => $w->where('is_published', false))
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->paginate(12)
+            ->withQueryString();
+
         return view('admin-landing.galeri.indeks', [
             'title' => 'Galeri',
-            'galleries' => GaleriLanding::orderBy('sort_order')->orderByDesc('id')->paginate(24)->withQueryString(),
+            'galleries' => $galleries,
+            'q' => $q,
+            'status' => $status,
         ]);
     }
 
@@ -1085,12 +1137,12 @@ class AdminLandingController extends Controller
     public function profileSections()
     {
         $this->ensureProfileSectionDefaults();
+        $this->ensureFasilitasDefaults();
 
         return view('admin-landing.bagian-profil.indeks', [
             'title' => 'Section Profil',
             'items' => BagianProfilLanding::orderBy('id')->get(),
             'action' => route('app.admin-landing.profile-sections.updateAll'),
-            'strukturItems' => StrukturOrganisasiLanding::orderBy('sort_order')->orderBy('id')->get(),
             'fasilitasItems' => FasilitasLanding::orderBy('sort_order')->orderBy('id')->get(),
         ]);
     }
@@ -1185,6 +1237,42 @@ class AdminLandingController extends Controller
         }
     }
 
+    private function ensureFasilitasDefaults(): void
+    {
+        // Default fasilitas seragam dengan fallback statis di landing publik
+        // (resources/views/halaman-publik/profil-sekolah.blade.php). Saat tabel
+        // kosong, sisipkan 2 item pertama supaya admin & publik konsisten.
+        if (FasilitasLanding::exists()) {
+            return;
+        }
+
+        $defaults = [
+            [
+                'title' => 'Ruang Kelas Modern',
+                'description' => 'Ruang belajar nyaman dengan pendingin ruangan, proyektor, dan akses internet untuk mendukung pembelajaran digital.',
+                'icon' => 'bi-easel',
+                'color_key' => 'blue',
+                'sort_order' => 1,
+                'is_published' => true,
+            ],
+            [
+                'title' => 'Laboratorium & Perpustakaan',
+                'description' => 'Laboratorium IPA, komputer, dan perpustakaan digital dengan koleksi buku yang lengkap untuk mendukung eksplorasi siswa.',
+                'icon' => 'bi-cpu',
+                'color_key' => 'cyan',
+                'sort_order' => 2,
+                'is_published' => true,
+            ],
+        ];
+
+        foreach ($defaults as $row) {
+            FasilitasLanding::firstOrCreate(
+                ['title' => $row['title']],
+                $row
+            );
+        }
+    }
+
     public function profileSectionEdit($item)
     {
         $model = BagianProfilLanding::findOrFail($item);
@@ -1241,31 +1329,60 @@ class AdminLandingController extends Controller
 
     public function ppdbCtaStore(Request $request)
     {
+        $section = $request->input('section');
+
+        // === Section "konten" → simpan ke tabel lp_ppdb_pengaturan ===
+        if ($section === 'konten') {
+            $data = $request->validate([
+                'bottom_eyebrow' => ['nullable', 'string', 'max:100'],
+                'bottom_title' => ['required', 'string', 'max:200'],
+                'bottom_paragraph' => ['nullable', 'string'],
+                'bottom_primary_text' => ['required', 'string', 'max:100'],
+                'bottom_primary_url' => ['nullable', 'string', 'max:255'],
+                'bottom_secondary_text' => ['nullable', 'string', 'max:100'],
+                'bottom_secondary_url' => ['nullable', 'string', 'max:255'],
+                'bottom_meta' => ['nullable', 'string', 'max:150'],
+            ]);
+
+            // Ambil baris aktif (kalau ada), atau baris pertama,
+            // atau buat baru dengan default values untuk field NOT NULL.
+            $ppdb = PengaturanPpdb::query()->where('is_active', true)->first()
+                ?? PengaturanPpdb::query()->first();
+
+            if ($ppdb) {
+                $ppdb->fill($data)->save();
+            } else {
+                // Baris pertama — butuh title karena NOT NULL tanpa default.
+                // Pakai bottom_title sebagai title default kalau field top belum diisi.
+                PengaturanPpdb::create(array_merge([
+                    'title' => $data['bottom_title'] ?? 'PPDB',
+                ], $data));
+            }
+
+            PengaturanPpdb::flushCache();
+
+            return $this->saveSuccess($request, 'Konten PPDB berhasil disimpan.', 'app.admin-landing.ppdb-cta');
+        }
+
+        // === Default: section "hero" → simpan ke JSON ppdb_cta ===
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'paragraph' => ['nullable', 'string'],
-            'button_primary_text' => ['required', 'string', 'max:80'],
-            'button_primary_url' => ['nullable', 'string', 'max:255'],
-            'button_secondary_text' => ['required', 'string', 'max:80'],
-            'button_secondary_url' => ['nullable', 'string', 'max:255'],
-            'points' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
+            'registration' => ['nullable', 'string'],
         ]);
 
-        $points = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) $request->input('points')))));
+        $setting = PengaturanLanding::current();
+        $existing = $setting->ppdb_cta ?: [];
 
-        $payload = [
+        // Pertahankan field lain (button_*, is_active) agar tidak hilang
+        // saat admin hanya edit dari halaman ini.
+        $payload = array_merge($existing, [
             'title' => $data['title'],
             'paragraph' => $data['paragraph'] ?? '',
-            'button_primary_text' => $data['button_primary_text'],
-            'button_primary_url' => $data['button_primary_url'] ?? '',
-            'button_secondary_text' => $data['button_secondary_text'],
-            'button_secondary_url' => $data['button_secondary_url'] ?? '',
-            'points' => $points,
-            'is_active' => $request->boolean('is_active'),
-        ];
+            'registration' => $data['registration'] ?? '',
+            'is_active' => $request->boolean('is_active', (bool) ($existing['is_active'] ?? true)),
+        ]);
 
-        $setting = PengaturanLanding::current();
         $setting->ppdb_cta = $payload;
         $setting->save();
 

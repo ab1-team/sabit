@@ -51,6 +51,7 @@ class LandingPageSeeder extends Seeder
             'email' => $email,
             'meta_description' => 'Informasi resmi, berita, kegiatan, dan pengumuman ' . $namaSekolah . '.',
             'meta_keywords' => 'sekolah, pendidikan, ' . strtolower($namaSekolah),
+            'welcome' => PengaturanLanding::welcomeDefaults(),
         ]);
     }
 

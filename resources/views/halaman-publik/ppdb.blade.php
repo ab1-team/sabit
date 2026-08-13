@@ -260,6 +260,21 @@
 @section('content')
 
 {{-- ====== Hero PPDB ====== --}}
+@php
+    $ppdbHeroYear = date('Y');
+    $ppdbHeroNextYear = $ppdbHeroYear + 1;
+    $ppdbHeroSchool = $setting->school_name ?? 'sekolah kami';
+    $ppdbHeroTitle = str_replace(
+        ['{{year}}', '{{school}}'],
+        [$ppdbHeroYear . '/' . $ppdbHeroNextYear, $ppdbHeroSchool],
+        $ppdbCta['title'] ?? 'Penerimaan Peserta Didik Baru'
+    );
+    $ppdbHeroParagraph = str_replace(
+        ['{{year}}', '{{school}}'],
+        [$ppdbHeroYear . '/' . $ppdbHeroNextYear, $ppdbHeroSchool],
+        $ppdbCta['paragraph'] ?? 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.'
+    );
+@endphp
 <section class="lp-ppdb-hero">
     <div class="container text-center">
         @if (!empty($ppdb->eyebrow))
@@ -267,18 +282,18 @@
                 {{ $ppdb->eyebrow }}
             </div>
         @endif
-        <h1 class="lp-reveal" data-from="zoom">{{ $ppdb->title ?? 'Penerimaan Peserta Didik Baru' }}</h1>
+        <h1 class="lp-reveal" data-from="zoom">{{ $ppdbHeroTitle }}</h1>
         <p class="lp-reveal" data-delay="1">
-            {{ $ppdb->subtitle ?? 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.' }}
+            {{ $ppdbHeroParagraph }}
         </p>
         <div class="lp-ppdb-cta lp-reveal" data-delay="2">
-            <a href="{{ $ppdb->cta_url ?: route('halaman-publik.kontak') }}" class="lp-btn-light">
+            <a href="{{ $ppdb->cta_url ?: route('halaman-publik.ppdb') }}" class="lp-btn-light">
                 <i class="bi bi-pencil-square"></i>
-                {{ $ppdb->cta_text ?? 'Formulir Pendaftaran Online' }}
+                <span>{{ $ppdb->cta_text ?? 'Formulir Pendaftaran' }}</span>
             </a>
             <a href="{{ $ppdb->secondary_url ?: route('halaman-publik.kontak') }}" class="lp-btn-outline-light">
                 <i class="bi bi-telephone"></i>
-                {{ $ppdb->secondary_text ?? 'Kontak Kami' }}
+                <span>{{ $ppdb->secondary_text ?? 'Kontak' }}</span>
             </a>
         </div>
     </div>
@@ -383,8 +398,8 @@
                                                 &ndash;
                                                 {{ $s->end_date?->translatedFormat('d M Y') }}
                                             </td>
-                                            <td>{{ $s->biaya_daftar ?? '-' }}</td>
-                                            <td>{{ $s->spp_bulanan ?? '-' }}</td>
+                                            <td>{{ \App\Support\PpdbFormat::rupiah($s->biaya_daftar) }}</td>
+                                            <td>{{ \App\Support\PpdbFormat::rupiah($s->spp_bulanan) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -405,7 +420,15 @@
                                 <i class="bi bi-chevron-down"></i>
                             </button>
                             <div class="lp-faq-a">
-                                {!! $faq->answer !!}
+                                @php
+                                    $answer = (string) $faq->answer;
+                                    $hasTags = $answer !== strip_tags($answer);
+                                @endphp
+                                @if ($hasTags)
+                                    {!! $answer !!}
+                                @else
+                                    {!! nl2br(e($answer)) !!}
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -418,25 +441,29 @@
                     <div class="row align-items-center g-4">
                         <div class="col-lg-7">
                             <span class="lp-cta-eyebrow">
-                                <i class="bi bi-megaphone-fill"></i> PPDB {{ date('Y') }}/{{ date('Y') + 1 }}
+                                <i class="bi bi-megaphone-fill"></i>
+                                {{ $ppdb->bottom_eyebrow ?: 'PPDB ' . date('Y') . '/' . (date('Y') + 1) }}
                             </span>
-                            <h3 class="mb-2">Siap mendaftarkan putra/putri Anda?</h3>
+                            <h3 class="mb-2">{{ $ppdb->bottom_title ?: 'Siap mendaftarkan putra/putri Anda?' }}</h3>
                             <p class="mb-0">
-                                Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.
+                                {{ $ppdb->bottom_paragraph ?: 'Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.' }}
                             </p>
                         </div>
                         <div class="col-lg-5">
                             <div class="lp-cta-actions lp-ppdb-cta-actions">
-                                <a href="{{ $ppdb->cta_url ?: route('halaman-publik.kontak') }}" class="lp-cta-btn">
-                                    <span>Mulai Pendaftaran Online</span>
-                                    <i class="bi bi-arrow-right"></i>
+                                <a href="{{ $ppdb->bottom_primary_url ?: ($ppdb->cta_url ?: route('halaman-publik.ppdb')) }}" class="lp-cta-btn">
+                                    <i class="bi bi-pencil-square"></i>
+                                    <span>{{ $ppdb->bottom_primary_text ?: 'Formulir Pendaftaran' }}</span>
                                 </a>
-                                <a href="{{ route('halaman-publik.kontak') }}" class="lp-cta-btn-outline">
-                                    <i class="bi bi-telephone"></i> Hubungi Tim PPDB
-                                </a>
-                                <div class="lp-cta-meta">
-                                    <i class="bi bi-shield-check"></i> Konsultasi gratis sebelum mendaftar
-                                </div>
+                                @if (!empty($ppdb->bottom_meta))
+                                    <div class="lp-cta-meta">
+                                        <i class="bi bi-shield-check"></i> {{ $ppdb->bottom_meta }}
+                                    </div>
+                                @else
+                                    <div class="lp-cta-meta">
+                                        <i class="bi bi-shield-check"></i> Konsultasi gratis sebelum mendaftar
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

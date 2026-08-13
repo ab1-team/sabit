@@ -59,17 +59,16 @@ class HalamanPublikController extends Controller
 
     /**
      * Halaman profil sekolah terpadu (sidebar nav + konten).
-     * Mengambil data Visi&Misi & Struktur Organisasi dari lp_pages;
+     * Mengambil data Visi&Misi dari lp_pages;
      * jika belum ada di DB, view akan pakai fallback statis.
      */
     public function profile()
     {
         $pages = HalamanLanding::published()
-            ->whereIn('slug', ['visi-dan-misi', 'struktur-organisasi'])
+            ->whereIn('slug', ['visi-dan-misi'])
             ->get()
             ->keyBy('slug');
 
-        $strukturItems = \App\Models\Landing\StrukturOrganisasiLanding::published()->ordered()->get();
         $fasilitasItems = \App\Models\Landing\FasilitasLanding::published()->ordered()->get();
         $overviewSection = \App\Models\Landing\BagianProfilLanding::getByKey('overview');
         $sejarahSection = \App\Models\Landing\BagianProfilLanding::getByKey('sejarah');
@@ -80,8 +79,6 @@ class HalamanPublikController extends Controller
             'setting' => PengaturanLanding::current(),
             'menus' => $this->menus(),
             'pageVisiMisi' => $pages->get('visi-dan-misi'),
-            'pageStruktur' => $pages->get('struktur-organisasi'),
-            'strukturItems' => $strukturItems,
             'fasilitasItems' => $fasilitasItems,
             'overviewSection' => $overviewSection,
             'sejarahSection' => $sejarahSection,

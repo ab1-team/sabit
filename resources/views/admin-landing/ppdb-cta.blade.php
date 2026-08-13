@@ -2,174 +2,185 @@
 
 @section('style')
     @include('admin-landing._gaya')
+    <style>
+        .lp-cta-card { position: relative; }
+
+        .lp-cta-card .input-group input,
+        .lp-cta-card .input-group textarea {
+            /* Pastikan kursor & klik input bekerja normal (Material outline +
+               card nested kadang bikin pointer-events salah). */
+            pointer-events: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .lp-cta-foot {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: .5rem;
+            margin-top: .75rem;
+            padding-top: .5rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+        /* Card Konten PPDB - kecilkan ruang bawah tombol saja */
+        .lp-cta-card-konten > .card-body {
+            padding-bottom: .4rem;
+        }
+        .lp-cta-card-konten .lp-cta-foot {
+            margin-top: .35rem;
+            margin-bottom: -.25rem;
+            padding-top: .3rem;
+            padding-bottom: 0;
+        }
+    </style>
 @endsection
 
 @section('content')
 <div class="px-2 py-2">
-    @if (session('success'))
-        <div class="alert alert-success py-2 small mb-3">{{ session('success') }}</div>
-    @endif
-    @if ($errors->any())
-        <div class="alert alert-danger py-2 small mb-3">
-            <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-        </div>
-    @endif
-
     @php
-        $titleSlot = '<h5 class="lp-page-title mb-1">'.e($title).'</h5>'
-            .'<p class="text-muted small mb-0">Atur judul, paragraf, tombol, dan poin-poin CTA di section PPDB halaman beranda. Nonaktifkan untuk menyembunyikan section.</p>';
+        $titleSlot = '<p class="text-muted small mb-0">Atur judul & paragraf Hero CTA, teks Pendaftaran, dan Konten PPDB 2026/2027 (eyebrow, judul, paragraf, tombol) yang tampil di section PPDB beranda & halaman PPDB publik. Setiap kartu punya tombol simpan sendiri.</p>';
     @endphp
     @include('admin-landing._header-halaman', [
         'subtitle' => 'Landing Page',
-        'back' => route('app.admin-landing.index'),
         'titleSlot' => $titleSlot,
     ])
 
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="material-symbols-rounded text-primary">how_to_reg</span>
-                <h6 class="mb-0 fw-bold">Kelola Konten Halaman PPDB</h6>
-            </div>
-            <p class="text-muted small mb-3">Halaman publik <code>/ppdb</code> terdiri dari CTA di beranda (form di bawah) dan konten detail (persyaratan, alur, jadwal, FAQ).</p>
-            <div class="row g-2 mb-3">
-                <div class="col-12 col-md-6">
-                    <a href="{{ route('app.admin-landing.ppdb-setting') }}" class="lp-admin-menu text-decoration-none">
-                        <div class="lp-admin-menu-icon" style="background: linear-gradient(135deg, #6366f122, #6366f111); color: #6366f1;">
-                            <span class="material-symbols-rounded">edit_note</span>
-                        </div>
-                        <div class="flex-grow-1 min-w-0">
-                            <div class="fw-bold text-dark lh-1" style="font-size:.85rem;">Pengaturan Halaman PPDB</div>
-                            <div class="text-muted" style="font-size:.7rem;">Judul, subjudul, tombol halaman PPDB</div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            <div class="row g-2">
-                <div class="col-6 col-md-3">
-                    <a href="{{ route('app.admin-landing.ppdb.requirements') }}" class="lp-admin-menu text-decoration-none">
-                        <div class="lp-admin-menu-icon" style="background: linear-gradient(135deg, #37d17c22, #37d17c11); color: #37d17c;">
-                            <span class="material-symbols-rounded">fact_check</span>
-                        </div>
-                        <div class="flex-grow-1 min-w-0">
-                            <div class="fw-bold text-dark lh-1" style="font-size:.85rem;">Persyaratan</div>
-                            <div class="text-muted" style="font-size:.7rem;">Dokumen & kelengkapan</div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-6 col-md-3">
-                    <a href="{{ route('app.admin-landing.ppdb.stages') }}" class="lp-admin-menu text-decoration-none">
-                        <div class="lp-admin-menu-icon" style="background: linear-gradient(135deg, #0ea5e922, #0ea5e911); color: #0ea5e9;">
-                            <span class="material-symbols-rounded">timeline</span>
-                        </div>
-                        <div class="flex-grow-1 min-w-0">
-                            <div class="fw-bold text-dark lh-1" style="font-size:.85rem;">Alur</div>
-                            <div class="text-muted" style="font-size:.7rem;">Tahapan pendaftaran</div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-6 col-md-3">
-                    <a href="{{ route('app.admin-landing.ppdb.schedules') }}" class="lp-admin-menu text-decoration-none">
-                        <div class="lp-admin-menu-icon" style="background: linear-gradient(135deg, #f59e0b22, #f59e0b11); color: #f59e0b;">
-                            <span class="material-symbols-rounded">event</span>
-                        </div>
-                        <div class="flex-grow-1 min-w-0">
-                            <div class="fw-bold text-dark lh-1" style="font-size:.85rem;">Jadwal</div>
-                            <div class="text-muted" style="font-size:.7rem;">Gelombang & tanggal</div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-6 col-md-3">
-                    <a href="{{ route('app.admin-landing.ppdb.faqs') }}" class="lp-admin-menu text-decoration-none">
-                        <div class="lp-admin-menu-icon" style="background: linear-gradient(135deg, #ec489922, #ec489911); color: #ec4899;">
-                            <span class="material-symbols-rounded">quiz</span>
-                        </div>
-                        <div class="flex-grow-1 min-w-0">
-                            <div class="fw-bold text-dark lh-1" style="font-size:.85rem;">FAQ</div>
-                            <div class="text-muted" style="font-size:.7rem;">Pertanyaan umum</div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     @php
-        $points = $cta['points'] ?? [
-            'Pendaftaran online & mudah',
-            'Kuota terbatas per jenjang',
-            'Bantuan seleksi & verifikasi',
-        ];
-        $pointsString = old('points', is_array($points) ? implode("\n", $points) : $points);
+        $registrationDefault = "Pendaftaran Peserta Didik Baru demo Tahun Ajaran 2026/2027 telah dibuka. Silakan pilih gelombang pendaftaran yang tersedia dan lengkapi dokumen sesuai persyaratan.\n\nKlik tombol \"Formulir Pendaftaran Online\" di atas untuk memulai pendaftaran, atau hubungi panitia PPDB untuk konsultasi terlebih dahulu.";
+        $registrationValue = old('registration', $cta['registration'] ?? $registrationDefault);
+        $titleValue = old('title', $cta['title'] ?? 'Penerimaan Peserta Didik Baru');
+        $paragraphValue = old('paragraph', $cta['paragraph'] ?? 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.');
+
+        // Default Konten PPDB 2026/2027
+        $bottomEyebrow = old('bottom_eyebrow', $ppdb->bottom_eyebrow ?? 'PPDB 2026/2027');
+        $bottomTitle = old('bottom_title', $ppdb->bottom_title ?? 'Siap mendaftarkan putra/putri Anda?');
+        $bottomParagraph = old('bottom_paragraph', $ppdb->bottom_paragraph ?? 'Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.');
+        $bottomPrimaryText = old('bottom_primary_text', $ppdb->bottom_primary_text ?? 'Mulai Pendaftaran Online');
+        $bottomPrimaryUrl = old('bottom_primary_url', $ppdb->bottom_primary_url ?? '');
+        $bottomSecondaryText = old('bottom_secondary_text', $ppdb->bottom_secondary_text ?? '');
+        $bottomSecondaryUrl = old('bottom_secondary_url', $ppdb->bottom_secondary_url ?? '');
+        $bottomMeta = old('bottom_meta', $ppdb->bottom_meta ?? 'Konsultasi gratis sebelum mendaftar');
     @endphp
 
+    {{-- ============ CARD 1: HERO CTA & PENDAFTARAN ============ --}}
     <form action="{{ $action }}" method="POST" class="lp-ajax">
         @csrf
-
-        <div class="card my-3 shadow-sm">
+        <input type="hidden" name="section" value="hero">
+        <div class="card my-3 shadow-sm lp-cta-card">
             <div class="card-body p-3">
+                <div class="lp-section-title">
+                    <span class="material-symbols-rounded">title</span>
+                    Hero CTA & Pendaftaran
+                </div>
+                <p class="text-muted small mb-3">Judul, paragraf singkat, dan teks panjang pendaftaran yang tampil di section CTA beranda publik.</p>
+
                 <div class="row">
-                    @include('admin-landing._komponen.input-teks', [
-                        'name' => 'title', 'label' => 'Judul CTA', 'required' => true,
-                        'value' => old('title', $cta['title'] ?? ''), 'colClass' => 'col-md-8',
-                        'help' => 'Gunakan <code>{{year}}</code> untuk placeholder tahun ajaran, mis. "PPDB {{year}}/".',
-                    ])
-                    @include('admin-landing._komponen.input-saklar', [
-                        'name' => 'is_active', 'label' => 'Aktif (tampilkan section)',
-                        'checkedDefault' => $cta['is_active'] ?? true,
-                        'inputId' => 'is_active_cta', 'colClass' => 'col-md-4',
-                    ])
-                    @include('admin-landing._komponen.input-teksarea', [
-                        'name' => 'paragraph', 'label' => 'Paragraf',
-                        'value' => old('paragraph', $cta['paragraph'] ?? ''), 'rows' => 3,
-                        'help' => 'Gunakan <code>{{school}}</code> untuk nama sekolah.',
-                    ])
-                    @include('admin-landing._komponen.input-teksarea', [
-                        'name' => 'points', 'label' => 'Poin-poin Keunggulan (satu per baris)',
-                        'value' => $pointsString, 'rows' => 4,
-                        'help' => 'Tiap baris jadi satu poin dengan icon centang.',
-                    ])
-                    @include('admin-landing._komponen.input-teks', [
-                        'name' => 'button_primary_text', 'label' => 'Teks Tombol Utama', 'required' => true,
-                        'value' => old('button_primary_text', $cta['button_primary_text'] ?? 'Daftar Sekarang'),
-                        'colClass' => 'col-md-6',
-                    ])
-                    @include('admin-landing._komponen.input-teks', [
-                        'name' => 'button_primary_url', 'label' => 'URL Tombol Utama',
-                        'placeholder' => '/ppdb atau https://...',
-                        'value' => old('button_primary_url', $cta['button_primary_url'] ?? ''),
-                        'colClass' => 'col-md-6',
-                        'help' => 'Kosongkan untuk default ke halaman <code>/ppdb</code>.',
-                    ])
-                    @include('admin-landing._komponen.input-teks', [
-                        'name' => 'button_secondary_text', 'label' => 'Teks Tombol Sekunder', 'required' => true,
-                        'value' => old('button_secondary_text', $cta['button_secondary_text'] ?? 'Hubungi Kami'),
-                        'colClass' => 'col-md-6',
-                    ])
-                    @include('admin-landing._komponen.input-teks', [
-                        'name' => 'button_secondary_url', 'label' => 'URL Tombol Sekunder',
-                        'placeholder' => '/kontak atau https://...',
-                        'value' => old('button_secondary_url', $cta['button_secondary_url'] ?? ''),
-                        'colClass' => 'col-md-6',
-                        'help' => 'Kosongkan untuk default ke halaman <code>/kontak</code>.',
-                    ])
+                    <div class="col-md-12">
+                        <div class="input-group input-group-outline mb-3 @if ($titleValue !== '') is-filled @endif">
+                            <label class="form-label">Judul <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control" required maxlength="255" value="{{ $titleValue }}">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="input-group input-group-outline mb-3 @if ($paragraphValue !== '') is-filled @endif">
+                            <label class="form-label">Paragraf</label>
+                            <textarea name="paragraph" rows="3" class="form-control">{{ $paragraphValue }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="input-group input-group-outline mb-3 @if ($registrationValue !== '') is-filled @endif">
+                            <label class="form-label">Konten Pendaftaran</label>
+                            <textarea name="registration" rows="6" class="form-control" placeholder="Tulis teks panjang pendaftaran di sini. Baris baru akan tampil sebagai paragraf di halaman publik.">{{ $registrationValue }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lp-cta-foot" style="margin-bottom: -.25rem; padding-bottom: 0;">
+                    <button type="submit" class="btn btn-info">
+                        <span class="material-symbols-rounded">save</span>
+                        Simpan Perubahan
+                    </button>
                 </div>
             </div>
         </div>
+    </form>
 
-        <div class="card my-3 shadow-sm">
-            <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 p-2 pb-1">
-                <span class="fw-bold" style="font-size: 14px;">
-                    Isi semua kolom bertanda <span class="text-danger">*</span>.
-                </span>
-                <button type="submit" class="btn btn-info w-100 w-md-auto mb-1">
-                    <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                    Simpan
-                </button>
+    {{-- ============ CARD 2: KONTEN PPDB 2026/2027 ============ --}}
+    <form action="{{ $action }}" method="POST" class="lp-ajax">
+        @csrf
+        <input type="hidden" name="section" value="konten">
+        <div class="card my-3 shadow-sm lp-cta-card lp-cta-card-konten">
+            <div class="card-body p-3">
+                <div class="lp-section-title">
+                    <span class="material-symbols-rounded">smart_button</span>
+                    Konten PPDB 2026/2027
+                </div>
+                <p class="text-muted small mb-3">Strip ajakan di bagian bawah halaman PPDB publik: "Siap mendaftarkan putra/putri Anda?".</p>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomEyebrow !== '') is-filled @endif">
+                            <label class="form-label">Eyebrow</label>
+                            <input type="text" name="bottom_eyebrow" class="form-control" maxlength="100" value="{{ $bottomEyebrow }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomTitle !== '') is-filled @endif">
+                            <label class="form-label">Judul <span class="text-danger">*</span></label>
+                            <input type="text" name="bottom_title" class="form-control" required maxlength="200" value="{{ $bottomTitle }}">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomParagraph !== '') is-filled @endif">
+                            <label class="form-label">Paragraf</label>
+                            <textarea name="bottom_paragraph" rows="3" class="form-control" placeholder="Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.">{{ $bottomParagraph }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomPrimaryText !== '') is-filled @endif">
+                            <label class="form-label">Teks Tombol Utama <span class="text-danger">*</span></label>
+                            <input type="text" name="bottom_primary_text" class="form-control" required maxlength="100" value="{{ $bottomPrimaryText }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomPrimaryUrl !== '') is-filled @endif">
+                            <label class="form-label">URL Tombol Utama</label>
+                            <input type="text" name="bottom_primary_url" class="form-control" maxlength="255" value="{{ $bottomPrimaryUrl }}" placeholder="/ppdb atau https://...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomSecondaryText !== '') is-filled @endif">
+                            <label class="form-label">Teks Tombol Sekunder (opsional)</label>
+                            <input type="text" name="bottom_secondary_text" class="form-control" maxlength="100" value="{{ $bottomSecondaryText }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomSecondaryUrl !== '') is-filled @endif">
+                            <label class="form-label">URL Tombol Sekunder</label>
+                            <input type="text" name="bottom_secondary_url" class="form-control" maxlength="255" value="{{ $bottomSecondaryUrl }}" placeholder="/kontak atau https://...">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="input-group input-group-outline mb-3 @if ($bottomMeta !== '') is-filled @endif">
+                            <label class="form-label">Teks Meta (di bawah tombol)</label>
+                            <input type="text" name="bottom_meta" class="form-control" maxlength="150" value="{{ $bottomMeta }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lp-cta-foot" style="margin-bottom: -.25rem; padding-bottom: 0;">
+                    <button type="submit" class="btn btn-info">
+                        <span class="material-symbols-rounded">save</span>
+                        Simpan Perubahan
+                    </button>
+                </div>
             </div>
         </div>
     </form>
 </div>
 @endsection
 
-@include('admin-landing._skrip')
+@section('script')
+    @include('admin-landing._skrip')
+@endsection

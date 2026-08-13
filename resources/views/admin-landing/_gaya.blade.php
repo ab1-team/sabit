@@ -39,6 +39,7 @@
     .lp-status-badge.is-draft     { background: rgba(100,116,139,.15); color: #475569; }
     .lp-status-badge.is-active    { background: rgba(55,209,124,.12); color: #1f9d57; }
     .lp-status-badge.is-inactive  { background: rgba(100,116,139,.15); color: #475569; }
+    .lp-status-badge.is-featured  { background: rgba(245,158,11,.15); color: #b45309; }
 
     .lp-thumb {
         width: 56px; height: 42px;

@@ -45,20 +45,12 @@ class PengaturanLanding extends Model
         'hero_background',
         'theme_button_color',
         'theme_text_color',
-        'hero_badges',
-        'stats',
         'welcome',
-        'jenjang',
-        'keunggulan',
         'ppdb_cta',
     ];
 
     protected $casts = [
-        'hero_badges' => 'array',
-        'stats' => 'array',
         'welcome' => 'array',
-        'jenjang' => 'array',
-        'keunggulan' => 'array',
         'ppdb_cta' => 'array',
     ];
 
@@ -288,26 +280,9 @@ class PengaturanLanding extends Model
         return in_array($key, array_column(self::themeBackgroundDefaults(), 'key'), true);
     }
 
-    public function heroBadges(): array
+    public static function welcomeDefaults(): array
     {
-        return $this->hero_badges ?: [
-            ['icon' => 'bi-patch-check-fill', 'text' => 'Terakreditasi A'],
-            ['icon' => 'bi-trophy-fill', 'text' => '50+ Prestasi 2025'],
-        ];
-    }
-
-    public function statsList(): array
-    {
-        return $this->stats ?: [
-            ['icon' => 'bi-people-fill', 'color' => 'blue', 'value' => '1.200+', 'label' => 'Siswa Aktif'],
-            ['icon' => 'bi-mortarboard-fill', 'color' => 'green', 'value' => '85+', 'label' => 'Guru & Staf Pengajar'],
-            ['icon' => 'bi-trophy-fill', 'color' => 'amber', 'value' => '120+', 'label' => 'Prestasi Diraih'],
-        ];
-    }
-
-    public function welcomeData(): array
-    {
-        $defaults = [
+        return [
             'photo' => 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80',
             'quote' => 'Mendidik dengan Hati, Membentuk dengan Karakter.',
             'paragraph_1' => 'Selamat datang di {{school}}. Kami berkomitmen untuk memberikan pengalaman belajar terbaik bagi putra-putri Anda. Di era digital ini, kami memadukan kurikulum nasional dengan standar internasional untuk membentuk karakter yang kuat dan pemikiran yang kritis.',
@@ -315,8 +290,19 @@ class PengaturanLanding extends Model
             'head_name' => 'Dr. Budi Santoso, M.Pd.',
             'head_role' => 'Kepala Sekolah, {{school}}',
         ];
+    }
 
-        $data = array_merge($defaults, $this->welcome ?: []);
+    public function welcomeData(): array
+    {
+        // Merge dengan fallback: nilai null/kosong dari DB kembali ke default.
+        $stored = $this->welcome ?: [];
+        $merged = self::welcomeDefaults();
+        foreach ($stored as $k => $v) {
+            if ($v !== null && $v !== '') {
+                $merged[$k] = $v;
+            }
+        }
+        $data = $merged;
 
         // Resolve foto upload: 'uploaded:' -> URL storage
         if (!empty($data['photo']) && is_string($data['photo']) && str_starts_with($data['photo'], 'uploaded:')) {
@@ -335,57 +321,16 @@ class PengaturanLanding extends Model
         return $data;
     }
 
-    public function jenjangList(): array
-    {
-        $defaults = [
-            ['key' => 'tk', 'age' => 'USIA 4–6 TAHUN', 'title' => 'TK / PAUD', 'icon' => 'bi-emoji-smile-fill', 'desc' => 'Pembelajaran bermain sambil belajar dengan pendekatan tematik untuk menumbuhkan rasa ingin tahu.'],
-            ['key' => 'sd', 'age' => 'KELAS 1–6', 'title' => 'Sekolah Dasar', 'icon' => 'bi-pencil-square', 'desc' => 'Fondasi akademik yang kuat dengan literasi, numerasi, dan pengembangan karakter.'],
-            ['key' => 'smp', 'age' => 'KELAS 7–9', 'title' => 'SMP', 'icon' => 'bi-backpack3-fill', 'desc' => 'Pendidikan menengah dengan eksplorasi minat, berpikir kritis, dan kepemimpinan.'],
-            ['key' => 'sma', 'age' => 'KELAS 10–12', 'title' => 'SMA', 'icon' => 'bi-mortarboard-fill', 'desc' => 'Persiapan masuk perguruan tinggi terbaik dengan program akselerasi & bimbingan karir.'],
-        ];
-
-        if (empty($this->jenjang)) {
-            return $defaults;
-        }
-
-        $keys = array_column($defaults, 'key');
-        $items = $this->jenjang;
-        // Isi key default untuk item tanpa key (untuk konsistensi class CSS lp-jenjang-card)
-        foreach ($items as $i => &$it) {
-            if (empty($it['key']) && isset($keys[$i])) {
-                $it['key'] = $keys[$i];
-            }
-        }
-
-        return $items;
-    }
-
-    public function keunggulanList(): array
-    {
-        return $this->keunggulan ?: [
-            ['color' => 'blue', 'icon' => 'bi-book-fill', 'title' => 'Kurikulum Merdeka', 'desc' => 'Penerapan kurikulum merdeka dengan pembelajaran yang fleksibel, mendalam, dan menyenangkan, mengembangkan potensi sesuai minat & bakat siswa.'],
-            ['color' => 'green', 'icon' => 'bi-shield-check', 'title' => 'Pendidikan Karakter', 'desc' => 'Menumbuhkan nilai-nilai disiplin, integritas, dan kepemimpinan dalam setiap aspek kehidupan sekolah.'],
-            ['color' => 'amber', 'icon' => 'bi-pc-display', 'title' => 'Digital Learning', 'desc' => 'Integrasi teknologi dalam pembelajaran dengan laboratorium komputer dan multimedia modern.'],
-            ['color' => 'pink', 'icon' => 'bi-translate', 'title' => 'Lingkungan Dwibahasa', 'desc' => 'Penggunaan Bahasa Inggris & Indonesia secara aktif dalam keseharian sekolah, mempersiapkan siswa untuk komunikasi global.'],
-            ['color' => 'purple', 'icon' => 'bi-palette-fill', 'title' => 'Seni & Kreativitas', 'desc' => 'Ruang ekspresi seni musik, lukis, dan tari yang mengembangkan kreativitas anak.'],
-            ['color' => 'cyan', 'icon' => 'bi-trophy-fill', 'title' => 'Prestasi Gemilang', 'desc' => 'Ratusan prestasi akademik & non-akademik tingkat kota hingga nasional.'],
-        ];
-    }
-
     public function ppdbCtaData(): array
     {
         return $this->ppdb_cta ?: [
-            'title' => 'Penerimaan Peserta Didik Baru {{year}} Telah Dibuka!',
-            'paragraph' => 'Daftarkan putra-putri Anda sekarang dan jadilah bagian dari keluarga besar {{school}}. Kuota terbatas untuk setiap jenjang.',
+            'title' => 'Penerimaan Peserta Didik Baru',
+            'paragraph' => 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.',
             'button_primary_text' => 'Daftar Sekarang',
             'button_primary_url' => '#kontak',
             'button_secondary_text' => 'Hubungi Kami',
             'button_secondary_url' => '#kontak',
-            'points' => [
-                'Pendaftaran online & mudah',
-                'Kuota terbatas per jenjang',
-                'Bantuan seleksi & verifikasi',
-            ],
+            'registration' => "Pendaftaran Peserta Didik Baru demo Tahun Ajaran 2026/2027 telah dibuka. Silakan pilih gelombang pendaftaran yang tersedia dan lengkapi dokumen sesuai persyaratan.\n\nKlik tombol \"Formulir Pendaftaran Online\" di atas untuk memulai pendaftaran, atau hubungi panitia PPDB untuk konsultasi terlebih dahulu.",
             'is_active' => true,
         ];
     }

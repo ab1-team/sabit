@@ -23,13 +23,6 @@
     // Sambutan Kepala Sekolah
     $welcome = $setting->welcomeData();
 
-    // Statistik (3 kartu)
-    $statsList = $setting->statsList();
-
-    // Jenjang & Keunggulan (untuk section di beranda)
-    $jenjangList = $setting->jenjangList();
-    $keunggulanList = $setting->keunggulanList();
-
     // CTA PPDB section data
     $ppdbCta = $setting->ppdbCtaData();
     $ppdbCtaActive = $ppdbCta['is_active'] ?? true;
@@ -37,11 +30,7 @@
     $nextYear = $year + 1;
     $ppdbTitle = str_replace(['{{year}}'], [$year . '/' . $nextYear], $ppdbCta['title'] ?? '');
     $ppdbParagraph = str_replace(['{{school}}'], $setting->school_name ?? 'sekolah kami', $ppdbCta['paragraph'] ?? '');
-    $ppdbPoints = $ppdbCta['points'] ?? [
-        'Pendaftaran online & mudah',
-        'Kuota terbatas per jenjang',
-        'Bantuan seleksi & verifikasi',
-    ];
+    $ppdbRegistration = $ppdbCta['registration'] ?? "Pendaftaran Peserta Didik Baru demo Tahun Ajaran 2026/2027 telah dibuka. Silakan pilih gelombang pendaftaran yang tersedia dan lengkapi dokumen sesuai persyaratan.\n\nKlik tombol \"Formulir Pendaftaran Online\" di atas untuk memulai pendaftaran, atau hubungi panitia PPDB untuk konsultasi terlebih dahulu.";
 @endphp
 
 @section('content')
@@ -65,25 +54,6 @@
         <div class="lp-reveal mt-4 d-flex flex-wrap justify-content-center gap-2" data-delay="4">
             <span class="lp-badge"><i class="bi bi-patch-check-fill"></i> Terakreditasi A</span>
             <span class="lp-badge"><i class="bi bi-trophy-fill"></i> 50+ Prestasi 2025</span>
-        </div>
-    </div>
-</section>
-
-{{-- ===== Stats ===== --}}
-<section class="lp-section lp-bg-soft" id="stats">
-    <div class="container">
-        <div class="row g-3 g-lg-4">
-            @foreach ($statsList as $i => $s)
-                <div class="col-md-4">
-                    <div class="lp-glass lp-stat-card lp-reveal" data-from="zoom" data-delay="{{ $i + 1 }}">
-                        <div class="lp-stat-icon is-{{ $s['color'] ?? 'blue' }}"><i class="bi {{ $s['icon'] ?? 'bi-people-fill' }}"></i></div>
-                        <div>
-                            <div class="lp-stat-value">{{ $s['value'] }}</div>
-                            <div class="lp-stat-label">{{ $s['label'] }}</div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
         </div>
     </div>
 </section>
@@ -124,57 +94,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
-
-{{-- ===== Jenjang Pendidikan ===== --}}
-<section class="lp-section lp-bg-soft" id="jenjang">
-    <div class="container">
-        <div class="text-center lp-section-head lp-reveal" data-from="zoom">
-            <span class="lp-section-eyebrow">Jenjang Pendidikan</span>
-            <h2 class="lp-section-title">Tumbuh Bersama di Setiap Jenjang</h2>
-            <p class="lp-section-sub">Pendidikan terpadu dari usia dini hingga sekolah menengah atas dengan kurikulum yang adaptif.</p>
-        </div>
-
-        <div class="row g-3 g-lg-4">
-            @foreach ($jenjangList as $i => $j)
-                @php
-                    $kelasMap = ['tk', 'sd', 'smp', 'sma'];
-                    $kelas = $j['key'] ?? ($kelasMap[$i] ?? 'sd');
-                @endphp
-                <div class="col-md-6 col-lg-3">
-                    <div class="lp-glass lp-jenjang-card {{ $kelas }} lp-reveal h-100" data-from="zoom" data-delay="{{ $i + 1 }}">
-                        <div class="lp-jenjang-icon"><i class="bi {{ $j['icon'] ?? 'bi-mortarboard-fill' }}"></i></div>
-                        <span class="lp-jenjang-age">{{ $j['age'] ?? '' }}</span>
-                        <h5 class="lp-jenjang-title">{{ $j['title'] ?? '' }}</h5>
-                        <p class="lp-jenjang-desc">{{ $j['desc'] ?? '' }}</p>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-{{-- ===== Keunggulan ===== --}}
-<section class="lp-section" id="keunggulan">
-    <div class="container">
-        <div class="text-center lp-section-head lp-reveal" data-from="zoom">
-            <span class="lp-section-eyebrow">Mengapa Kami</span>
-            <h2 class="lp-section-title">Keunggulan Sekolah Kami</h2>
-            <p class="lp-section-sub">Komitmen kami untuk memberikan pendidikan terbaik bagi setiap siswa.</p>
-        </div>
-
-        <div class="row g-3 g-lg-4">
-            @foreach ($keunggulanList as $i => $k)
-                <div class="col-md-6 col-lg-4">
-                    <div class="lp-glass lp-feature-card lp-reveal h-100" data-from="zoom" data-delay="{{ ($i % 3) + 1 }}">
-                        <div class="lp-feature-icon is-{{ $k['color'] ?? 'blue' }}"><i class="bi {{ $k['icon'] ?? 'bi-book-fill' }}"></i></div>
-                        <h5 class="lp-feature-title">{{ $k['title'] ?? '' }}</h5>
-                        <p class="lp-feature-desc">{{ $k['desc'] ?? '' }}</p>
-                    </div>
-                </div>
-            @endforeach
         </div>
     </div>
 </section>
@@ -364,20 +283,19 @@
                     </span>
                     <h3>{{ $ppdbTitle }}</h3>
                     <p>{{ $ppdbParagraph }}</p>
-                    <ul class="lp-cta-points">
-                        @foreach ($ppdbPoints as $point)
-                            <li><i class="bi bi-check2-circle"></i> {{ $point }}</li>
-                        @endforeach
-                    </ul>
+                    <div class="lp-cta-registration">
+                        {!! nl2br(e($ppdbRegistration)) !!}
+                    </div>
                 </div>
                 <div class="col-lg-5">
                     <div class="lp-cta-actions">
-                        <a href="{{ $ppdbCta['button_primary_url'] ?: route('halaman-publik.ppdb') }}" class="lp-cta-btn">
-                            <span>{{ $ppdbCta['button_primary_text'] ?: 'Daftar Sekarang' }}</span>
-                            <i class="bi bi-arrow-right"></i>
+                        <a href="{{ route('halaman-publik.ppdb') }}" class="lp-cta-btn">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>Formulir Pendaftaran</span>
                         </a>
-                        <a href="{{ $ppdbCta['button_secondary_url'] ?: route('halaman-publik.kontak') }}" class="lp-cta-btn-outline">
-                            <i class="bi bi-telephone"></i> {{ $ppdbCta['button_secondary_text'] ?: 'Hubungi Kami' }}
+                        <a href="{{ route('halaman-publik.kontak') }}" class="lp-cta-btn-outline">
+                            <i class="bi bi-telephone"></i>
+                            <span>Kontak</span>
                         </a>
                         <div class="lp-cta-meta">
                             <i class="bi bi-shield-check"></i> Gratis konsultasi sebelum daftar

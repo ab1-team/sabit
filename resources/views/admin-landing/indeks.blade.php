@@ -71,7 +71,7 @@
             <div class="row g-2">
 @php
                 $menus = [
-                    ['route' => 'app.admin-landing.pengaturan', 'icon' => 'settings', 'title' => 'Pengaturan Website', 'sub' => 'Identitas, kontak, sambutan, statistik, jenjang, keunggulan, warna, background, SEO', 'color' => '#37d17c'],
+                    ['route' => 'app.admin-landing.pengaturan', 'icon' => 'settings', 'title' => 'Pengaturan Website', 'sub' => 'Hero, identitas, kontak, sambutan, warna, background, SEO', 'color' => '#37d17c'],
                     ['route' => 'app.admin-landing.ppdb-cta', 'icon' => 'how_to_reg', 'title' => 'PPDB', 'sub' => 'CTA, persyaratan, alur, jadwal, FAQ', 'color' => '#f97316'],
                     ['route' => 'app.admin-landing.profile-sections', 'icon' => 'account_balance', 'title' => 'Profil', 'sub' => 'Section profil, struktur, fasilitas', 'color' => '#0ea5e9'],
                     ['route' => 'app.admin-landing.posts', 'icon' => 'article', 'title' => 'Berita', 'sub' => 'Artikel & program', 'color' => '#f59e0b'],

@@ -57,19 +57,43 @@ class MenuStructureSeeder extends Seeder
         // PPDB child menggunakan id 31-35 untuk menghindari collision dengan
         // id=26 (Beranda Layanan dari MenuSeeder) dan id 27-30 (konten
         // landing lain hasil migrasi). Id konsisten dipakai di MenuStructureSeeder.
-        DB::table('menu')->insertOrIgnore([
-            ['id' => 16, 'nama_menu' => 'Pengaturan Website', 'route' => '/app/admin-landing/pengaturan', 'icon' => 'tune', 'urutan' => 16, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
-            ['id' => 19, 'nama_menu' => 'Profil', 'route' => '/app/admin-landing/bagian-profil', 'icon' => 'account_balance', 'urutan' => 17, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
-            ['id' => 20, 'nama_menu' => 'Berita', 'route' => '/app/admin-landing/artikel', 'icon' => 'article', 'urutan' => 18, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
-            ['id' => 21, 'nama_menu' => 'Galeri', 'route' => '/app/admin-landing/galeri', 'icon' => 'photo_library', 'urutan' => 19, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
-            ['id' => 22, 'nama_menu' => 'Pengumuman', 'route' => '/app/admin-landing/pengumuman', 'icon' => 'campaign', 'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
-            ['id' => 23, 'nama_menu' => 'Kontak', 'route' => '/app/admin-landing/pesan-kontak', 'icon' => 'contact_mail', 'urutan' => 21, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
-            ['id' => 31, 'nama_menu' => 'Pengaturan PPDB', 'route' => '/app/admin-landing/ppdb-cta', 'icon' => 'tune', 'urutan' => 1, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25, 'created_at' => null, 'updated_at' => null],
-            ['id' => 32, 'nama_menu' => 'Persyaratan', 'route' => '/app/admin-landing/ppdb/persyaratan', 'icon' => 'fact_check', 'urutan' => 2, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25, 'created_at' => null, 'updated_at' => null],
-            ['id' => 33, 'nama_menu' => 'Alur', 'route' => '/app/admin-landing/ppdb/tahapan', 'icon' => 'timeline', 'urutan' => 3, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25, 'created_at' => null, 'updated_at' => null],
-            ['id' => 34, 'nama_menu' => 'Jadwal', 'route' => '/app/admin-landing/ppdb/jadwal', 'icon' => 'event', 'urutan' => 4, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25, 'created_at' => null, 'updated_at' => null],
-            ['id' => 35, 'nama_menu' => 'FAQ', 'route' => '/app/admin-landing/ppdb/faq', 'icon' => 'quiz', 'urutan' => 5, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25, 'created_at' => null, 'updated_at' => null],
-        ]);
+        //
+        // Penting: kolom `route` di sini HARUS cocok dengan path pada
+        // routes/tenant-admin.php (prefix 'admin-landing'). Sidebar men-render
+        // url($menu->route) langsung. Jika tidak cocok, link sub-menu
+        // akan 404. Perhatikan:
+        //   - profil -> profile-sections (bukan bagian-profil)
+        //   - berita -> posts (bukan artikel)
+        //   - galeri -> galleries (bukan galeri)
+        //   - pengumuman -> announcements (bukan pengumuman)
+        //   - kontak -> contact-messages (bukan pesan-kontak)
+        $landingChildren = [
+            ['id' => 16, 'nama_menu' => 'Pengaturan Website', 'route' => '/app/admin-landing/pengaturan',        'icon' => 'tune',             'urutan' => 16, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 19, 'nama_menu' => 'Profil',              'route' => '/app/admin-landing/profile-sections', 'icon' => 'account_balance',  'urutan' => 17, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 20, 'nama_menu' => 'Berita',              'route' => '/app/admin-landing/posts',            'icon' => 'article',          'urutan' => 18, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 21, 'nama_menu' => 'Galeri',              'route' => '/app/admin-landing/galleries',        'icon' => 'photo_library',    'urutan' => 19, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 22, 'nama_menu' => 'Pengumuman',          'route' => '/app/admin-landing/announcements',    'icon' => 'campaign',         'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 23, 'nama_menu' => 'Kontak',              'route' => '/app/admin-landing/contact-messages', 'icon' => 'contact_mail',     'urutan' => 21, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 31, 'nama_menu' => 'Pengaturan PPDB',     'route' => '/app/admin-landing/ppdb-cta',         'icon' => 'tune',             'urutan' => 1,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
+            ['id' => 32, 'nama_menu' => 'Persyaratan',         'route' => '/app/admin-landing/ppdb/persyaratan', 'icon' => 'fact_check',       'urutan' => 2,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
+            ['id' => 33, 'nama_menu' => 'Alur',                'route' => '/app/admin-landing/ppdb/tahapan',     'icon' => 'timeline',         'urutan' => 3,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
+            ['id' => 34, 'nama_menu' => 'Jadwal',              'route' => '/app/admin-landing/ppdb/jadwal',      'icon' => 'event',            'urutan' => 4,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
+            ['id' => 35, 'nama_menu' => 'FAQ',                 'route' => '/app/admin-landing/ppdb/faq',         'icon' => 'quiz',             'urutan' => 5,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
+        ];
+
+        $now = now();
+        foreach ($landingChildren as $row) {
+            $exists = DB::table('menu')->where('id', $row['id'])->exists();
+            $payload = $row + ['created_at' => null, 'updated_at' => $now];
+            if ($exists) {
+                // Update kolom route/icon/nama_menu/group/parent_id/urutan/status
+                // agar sesuai dengan route aktual, walau baris sudah ada.
+                DB::table('menu')->where('id', $row['id'])->update($payload);
+            } else {
+                $payload['created_at'] = null;
+                DB::table('menu')->insert($payload);
+            }
+        }
 
         DB::table('menu')->where('id', 2)->update(['parent_id' => 12]);
         DB::table('menu')->where('id', 3)->update(['parent_id' => 12]);
