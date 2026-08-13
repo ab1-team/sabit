@@ -40,14 +40,17 @@ trait LandingAdminResponse
 
     protected function saveSuccess(Request $request, string $msg, ?string $redirectRoute = null, array $extra = [])
     {
-        if ($this->wantsJsonResponse($request)) {
+        if ($this->wantsJsonResponse($request) || $request->isMethod('PUT') || $request->isMethod('PATCH')) {
             return response()->json(array_merge([
                 'success' => true,
                 'msg' => $msg,
                 'redirect' => $redirectRoute ? route($redirectRoute) : null,
             ], $extra));
         }
-        return redirect()->route($redirectRoute)->with('success', $msg);
+        if ($redirectRoute) {
+            return redirect()->route($redirectRoute)->with('success', $msg);
+        }
+        return back()->with('success', $msg);
     }
 
     protected function deleteSuccess(Request $request, string $msg, ?string $redirectRoute = null)
@@ -100,41 +103,322 @@ class LandingAdminController extends Controller
         ]);
     }
 
+    /**
+     * Whitelist field per-section. Dipakai agar submit parsial (per-card)
+     * hanya memproses field milik section yang dikirim — section lain
+     * di DB tidak boleh ter-overwrite.
+     *
+     * Setiap section menentukan:
+     *  - rules   : aturan validasi Laravel untuk field section tsb.
+     *  - fields  : kolom DB yang akan di-save (sisanya diabaikan).
+     *  - messages: pesan error kustom (opsional).
+     *  - label   : label section untuk pesan sukses.
+     */
+    private function pengaturanSections(): array
+    {
+        return [
+            'identitas' => [
+                'label' => 'Identitas Sekolah',
+                'fields' => ['school_name', 'tagline', 'logo', 'favicon'],
+                'rules' => [
+                    'school_name' => ['required', 'string', 'max:150'],
+                    'tagline' => ['nullable', 'string', 'max:255'],
+                    'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
+                    'favicon' => ['nullable', 'image', 'mimes:png,ico,jpg,jpeg', 'max:512'],
+                ],
+                'messages' => [],
+            ],
+            'kontak' => [
+                'label' => 'Kontak',
+                'fields' => ['email', 'phone', 'whatsapp', 'address', 'google_maps_url'],
+                'rules' => [
+                    'email' => ['nullable', 'email', 'max:150'],
+                    'phone' => ['nullable', 'string', 'max:30'],
+                    'whatsapp' => ['nullable', 'string', 'max:30'],
+                    'address' => ['nullable', 'string'],
+                    'google_maps_url' => ['nullable', 'string'],
+                ],
+                'messages' => [],
+            ],
+            'medsos' => [
+                'label' => 'Media Sosial',
+                'fields' => ['facebook', 'instagram', 'youtube', 'tiktok'],
+                'rules' => [
+                    'facebook' => ['nullable', 'url', 'max:255'],
+                    'instagram' => ['nullable', 'url', 'max:255'],
+                    'youtube' => ['nullable', 'url', 'max:255'],
+                    'tiktok' => ['nullable', 'url', 'max:255'],
+                ],
+                'messages' => [],
+            ],
+            'background' => [
+                'label' => 'Background Tema',
+                'fields' => ['hero_background'],
+                'rules' => [
+                    'hero_background_choice' => ['nullable', 'string', 'max:255'],
+                    'hero_background_custom' => [
+                        'nullable',
+                        'image',
+                        'mimes:jpg,jpeg,png,webp',
+                        'max:10240',
+                    ],
+                ],
+                'messages' => [
+                    'hero_background_custom.image' => 'File background harus berupa gambar.',
+                    'hero_background_custom.mimes' => 'Format background harus JPG, JPEG, PNG, atau WEBP.',
+                    'hero_background_custom.max' => 'Ukuran background maksimal 10 MB (akan otomatis dikecilkan ke 1920×1080).',
+                ],
+            ],
+            'warna' => [
+                'label' => 'Warna Tombol & Text',
+                'fields' => ['theme_button_color', 'theme_text_color'],
+                'rules' => [
+                    'theme_button_color_choice' => ['nullable', 'string', 'max:255'],
+                    'theme_button_color_custom' => ['nullable', 'string', 'max:20', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+                ],
+                'messages' => [],
+            ],
+            'seo' => [
+                'label' => 'SEO',
+                'fields' => ['meta_description', 'meta_keywords'],
+                'rules' => [
+                    'meta_description' => ['nullable', 'string', 'max:255'],
+                    'meta_keywords' => ['nullable', 'string', 'max:255'],
+                ],
+                'messages' => [],
+            ],
+            'sambutan' => [
+                'label' => 'Sambutan Kepala Sekolah',
+                'fields' => ['welcome'],
+                'rules' => [
+                    'welcome_photo_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+                    'welcome_quote' => ['nullable', 'string', 'max:255'],
+                    'welcome_paragraph_1' => ['nullable', 'string'],
+                    'welcome_paragraph_2' => ['nullable', 'string'],
+                    'welcome_head_name' => ['nullable', 'string', 'max:150'],
+                    'welcome_head_role' => ['nullable', 'string', 'max:200'],
+                ],
+                'messages' => [
+                    'welcome_photo_upload.image' => 'File foto harus berupa gambar.',
+                    'welcome_photo_upload.mimes' => 'Format foto harus JPG, JPEG, PNG, atau WEBP.',
+                    'welcome_photo_upload.max' => 'Ukuran foto maksimal 4 MB.',
+                ],
+            ],
+            'statistik' => [
+                'label' => 'Statistik',
+                'fields' => ['stats'],
+                'rules' => [
+                    'stats_icon_1' => ['nullable', 'string', 'max:80'],
+                    'stats_color_1' => ['nullable', 'string', 'max:20'],
+                    'stats_value_1' => ['nullable', 'string', 'max:30'],
+                    'stats_label_1' => ['nullable', 'string', 'max:80'],
+                    'stats_icon_2' => ['nullable', 'string', 'max:80'],
+                    'stats_color_2' => ['nullable', 'string', 'max:20'],
+                    'stats_value_2' => ['nullable', 'string', 'max:30'],
+                    'stats_label_2' => ['nullable', 'string', 'max:80'],
+                    'stats_icon_3' => ['nullable', 'string', 'max:80'],
+                    'stats_color_3' => ['nullable', 'string', 'max:20'],
+                    'stats_value_3' => ['nullable', 'string', 'max:30'],
+                    'stats_label_3' => ['nullable', 'string', 'max:80'],
+                ],
+                'messages' => [],
+            ],
+            'jenjang' => [
+                'label' => 'Jenjang Pendidikan',
+                'fields' => ['jenjang'],
+                'rules' => [
+                    'jenjang_age_1' => ['nullable', 'string', 'max:60'],
+                    'jenjang_title_1' => ['nullable', 'string', 'max:80'],
+                    'jenjang_icon_1' => ['nullable', 'string', 'max:80'],
+                    'jenjang_desc_1' => ['nullable', 'string'],
+                    'jenjang_age_2' => ['nullable', 'string', 'max:60'],
+                    'jenjang_title_2' => ['nullable', 'string', 'max:80'],
+                    'jenjang_icon_2' => ['nullable', 'string', 'max:80'],
+                    'jenjang_desc_2' => ['nullable', 'string'],
+                    'jenjang_age_3' => ['nullable', 'string', 'max:60'],
+                    'jenjang_title_3' => ['nullable', 'string', 'max:80'],
+                    'jenjang_icon_3' => ['nullable', 'string', 'max:80'],
+                    'jenjang_desc_3' => ['nullable', 'string'],
+                    'jenjang_age_4' => ['nullable', 'string', 'max:60'],
+                    'jenjang_title_4' => ['nullable', 'string', 'max:80'],
+                    'jenjang_icon_4' => ['nullable', 'string', 'max:80'],
+                    'jenjang_desc_4' => ['nullable', 'string'],
+                ],
+                'messages' => [],
+            ],
+            'keunggulan' => [
+                'label' => 'Keunggulan Sekolah',
+                'fields' => ['keunggulan'],
+                'rules' => [
+                    'keunggulan_color_1' => ['nullable', 'string', 'max:20'],
+                    'keunggulan_icon_1' => ['nullable', 'string', 'max:80'],
+                    'keunggulan_title_1' => ['nullable', 'string', 'max:120'],
+                    'keunggulan_desc_1' => ['nullable', 'string'],
+                    'keunggulan_color_2' => ['nullable', 'string', 'max:20'],
+                    'keunggulan_icon_2' => ['nullable', 'string', 'max:80'],
+                    'keunggulan_title_2' => ['nullable', 'string', 'max:120'],
+                    'keunggulan_desc_2' => ['nullable', 'string'],
+                    'keunggulan_color_3' => ['nullable', 'string', 'max:20'],
+                    'keunggulan_icon_3' => ['nullable', 'string', 'max:80'],
+                    'keunggulan_title_3' => ['nullable', 'string', 'max:120'],
+                    'keunggulan_desc_3' => ['nullable', 'string'],
+                    'keunggulan_color_4' => ['nullable', 'string', 'max:20'],
+                    'keunggulan_icon_4' => ['nullable', 'string', 'max:80'],
+                    'keunggulan_title_4' => ['nullable', 'string', 'max:120'],
+                    'keunggulan_desc_4' => ['nullable', 'string'],
+                    'keunggulan_color_5' => ['nullable', 'string', 'max:20'],
+                    'keunggulan_icon_5' => ['nullable', 'string', 'max:80'],
+                    'keunggulan_title_5' => ['nullable', 'string', 'max:120'],
+                    'keunggulan_desc_5' => ['nullable', 'string'],
+                    'keunggulan_color_6' => ['nullable', 'string', 'max:20'],
+                    'keunggulan_icon_6' => ['nullable', 'string', 'max:80'],
+                    'keunggulan_title_6' => ['nullable', 'string', 'max:120'],
+                    'keunggulan_desc_6' => ['nullable', 'string'],
+                ],
+                'messages' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Bangun payload untuk section 'sambutan' (welcome JSON).
+     * Field di-prefix 'welcome_' lalu di-strip, digabung dengan foto existing
+     * bila admin tidak upload baru. Placeholder {{school}} tidak diubah di sini.
+     */
+    private function buildWelcomePayload(Request $request, LpSetting $setting, array $validated): array
+    {
+        $current = $setting->welcome ?: [];
+        $photo = $current['photo'] ?? null;
+
+        if ($request->hasFile('welcome_photo_upload')) {
+            if ($photo && str_starts_with((string) $photo, 'uploaded:')) {
+                $old = substr($photo, strlen('uploaded:'));
+                if ($old !== '') {
+                    Storage::disk('public')->delete($this->diskPath($old));
+                }
+            }
+            $photo = 'uploaded:' . basename($request->file('welcome_photo_upload')->store($this->uploadDir(), 'public'));
+        } elseif ($request->boolean('welcome_photo_clear')) {
+            if ($photo && str_starts_with((string) $photo, 'uploaded:')) {
+                $old = substr($photo, strlen('uploaded:'));
+                if ($old !== '') {
+                    Storage::disk('public')->delete($this->diskPath($old));
+                }
+            }
+            $photo = null;
+        }
+
+        $strip = static function (string $key) use ($validated): ?string {
+            $full = 'welcome_' . $key;
+            $v = $validated[$full] ?? null;
+            return $v !== null ? trim((string) $v) : null;
+        };
+
+        return [
+            'photo' => $photo,
+            'quote' => $strip('quote') ?: ($current['quote'] ?? null),
+            'paragraph_1' => $strip('paragraph_1') ?: ($current['paragraph_1'] ?? null),
+            'paragraph_2' => $strip('paragraph_2') ?: ($current['paragraph_2'] ?? null),
+            'head_name' => $strip('head_name') ?: ($current['head_name'] ?? null),
+            'head_role' => $strip('head_role') ?: ($current['head_role'] ?? null),
+        ];
+    }
+
+    /**
+     * Bangun payload untuk section 'statistik' (stats JSON).
+     * Mengambil field stats_*_{1..3} dan menyusun menjadi array of 3 items.
+     * Field kosong = pakai nilai existing (fallback ke default model).
+     */
+    private function buildStatsPayload(Request $request, LpSetting $setting, array $validated): array
+    {
+        $current = $setting->stats ?: [];
+        $allowedColors = ['blue', 'green', 'amber', 'pink', 'purple', 'cyan'];
+
+        $items = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $cur = $current[$i - 1] ?? [];
+            $color = $validated["stats_color_{$i}"] ?? ($cur['color'] ?? 'blue');
+            if (!in_array($color, $allowedColors, true)) {
+                $color = 'blue';
+            }
+            $items[] = [
+                'icon' => trim((string) ($validated["stats_icon_{$i}"] ?? ($cur['icon'] ?? 'bi-people-fill'))),
+                'color' => $color,
+                'value' => trim((string) ($validated["stats_value_{$i}"] ?? ($cur['value'] ?? ''))),
+                'label' => trim((string) ($validated["stats_label_{$i}"] ?? ($cur['label'] ?? ''))),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Bangun payload untuk section 'jenjang' (jenjang JSON).
+     * Mengambil field jenjang_*_{1..4}.
+     */
+    private function buildJenjangPayload(Request $request, LpSetting $setting, array $validated): array
+    {
+        $current = $setting->jenjang ?: [];
+        $items = [];
+        for ($i = 1; $i <= 4; $i++) {
+            $cur = $current[$i - 1] ?? [];
+            $items[] = [
+                'age' => trim((string) ($validated["jenjang_age_{$i}"] ?? ($cur['age'] ?? ''))),
+                'title' => trim((string) ($validated["jenjang_title_{$i}"] ?? ($cur['title'] ?? ''))),
+                'icon' => trim((string) ($validated["jenjang_icon_{$i}"] ?? ($cur['icon'] ?? 'bi-mortarboard-fill'))),
+                'desc' => trim((string) ($validated["jenjang_desc_{$i}"] ?? ($cur['desc'] ?? ''))),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Bangun payload untuk section 'keunggulan' (keunggulan JSON).
+     * Mengambil field keunggulan_*_{1..6}.
+     */
+    private function buildKeunggulanPayload(Request $request, LpSetting $setting, array $validated): array
+    {
+        $current = $setting->keunggulan ?: [];
+        $allowedColors = ['blue', 'green', 'amber', 'pink', 'purple', 'cyan'];
+        $items = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $cur = $current[$i - 1] ?? [];
+            $color = $validated["keunggulan_color_{$i}"] ?? ($cur['color'] ?? 'blue');
+            if (!in_array($color, $allowedColors, true)) {
+                $color = 'blue';
+            }
+            $items[] = [
+                'color' => $color,
+                'icon' => trim((string) ($validated["keunggulan_icon_{$i}"] ?? ($cur['icon'] ?? 'bi-book-fill'))),
+                'title' => trim((string) ($validated["keunggulan_title_{$i}"] ?? ($cur['title'] ?? ''))),
+                'desc' => trim((string) ($validated["keunggulan_desc_{$i}"] ?? ($cur['desc'] ?? ''))),
+            ];
+        }
+
+        return $items;
+    }
+
     public function pengaturanStore(Request $request)
     {
-        $data = $request->validate([
-            'school_name' => ['required', 'string', 'max:150'],
-            'tagline' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'whatsapp' => ['nullable', 'string', 'max:30'],
-            'address' => ['nullable', 'string'],
-            'google_maps_url' => ['nullable', 'string'],
-            'facebook' => ['nullable', 'url', 'max:255'],
-            'instagram' => ['nullable', 'url', 'max:255'],
-            'youtube' => ['nullable', 'url', 'max:255'],
-            'tiktok' => ['nullable', 'url', 'max:255'],
-            'meta_description' => ['nullable', 'string', 'max:255'],
-            'meta_keywords' => ['nullable', 'string', 'max:255'],
-            'hero_background_choice' => ['nullable', 'string', 'max:255'],
-            'hero_background_custom' => [
-                'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:10240',
-            ],
-            'theme_button_color_choice' => ['nullable', 'string', 'max:255'],
-            'theme_button_color_custom' => ['nullable', 'string', 'max:20', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
-            'favicon' => ['nullable', 'image', 'mimes:png,ico,jpg,jpeg', 'max:512'],
-        ], [
-            'hero_background_custom.image' => 'File background harus berupa gambar.',
-            'hero_background_custom.mimes' => 'Format background harus JPG, JPEG, PNG, atau WEBP.',
-            'hero_background_custom.max' => 'Ukuran background maksimal 10 MB (akan otomatis dikecilkan ke 1920×1080).',
-        ]);
+        $sectionKey = (string) $request->input('section', '');
+        $sections = $this->pengaturanSections();
+
+        if (!array_key_exists($sectionKey, $sections)) {
+            $msg = 'Section pengaturan tidak dikenali.';
+            if ($this->wantsJsonResponse($request)) {
+                return response()->json(['success' => false, 'msg' => $msg], 422);
+            }
+            return redirect()->route('app.landing.pengaturan')->with('error', $msg);
+        }
+
+        $section = $sections[$sectionKey];
+
+        $data = $request->validate($section['rules'], $section['messages']);
 
         $setting = LpSetting::query()->first() ?? new LpSetting();
 
+        // Proses upload logo/favicon HANYA untuk section identitas.
         foreach (['logo', 'favicon'] as $field) {
             if ($request->hasFile($field)) {
                 if ($setting->{$field}) {
@@ -148,62 +432,108 @@ class LandingAdminController extends Controller
             }
         }
 
-        $bgChoice = $request->input('hero_background_choice');
-        if ($request->hasFile('hero_background_custom')) {
-            if ($setting->hero_background && str_starts_with($setting->hero_background, 'custom:')) {
-                $oldName = substr($setting->hero_background, strlen('custom:'));
-                if ($oldName !== '') {
-                    Storage::disk('public')->delete($this->diskPath($oldName));
+        // Background tema — HANYA diproses di section 'background'.
+        if ($sectionKey === 'background') {
+            $bgChoice = $request->input('hero_background_choice');
+            if ($request->hasFile('hero_background_custom')) {
+                if ($setting->hero_background && str_starts_with($setting->hero_background, 'custom:')) {
+                    $oldName = substr($setting->hero_background, strlen('custom:'));
+                    if ($oldName !== '') {
+                        Storage::disk('public')->delete($this->diskPath($oldName));
+                    }
                 }
-            }
 
-            $uploaded = $request->file('hero_background_custom');
-            $disk = Storage::disk('public');
-            $dir = $this->uploadDir();
+                $uploaded = $request->file('hero_background_custom');
+                $disk = Storage::disk('public');
+                $dir = $this->uploadDir();
 
-            // Cover-fit resize ke 1920x1080 (JPG, kualitas 85).
-            $resizedTmp = $this->resizeToCover($uploaded->getRealPath(), 1920, 1080);
+                // Cover-fit resize ke 1920x1080 (JPG, kualitas 85).
+                $resizedTmp = $this->resizeToCover($uploaded->getRealPath(), 1920, 1080);
 
-            $customName = null;
-            if ($resizedTmp && is_file($resizedTmp)) {
-                $basename = 'hero-bg-' . Str::random(10) . '.jpg';
-                $stored = $disk->putFileAs($dir, new \Illuminate\Http\UploadedFile($resizedTmp, $basename, 'image/jpeg', null, true), $basename);
-                @unlink($resizedTmp);
-                if ($stored) {
-                    $customName = basename($stored);
+                $customName = null;
+                if ($resizedTmp && is_file($resizedTmp)) {
+                    $basename = 'hero-bg-' . Str::random(10) . '.jpg';
+                    $stored = $disk->putFileAs($dir, new \Illuminate\Http\UploadedFile($resizedTmp, $basename, 'image/jpeg', null, true), $basename);
+                    @unlink($resizedTmp);
+                    if ($stored) {
+                        $customName = basename($stored);
+                    }
                 }
-            }
 
-            // Fallback: kalau resize gagal, simpan file original apa adanya.
-            if (!$customName) {
-                $customName = basename($uploaded->store($dir, 'public'));
-            }
+                // Fallback: kalau resize gagal, simpan file original apa adanya.
+                if (!$customName) {
+                    $customName = basename($uploaded->store($dir, 'public'));
+                }
 
-            $data['hero_background'] = 'custom:' . $customName;
-        } elseif ($bgChoice === 'custom') {
-            $data['hero_background'] = $setting->hero_background;
-        } elseif ($bgChoice) {
-            $validKeys = array_column(LpSetting::themeBackgroundDefaults(), 'key');
-            $data['hero_background'] = in_array($bgChoice, $validKeys, true) ? $bgChoice : 'default-1';
-        } else {
-            unset($data['hero_background']);
+                $data['hero_background'] = 'custom:' . $customName;
+            } elseif ($bgChoice === 'custom') {
+                // Pilih custom tanpa upload baru -> pertahankan nilai lama.
+                $data['hero_background'] = $setting->hero_background;
+            } elseif ($bgChoice) {
+                $validKeys = array_column(LpSetting::themeBackgroundDefaults(), 'key');
+                $data['hero_background'] = in_array($bgChoice, $validKeys, true) ? $bgChoice : 'default-1';
+            } else {
+                // Tidak ada pilihan sama sekali -> jangan sentuh kolom ini.
+                unset($data['hero_background']);
+            }
         }
 
         unset($data['hero_background_choice'], $data['hero_background_custom']);
 
-        $resolvedButton = $this->resolveThemeColor(
-            $request->input('theme_button_color_choice'),
-            $request->input('theme_button_color_custom'),
-            array_column(LpSetting::themeButtonColorDefaults(), 'key', 'key'),
-        );
-        if ($resolvedButton !== null) {
-            $data['theme_button_color'] = $resolvedButton;
-            $data['theme_text_color'] = $resolvedButton;
+        // Warna tombol & text — HANYA diproses di section 'warna'.
+        if ($sectionKey === 'warna') {
+            $resolvedButton = $this->resolveThemeColor(
+                $request->input('theme_button_color_choice'),
+                $request->input('theme_button_color_custom'),
+                array_column(LpSetting::themeButtonColorDefaults(), 'key', 'key'),
+            );
+            if ($resolvedButton !== null) {
+                $data['theme_button_color'] = $resolvedButton;
+                $data['theme_text_color'] = $resolvedButton;
+            }
         }
 
         unset($data['theme_button_color_choice'], $data['theme_button_color_custom']);
 
-        $setting->fill($data)->save();
+        // Section JSON: bangun payload dari field-field prefixed.
+        if ($sectionKey === 'sambutan') {
+            $data['welcome'] = $this->buildWelcomePayload($request, $setting, $data);
+            foreach (['welcome_photo_upload', 'welcome_photo_clear', 'welcome_quote', 'welcome_paragraph_1', 'welcome_paragraph_2', 'welcome_head_name', 'welcome_head_role'] as $k) {
+                unset($data[$k]);
+            }
+        }
+        if ($sectionKey === 'statistik') {
+            $data['stats'] = $this->buildStatsPayload($request, $setting, $data);
+            foreach (array_keys($data) as $k) {
+                if (str_starts_with($k, 'stats_')) {
+                    unset($data[$k]);
+                }
+            }
+        }
+        if ($sectionKey === 'jenjang') {
+            $data['jenjang'] = $this->buildJenjangPayload($request, $setting, $data);
+            foreach (array_keys($data) as $k) {
+                if (str_starts_with($k, 'jenjang_')) {
+                    unset($data[$k]);
+                }
+            }
+        }
+        if ($sectionKey === 'keunggulan') {
+            $data['keunggulan'] = $this->buildKeunggulanPayload($request, $setting, $data);
+            foreach (array_keys($data) as $k) {
+                if (str_starts_with($k, 'keunggulan_')) {
+                    unset($data[$k]);
+                }
+            }
+        }
+
+        // Filter $data HANYA ke kolom yang di-whitelist untuk section ini.
+        // Ini mencegah field dari section lain (yang ikut terkirim via form
+        // lain di halaman yang sama) men-overwrite data DB.
+        $allowedFields = $section['fields'];
+        $payload = array_intersect_key($data, array_flip($allowedFields));
+
+        $setting->fill($payload)->save();
 
         // Kumpulkan metadata file baru (untuk konfirmasi 'tersimpan' di modal post-save).
         $newFileMeta = null;
@@ -225,10 +555,15 @@ class LandingAdminController extends Controller
             }
         }
 
+        $sectionLabel = $section['label'];
+        $msg = $sectionLabel . ' berhasil disimpan.';
+
         if ($this->wantsJsonResponse($request)) {
             return response()->json([
                 'success' => true,
-                'msg' => 'Pengaturan landing page berhasil disimpan.',
+                'msg' => $msg,
+                'section' => $sectionKey,
+                'saved_fields' => array_keys($payload),
                 'hero_background_url' => $setting->heroBackgroundUrl(),
                 'hero_background_key' => $setting->activeThemeBackgroundKey(),
                 'hero_background_meta' => $newFileMeta,
@@ -239,7 +574,7 @@ class LandingAdminController extends Controller
 
         return redirect()
             ->route('app.landing.pengaturan')
-            ->with('success', 'Pengaturan landing page berhasil disimpan.');
+            ->with('success', $msg);
     }
 
     /**
@@ -1045,7 +1380,46 @@ class LandingAdminController extends Controller
         return view('landing-admin.profile-sections.index', [
             'title' => 'Section Profil',
             'items' => LpProfileSection::orderBy('id')->get(),
+            'action' => route('app.landing.profile-sections.updateAll'),
+            'strukturItems' => LpStrukturOrganisasi::orderBy('sort_order')->orderBy('id')->get(),
+            'fasilitasItems' => LpFasilitas::orderBy('sort_order')->orderBy('id')->get(),
         ]);
+    }
+
+    public function profileSectionsUpdateAll(Request $request)
+    {
+        $this->ensureProfileSectionDefaults();
+
+        $items = LpProfileSection::orderBy('id')->get();
+        $keys = $items->pluck('section_key')->all();
+        $rules = [];
+        foreach ($keys as $key) {
+            $rules["sections.$key.title"]        = ['required', 'string', 'max:200'];
+            $rules["sections.$key.subtitle"]     = ['nullable', 'string', 'max:255'];
+            $rules["sections.$key.content"]      = ['nullable', 'string'];
+            $rules["sections.$key.badge_text"]   = ['nullable', 'string', 'max:100'];
+            $rules["sections.$key.badge_icon"]   = ['nullable', 'string', 'max:80'];
+            $rules["sections.$key.badge_extra"]  = ['nullable', 'string', 'max:100'];
+            $rules["sections.$key.extra_label"]  = ['nullable', 'string', 'max:100'];
+            $rules["sections.$key.is_active"]    = ['nullable', 'boolean'];
+        }
+        $data = $request->validate($rules);
+
+        $payload = $data['sections'] ?? [];
+        foreach ($items as $model) {
+            $row = $payload[$model->section_key] ?? [];
+            $model->title       = $row['title']        ?? $model->title;
+            $model->subtitle    = $row['subtitle']     ?? null;
+            $model->content     = $row['content']      ?? null;
+            $model->badge_text  = $row['badge_text']   ?? null;
+            $model->badge_icon  = $row['badge_icon']   ?? null;
+            $model->badge_extra = $row['badge_extra']  ?? null;
+            $model->extra_label = $row['extra_label']  ?? null;
+            $model->is_active   = isset($row['is_active']) && $row['is_active'] ? true : false;
+            $model->save();
+        }
+
+        return $this->saveSuccess($request, 'Semua section profil berhasil diperbarui.', 'app.landing.profile-sections');
     }
 
     private function ensureProfileSectionDefaults(): void
@@ -1066,7 +1440,18 @@ class LandingAdminController extends Controller
                 'section_key' => 'sejarah',
                 'title' => 'Sejarah',
                 'subtitle' => null,
-                'content' => 'Didirikan sejak tahun 1995, sekolah kami telah berkembang menjadi lembaga pendidikan yang dipercaya masyarakat. Perjalanan panjang ini ditandai dengan berbagai inovasi pembelajaran dan pencapaian prestasi di tingkat kota, provinsi, hingga nasional.',
+                'content' => '<p>Didirikan sejak tahun 1995, sekolah kami telah berkembang menjadi lembaga pendidikan yang dipercaya masyarakat. Perjalanan panjang ini ditandai dengan berbagai inovasi pembelajaran dan pencapaian prestasi di tingkat kota, provinsi, hingga nasional.</p>',
+                'badge_text' => null,
+                'badge_icon' => null,
+                'badge_extra' => null,
+                'extra_label' => null,
+                'is_active' => true,
+            ],
+            [
+                'section_key' => 'visi_misi',
+                'title' => 'Visi & Misi',
+                'subtitle' => null,
+                'content' => '<h3>Visi Kami</h3><p>Menjadi sekolah unggul dalam prestasi, berakhlak mulia, dan berwawasan global.</p><h3>Misi Kami</h3><ol><li>Menyelenggarakan pembelajaran aktif, inovatif, efektif, dan menyenangkan.</li><li>Menumbuhkan penghayatan nilai keagamaan, budaya, dan karakter.</li><li>Mengembangkan potensi peserta didik secara optimal sesuai bakat dan minat.</li><li>Membangun lingkungan sekolah yang aman, nyaman, dan inklusif.</li></ol>',
                 'badge_text' => null,
                 'badge_icon' => null,
                 'badge_extra' => null,
@@ -1077,7 +1462,7 @@ class LandingAdminController extends Controller
                 'section_key' => 'akreditasi',
                 'title' => 'Akreditasi',
                 'subtitle' => null,
-                'content' => 'Status akreditasi A (Sangat Baik) diberikan oleh BAN-SM, mencerminkan komitmen kami terhadap mutu pendidikan, manajemen sekolah, dan pencapaian lulusan yang berkualitas.',
+                'content' => '<p>Status akreditasi <strong>A (Sangat Baik)</strong> diberikan oleh BAN-SM, mencerminkan komitmen kami terhadap mutu pendidikan, manajemen sekolah, dan pencapaian lulusan yang berkualitas.</p>',
                 'badge_text' => 'Terakreditasi A',
                 'badge_icon' => 'bi-award-fill',
                 'badge_extra' => null,
@@ -1107,10 +1492,8 @@ class LandingAdminController extends Controller
         $model = LpProfileSection::findOrFail($item);
         $data = $request->validate([
             'title' => ['required', 'string', 'max:200'],
-            'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'badge_text' => ['nullable', 'string', 'max:100'],
-            'badge_icon' => ['nullable', 'string', 'max:80'],
             'badge_extra' => ['nullable', 'string', 'max:100'],
             'extra_label' => ['nullable', 'string', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
@@ -1120,7 +1503,20 @@ class LandingAdminController extends Controller
 
         $model->fill($data)->save();
 
-        return $this->saveSuccess($request, 'Section profil berhasil diperbarui.', 'app.landing.profile-sections');
+        return $this->saveSuccess($request, 'Section "' . ($model->title ?: $model->section_key) . '" berhasil disimpan.', null);
+    }
+
+    public function profileSectionToggle(Request $request, $item)
+    {
+        $model = LpProfileSection::findOrFail($item);
+        $model->is_active = !$model->is_active;
+        $model->save();
+
+        return $this->saveSuccess(
+            $request,
+            $model->is_active ? 'Section diaktifkan.' : 'Section dinonaktifkan.',
+            'app.landing.profile-sections'
+        );
     }
 
     public function ppdbCta()
@@ -1165,6 +1561,44 @@ class LandingAdminController extends Controller
         $setting->save();
 
         return $this->saveSuccess($request, 'CTA PPDB berhasil disimpan.', 'app.landing.ppdb-cta');
+    }
+
+    public function ppdbSetting()
+    {
+        $ppdb = LpPpdbSetting::current();
+        return view('landing-admin.ppdb-setting', [
+            'title' => 'Pengaturan Halaman PPDB',
+            'ppdb' => $ppdb,
+            'action' => route('app.landing.ppdb-setting.store'),
+        ]);
+    }
+
+    public function ppdbSettingStore(Request $request)
+    {
+        $data = $request->validate([
+            'school_name' => ['nullable', 'string', 'max:150'],
+            'eyebrow' => ['nullable', 'string', 'max:100'],
+            'title' => ['required', 'string', 'max:200'],
+            'subtitle' => ['nullable', 'string'],
+            'cta_text' => ['nullable', 'string', 'max:100'],
+            'cta_url' => ['nullable', 'string', 'max:255'],
+            'secondary_text' => ['nullable', 'string', 'max:100'],
+            'secondary_url' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+
+        $ppdb = LpPpdbSetting::query()->where('is_active', true)->first()
+            ?? LpPpdbSetting::query()->first();
+
+        if ($ppdb) {
+            $ppdb->fill($data)->save();
+        } else {
+            $ppdb = LpPpdbSetting::create($data);
+        }
+
+        return $this->saveSuccess($request, 'Pengaturan Halaman PPDB berhasil disimpan.', 'app.landing.ppdb-setting');
     }
 
     // -----------------------------------------------------------------

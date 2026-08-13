@@ -72,6 +72,7 @@ class LandingController extends Controller
         $fasilitasItems = \App\Models\Landing\LpFasilitas::published()->ordered()->get();
         $overviewSection = \App\Models\Landing\LpProfileSection::getByKey('overview');
         $sejarahSection = \App\Models\Landing\LpProfileSection::getByKey('sejarah');
+        $visiMisiSection = \App\Models\Landing\LpProfileSection::getByKey('visi_misi');
         $akreditasiSection = \App\Models\Landing\LpProfileSection::getByKey('akreditasi');
 
         return view('landing.profil', [
@@ -83,6 +84,7 @@ class LandingController extends Controller
             'fasilitasItems' => $fasilitasItems,
             'overviewSection' => $overviewSection,
             'sejarahSection' => $sejarahSection,
+            'visiMisiSection' => $visiMisiSection,
             'akreditasiSection' => $akreditasiSection,
         ]);
     }

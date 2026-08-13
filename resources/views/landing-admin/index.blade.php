@@ -71,13 +71,13 @@
             <div class="row g-2">
 @php
                 $menus = [
-                    ['route' => 'app.landing.pengaturan', 'icon' => 'settings', 'title' => 'Pengaturan Website', 'sub' => 'Identitas, kontak, warna, background, SEO', 'color' => '#37d17c'],
+                    ['route' => 'app.landing.pengaturan', 'icon' => 'settings', 'title' => 'Pengaturan Website', 'sub' => 'Identitas, kontak, sambutan, statistik, jenjang, keunggulan, warna, background, SEO', 'color' => '#37d17c'],
+                    ['route' => 'app.landing.ppdb-cta', 'icon' => 'how_to_reg', 'title' => 'PPDB', 'sub' => 'CTA, persyaratan, alur, jadwal, FAQ', 'color' => '#f97316'],
                     ['route' => 'app.landing.profile-sections', 'icon' => 'account_balance', 'title' => 'Profil', 'sub' => 'Section profil, struktur, fasilitas', 'color' => '#0ea5e9'],
                     ['route' => 'app.landing.posts', 'icon' => 'article', 'title' => 'Berita', 'sub' => 'Artikel & program', 'color' => '#f59e0b'],
                     ['route' => 'app.landing.galleries', 'icon' => 'photo_library', 'title' => 'Galeri', 'sub' => 'Album foto', 'color' => '#8b5cf6'],
                     ['route' => 'app.landing.announcements', 'icon' => 'campaign', 'title' => 'Pengumuman', 'sub' => 'Info sekolah', 'color' => '#ef4444'],
                     ['route' => 'app.landing.contact-messages', 'icon' => 'contact_mail', 'title' => 'Kontak', 'sub' => 'Pesan masuk', 'color' => '#10b981'],
-                    ['route' => 'app.landing.ppdb-cta', 'icon' => 'how_to_reg', 'title' => 'PPDB', 'sub' => 'CTA, persyaratan, alur, jadwal, FAQ', 'color' => '#f97316'],
                 ];
             @endphp
                 @foreach ($menus as $m)

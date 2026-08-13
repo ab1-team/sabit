@@ -20,6 +20,16 @@
 
     $programs = $posts->take(3);
 
+    // Sambutan Kepala Sekolah
+    $welcome = $setting->welcomeData();
+
+    // Statistik (3 kartu)
+    $statsList = $setting->statsList();
+
+    // Jenjang & Keunggulan (untuk section di beranda)
+    $jenjangList = $setting->jenjangList();
+    $keunggulanList = $setting->keunggulanList();
+
     // CTA PPDB section data
     $ppdbCta = $setting->ppdbCtaData();
     $ppdbCtaActive = $ppdbCta['is_active'] ?? true;
@@ -63,33 +73,17 @@
 <section class="lp-section lp-bg-soft" id="stats">
     <div class="container">
         <div class="row g-3 g-lg-4">
-            <div class="col-md-4">
-                <div class="lp-glass lp-stat-card lp-reveal" data-from="zoom" data-delay="1">
-                    <div class="lp-stat-icon is-blue"><i class="bi bi-people-fill"></i></div>
-                    <div>
-                        <div class="lp-stat-value">1.200+</div>
-                        <div class="lp-stat-label">Siswa Aktif</div>
+            @foreach ($statsList as $i => $s)
+                <div class="col-md-4">
+                    <div class="lp-glass lp-stat-card lp-reveal" data-from="zoom" data-delay="{{ $i + 1 }}">
+                        <div class="lp-stat-icon is-{{ $s['color'] ?? 'blue' }}"><i class="bi {{ $s['icon'] ?? 'bi-people-fill' }}"></i></div>
+                        <div>
+                            <div class="lp-stat-value">{{ $s['value'] }}</div>
+                            <div class="lp-stat-label">{{ $s['label'] }}</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="lp-glass lp-stat-card lp-reveal" data-from="zoom" data-delay="2">
-                    <div class="lp-stat-icon is-green"><i class="bi bi-mortarboard-fill"></i></div>
-                    <div>
-                        <div class="lp-stat-value">85+</div>
-                        <div class="lp-stat-label">Guru &amp; Staf Pengajar</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="lp-glass lp-stat-card lp-reveal" data-from="zoom" data-delay="3">
-                    <div class="lp-stat-icon is-amber"><i class="bi bi-trophy-fill"></i></div>
-                    <div>
-                        <div class="lp-stat-value">120+</div>
-                        <div class="lp-stat-label">Prestasi Diraih</div>
-                    </div>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
@@ -100,35 +94,33 @@
         <div class="row align-items-center g-4 g-lg-5">
             <div class="col-lg-5">
                 <div class="lp-welcome-img lp-reveal" data-from="left">
-                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80"
+                    <img src="{{ $welcome['photo'] }}"
                          alt="Kepala Sekolah">
-                    <div class="lp-welcome-quote">
-                        <i class="bi bi-quote"></i>
-                        <span>"Mendidik dengan Hati, Membentuk dengan Karakter."</span>
-                    </div>
+                    @if (!empty($welcome['quote']))
+                        <div class="lp-welcome-quote">
+                            <i class="bi bi-quote"></i>
+                            <span>"{{ $welcome['quote'] }}"</span>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="col-lg-7 lp-reveal" data-from="right">
                 <span class="lp-section-eyebrow">Sambutan</span>
                 <h2 class="lp-section-title">Sambutan Kepala Sekolah</h2>
                 <div class="lp-divider"></div>
-                <p class="lp-text-muted-soft">
-                    Selamat datang di {{ $setting->school_name ?? 'Sekolah' }}. Kami berkomitmen
-                    untuk memberikan pengalaman belajar terbaik bagi putra-putri Anda. Di era digital ini, kami
-                    memadukan kurikulum nasional dengan standar internasional untuk membentuk karakter yang kuat
-                    dan pemikiran yang kritis.
-                </p>
-                <p class="lp-text-muted-soft">
-                    Lingkungan belajar kami dirancang untuk menumbuhkan kreativitas, kolaborasi, dan kemandirian.
-                    Bersama-sama, mari kita wujudkan potensi maksimal setiap anak.
-                </p>
+                @if (!empty($welcome['paragraph_1']))
+                    <p class="lp-text-muted-soft">{{ $welcome['paragraph_1'] }}</p>
+                @endif
+                @if (!empty($welcome['paragraph_2']))
+                    <p class="lp-text-muted-soft">{{ $welcome['paragraph_2'] }}</p>
+                @endif
                 <div class="mt-4 d-flex align-items-center gap-3">
                     <div class="lp-stat-icon is-blue" style="width:48px; height:48px; font-size:1.1rem;">
                         <i class="bi bi-person-badge"></i>
                     </div>
                     <div>
-                        <div class="fw-bold text-dark">Dr. Budi Santoso, M.Pd.</div>
-                        <div class="text-muted small">Kepala Sekolah, {{ $setting->school_name ?? 'Sekolah' }}</div>
+                        <div class="fw-bold text-dark">{{ $welcome['head_name'] }}</div>
+                        <div class="text-muted small">{{ $welcome['head_role'] }}</div>
                     </div>
                 </div>
             </div>
@@ -146,38 +138,20 @@
         </div>
 
         <div class="row g-3 g-lg-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="lp-glass lp-jenjang-card tk lp-reveal h-100" data-from="zoom" data-delay="1">
-                    <div class="lp-jenjang-icon"><i class="bi bi-emoji-smile-fill"></i></div>
-                    <span class="lp-jenjang-age">USIA 4–6 TAHUN</span>
-                    <h5 class="lp-jenjang-title">TK / PAUD</h5>
-                    <p class="lp-jenjang-desc">Pembelajaran bermain sambil belajar dengan pendekatan tematik untuk menumbuhkan rasa ingin tahu.</p>
+            @foreach ($jenjangList as $i => $j)
+                @php
+                    $kelasMap = ['tk', 'sd', 'smp', 'sma'];
+                    $kelas = $j['key'] ?? ($kelasMap[$i] ?? 'sd');
+                @endphp
+                <div class="col-md-6 col-lg-3">
+                    <div class="lp-glass lp-jenjang-card {{ $kelas }} lp-reveal h-100" data-from="zoom" data-delay="{{ $i + 1 }}">
+                        <div class="lp-jenjang-icon"><i class="bi {{ $j['icon'] ?? 'bi-mortarboard-fill' }}"></i></div>
+                        <span class="lp-jenjang-age">{{ $j['age'] ?? '' }}</span>
+                        <h5 class="lp-jenjang-title">{{ $j['title'] ?? '' }}</h5>
+                        <p class="lp-jenjang-desc">{{ $j['desc'] ?? '' }}</p>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="lp-glass lp-jenjang-card sd lp-reveal h-100" data-from="zoom" data-delay="2">
-                    <div class="lp-jenjang-icon"><i class="bi bi-pencil-square"></i></div>
-                    <span class="lp-jenjang-age">KELAS 1–6</span>
-                    <h5 class="lp-jenjang-title">Sekolah Dasar</h5>
-                    <p class="lp-jenjang-desc">Fondasi akademik yang kuat dengan literasi, numerasi, dan pengembangan karakter.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="lp-glass lp-jenjang-card smp lp-reveal h-100" data-from="zoom" data-delay="3">
-                    <div class="lp-jenjang-icon"><i class="bi bi-backpack3-fill"></i></div>
-                    <span class="lp-jenjang-age">KELAS 7–9</span>
-                    <h5 class="lp-jenjang-title">SMP</h5>
-                    <p class="lp-jenjang-desc">Pendidikan menengah dengan eksplorasi minat, berpikir kritis, dan kepemimpinan.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="lp-glass lp-jenjang-card sma lp-reveal h-100" data-from="zoom" data-delay="4">
-                    <div class="lp-jenjang-icon"><i class="bi bi-mortarboard-fill"></i></div>
-                    <span class="lp-jenjang-age">KELAS 10–12</span>
-                    <h5 class="lp-jenjang-title">SMA</h5>
-                    <p class="lp-jenjang-desc">Persiapan masuk perguruan tinggi terbaik dengan program akselerasi &amp; bimbingan karir.</p>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
@@ -192,79 +166,15 @@
         </div>
 
         <div class="row g-3 g-lg-4">
-            <div class="col-lg-6">
-                <div class="lp-glass lp-feature-card lp-reveal h-100" data-from="left">
-                    <div class="lp-feature-icon is-blue"><i class="bi bi-book-fill"></i></div>
-                    <h5 class="lp-feature-title">Kurikulum Merdeka</h5>
-                    <p class="lp-feature-desc">
-                        Penerapan kurikulum merdeka dengan pembelajaran yang fleksibel, mendalam, dan menyenangkan,
-                        mengembangkan potensi sesuai minat &amp; bakat siswa.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="row g-3 g-lg-4">
-                    <div class="col-12">
-                        <div class="lp-glass lp-feature-card lp-reveal" data-from="right" data-delay="1">
-                            <div class="lp-feature-icon is-green"><i class="bi bi-shield-check"></i></div>
-                            <h5 class="lp-feature-title">Pendidikan Karakter</h5>
-                            <p class="lp-feature-desc">
-                                Menumbuhkan nilai-nilai disiplin, integritas, dan kepemimpinan dalam setiap aspek kehidupan sekolah.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="lp-glass lp-feature-card lp-reveal" data-from="right" data-delay="2">
-                            <div class="lp-feature-icon is-amber"><i class="bi bi-pc-display"></i></div>
-                            <h5 class="lp-feature-title">Digital Learning</h5>
-                            <p class="lp-feature-desc">
-                                Integrasi teknologi dalam pembelajaran dengan laboratorium komputer dan multimedia modern.
-                            </p>
-                        </div>
+            @foreach ($keunggulanList as $i => $k)
+                <div class="col-md-6 col-lg-4">
+                    <div class="lp-glass lp-feature-card lp-reveal h-100" data-from="zoom" data-delay="{{ ($i % 3) + 1 }}">
+                        <div class="lp-feature-icon is-{{ $k['color'] ?? 'blue' }}"><i class="bi {{ $k['icon'] ?? 'bi-book-fill' }}"></i></div>
+                        <h5 class="lp-feature-title">{{ $k['title'] ?? '' }}</h5>
+                        <p class="lp-feature-desc">{{ $k['desc'] ?? '' }}</p>
                     </div>
                 </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="lp-glass lp-feature-card lp-reveal h-100" data-from="left">
-                    <div class="lp-feature-icon" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: var(--lp-pink);">
-                        <i class="bi bi-translate"></i>
-                    </div>
-                    <h5 class="lp-feature-title">Lingkungan Dwibahasa</h5>
-                    <p class="lp-feature-desc">
-                        Penggunaan Bahasa Inggris &amp; Indonesia secara aktif dalam keseharian sekolah,
-                        mempersiapkan siswa untuk komunikasi global.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="row g-3 g-lg-4">
-                    <div class="col-md-6">
-                        <div class="lp-glass lp-feature-card lp-reveal h-100" data-from="zoom" data-delay="1">
-                            <div class="lp-feature-icon" style="background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: var(--lp-purple);">
-                                <i class="bi bi-palette-fill"></i>
-                            </div>
-                            <h5 class="lp-feature-title">Seni &amp; Kreativitas</h5>
-                            <p class="lp-feature-desc">
-                                Ruang ekspresi seni musik, lukis, dan tari yang mengembangkan kreativitas anak.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="lp-glass lp-feature-card lp-reveal h-100" data-from="zoom" data-delay="2">
-                            <div class="lp-feature-icon" style="background: linear-gradient(135deg, #cffafe, #a5f3fc); color: var(--lp-accent-2);">
-                                <i class="bi bi-trophy-fill"></i>
-                            </div>
-                            <h5 class="lp-feature-title">Prestasi Gemilang</h5>
-                            <p class="lp-feature-desc">
-                                Ratusan prestasi akademik &amp; non-akademik tingkat kota hingga nasional.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>

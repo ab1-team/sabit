@@ -32,6 +32,19 @@
                 <h6 class="mb-0 fw-bold">Kelola Konten Halaman PPDB</h6>
             </div>
             <p class="text-muted small mb-3">Halaman publik <code>/ppdb</code> terdiri dari CTA di beranda (form di bawah) dan konten detail (persyaratan, alur, jadwal, FAQ).</p>
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-md-6">
+                    <a href="{{ route('app.landing.ppdb-setting') }}" class="lp-admin-menu text-decoration-none">
+                        <div class="lp-admin-menu-icon" style="background: linear-gradient(135deg, #6366f122, #6366f111); color: #6366f1;">
+                            <span class="material-symbols-rounded">edit_note</span>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-bold text-dark lh-1" style="font-size:.85rem;">Pengaturan Halaman PPDB</div>
+                            <div class="text-muted" style="font-size:.7rem;">Judul, subjudul, tombol halaman PPDB</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
             <div class="row g-2">
                 <div class="col-6 col-md-3">
                     <a href="{{ route('app.landing.ppdb.requirements') }}" class="lp-admin-menu text-decoration-none">

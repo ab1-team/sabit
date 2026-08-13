@@ -688,6 +688,9 @@
         .lp-feature-icon.is-blue { background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.15), rgba(var(--lp-primary-rgb), 0.3)); color: var(--lp-primary); }
         .lp-feature-icon.is-green { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #059669; }
         .lp-feature-icon.is-amber { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; }
+        .lp-feature-icon.is-pink { background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #db2777; }
+        .lp-feature-icon.is-purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #7c3aed; }
+        .lp-feature-icon.is-cyan { background: linear-gradient(135deg, #cffafe, #a5f3fc); color: #0891b2; }
         .lp-feature-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.6rem; }
         .lp-feature-desc { color: var(--lp-muted); font-size: 0.92rem; line-height: 1.65; margin: 0; }
 
@@ -1295,7 +1298,7 @@
         </div>
 
         <div class="lp-footer-bottom d-flex flex-wrap justify-content-between">
-            <span>&copy; {{ date('Y') }} {{ $setting->school_name ?? 'Sekolah' }}. {{ $setting->tagline ?? 'Membentuk Pemimpin Masa Depan.' }}</span>
+            <span>&copy; {{ date('Y') }}, dibuat dengan <i class="bi bi-heart-fill text-danger"></i> oleh Asta Brata untuk web yang lebih baik.</span>
             @if ($adminUrl = tenant()?->adminUrl())
                 <a href="{{ $adminUrl }}">Masuk Admin</a>
             @endif

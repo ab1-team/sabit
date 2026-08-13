@@ -290,7 +290,7 @@ class LpSetting extends Model
 
     public function welcomeData(): array
     {
-        return $this->welcome ?: [
+        $defaults = [
             'photo' => 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80',
             'quote' => 'Mendidik dengan Hati, Membentuk dengan Karakter.',
             'paragraph_1' => 'Selamat datang di {{school}}. Kami berkomitmen untuk memberikan pengalaman belajar terbaik bagi putra-putri Anda. Di era digital ini, kami memadukan kurikulum nasional dengan standar internasional untuk membentuk karakter yang kuat dan pemikiran yang kritis.',
@@ -298,16 +298,49 @@ class LpSetting extends Model
             'head_name' => 'Dr. Budi Santoso, M.Pd.',
             'head_role' => 'Kepala Sekolah, {{school}}',
         ];
+
+        $data = array_merge($defaults, $this->welcome ?: []);
+
+        // Resolve foto upload: 'uploaded:' -> URL storage
+        if (!empty($data['photo']) && is_string($data['photo']) && str_starts_with($data['photo'], 'uploaded:')) {
+            $filename = substr($data['photo'], strlen('uploaded:'));
+            if ($filename !== '') {
+                $data['photo'] = Storage::disk('public')->url('landing/' . $filename);
+            }
+        }
+
+        // Resolve placeholder {{school}} agar admin tidak perlu edit semua section
+        $schoolName = $this->school_name ?: 'Sekolah';
+        $data['paragraph_1'] = str_replace('{{school}}', $schoolName, $data['paragraph_1']);
+        $data['paragraph_2'] = str_replace('{{school}}', $schoolName, $data['paragraph_2']);
+        $data['head_role'] = str_replace('{{school}}', $schoolName, $data['head_role']);
+
+        return $data;
     }
 
     public function jenjangList(): array
     {
-        return $this->jenjang ?: [
+        $defaults = [
             ['key' => 'tk', 'age' => 'USIA 4–6 TAHUN', 'title' => 'TK / PAUD', 'icon' => 'bi-emoji-smile-fill', 'desc' => 'Pembelajaran bermain sambil belajar dengan pendekatan tematik untuk menumbuhkan rasa ingin tahu.'],
             ['key' => 'sd', 'age' => 'KELAS 1–6', 'title' => 'Sekolah Dasar', 'icon' => 'bi-pencil-square', 'desc' => 'Fondasi akademik yang kuat dengan literasi, numerasi, dan pengembangan karakter.'],
             ['key' => 'smp', 'age' => 'KELAS 7–9', 'title' => 'SMP', 'icon' => 'bi-backpack3-fill', 'desc' => 'Pendidikan menengah dengan eksplorasi minat, berpikir kritis, dan kepemimpinan.'],
             ['key' => 'sma', 'age' => 'KELAS 10–12', 'title' => 'SMA', 'icon' => 'bi-mortarboard-fill', 'desc' => 'Persiapan masuk perguruan tinggi terbaik dengan program akselerasi & bimbingan karir.'],
         ];
+
+        if (empty($this->jenjang)) {
+            return $defaults;
+        }
+
+        $keys = array_column($defaults, 'key');
+        $items = $this->jenjang;
+        // Isi key default untuk item tanpa key (untuk konsistensi class CSS lp-jenjang-card)
+        foreach ($items as $i => &$it) {
+            if (empty($it['key']) && isset($keys[$i])) {
+                $it['key'] = $keys[$i];
+            }
+        }
+
+        return $items;
     }
 
     public function keunggulanList(): array

@@ -52,10 +52,39 @@ class HakAksesPusatController extends Controller
                         return $m;
                     });
 
-                    $grouped = $menus->groupBy(fn ($m) => $m->group ?: 'Lainnya')->map(function ($items) {
+                    $grouped = $menus->groupBy(fn ($m) => $m->group ?: 'Lainnya')->map(function ($items) use ($byId) {
+                        // Tentukan top-level parents: menu dengan parent_id NULL,
+                        // atau menu yang parent-nya bukan menu aktif manapun.
+                        // Ini memungkinkan nested children (mis. PPDB > sub-menu
+                        // PPDB) tetap tampil sebagai sub-dropdown di dalam
+                        // group yang sama.
+                        $topLevel = $items->filter(function ($m) use ($byId) {
+                            if ($m->parent_id === null) {
+                                return true;
+                            }
+                            // Parent ada tapi di group berbeda → orphan, anggap top-level
+                            // (logic group mutation di atas sudah menyamakan group,
+                            // jadi这种情况 shouldn't happen; ini fallback).
+                            return !isset($byId[$m->parent_id]);
+                        })->values();
+
+                        // Bangun tree children per parent_id, dengan support
+                        // multi-level (sub-anak dikumpulkan di children[key]
+                        // bersama cucu, dst).
+                        $children = $items->whereNotNull('parent_id')->groupBy('parent_id');
+
+                        // Pre-compute descendant ids per parent (termasuk cucu/cicit)
+                        // supaya view bisa menandai semua sub-children saat
+                        // parent di-select-all.
+                        $descendantIds = [];
+                        foreach ($children as $pid => $kids) {
+                            $descendantIds[$pid] = $this->flattenDescendants($pid, $children);
+                        }
+
                         return [
-                            'parents' => $items->whereNull('parent_id')->values(),
-                            'children' => $items->whereNotNull('parent_id')->groupBy('parent_id'),
+                            'parents' => $topLevel,
+                            'children' => $children,
+                            'descendant_ids' => $descendantIds,
                         ];
                     });
 
@@ -208,7 +237,28 @@ class HakAksesPusatController extends Controller
             }
         }
 
-        return array_values(array_unique($ids));
+return array_values(array_unique($ids));
+    }
+
+    /**
+     * Kumpulkan semua id descendant dari sebuah parent secara rekursif
+     * (anak, cucu, cicit, ...) dari map children[parent_id => Collection].
+     * Return: array<int>.
+     */
+    private function flattenDescendants(int $parentId, $childrenMap, array &$visited = []): array
+    {
+        if (isset($visited[$parentId])) {
+            return [];
+        }
+        $visited[$parentId] = true;
+
+        $kids = $childrenMap->get($parentId, collect());
+        $ids = [];
+        foreach ($kids as $k) {
+            $ids[] = (int) $k->id;
+            $ids = array_merge($ids, $this->flattenDescendants((int) $k->id, $childrenMap, $visited));
+        }
+        return $ids;
     }
 
     public function destroyUser(Tenant $tenant, $userId)
@@ -347,28 +397,42 @@ class HakAksesPusatController extends Controller
                 \Log::warning('HakAksesPusat: skip tenant menus', ['tenant' => $t->id, 'err' => $e->getMessage()]);
             }
 
-            $items = $items ?? [];
-            $tree = [];
-            foreach ($items as $m) {
-                if ($m['parent_id']) {
-                    continue;
-                }
-                $tree[] = [
-                    'id' => $m['id'],
-                    'nama' => $m['nama'],
-                    'group' => $m['group'],
-                    'children' => collect($items)
-                        ->where('parent_id', $m['id'])
-                        ->map(fn ($c) => ['id' => $c['id'], 'nama' => $c['nama']])
-                        ->values()
-                        ->all(),
-                ];
-            }
-
+$items = $items ?? [];
+            $tree = $this->buildMenuTree($items);
             $out[$t->id] = $tree;
         }
 
         return $out;
+    }
+
+    /**
+     * Bangun tree nested dari flat list menu. Top-level adalah menu dengan
+     * parent_id NULL; child/anak/cucu/cicit disusun bertingkat.
+     */
+    private function buildMenuTree(array $items): array
+    {
+        $byParent = [];
+        foreach ($items as $m) {
+            $pid = $m['parent_id'] ?? 0;
+            $byParent[$pid][] = $m;
+        }
+
+        $build = function ($parentId) use (&$build, $byParent) {
+            $kids = $byParent[$parentId] ?? [];
+            $out = [];
+            foreach ($kids as $k) {
+                $children = $build($k['id']);
+                $out[] = [
+                    'id' => $k['id'],
+                    'nama' => $k['nama'],
+                    'group' => $k['group'],
+                    'children' => $children,
+                ];
+            }
+            return $out;
+        };
+
+        return $build(0);
     }
 }
 

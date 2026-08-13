@@ -19,6 +19,7 @@
     }
     @media (max-width: 991.98px) {
         .lp-profile-grid { grid-template-columns: 1fr; }
+        .lp-side { position: static; }
     }
 
     /* ---------- Sidebar ---------- */
@@ -362,7 +363,7 @@
         ? Storage::disk('public')->url('landing/' . $setting->logo)
         : null;
 
-    // ---- Visi & Misi: fallback statis kalau lp_pages kosong ----
+    // ---- Visi & Misi: preferensi lp_profile_sections, fallback ke lp_pages / statis ----
     $visiFallback = 'Menjadi institusi pendidikan dasar terdepan yang menghasilkan generasi berkarakter unggul, berwawasan global, dan berakhlak mulia.';
     $misiFallback = [
         'Menyelenggarakan pembelajaran aktif, inovatif, efektif, dan menyenangkan.',
@@ -373,17 +374,25 @@
 
     $visi = $visiFallback;
     $misi = $misiFallback;
-    if ($pageVisiMisi && $pageVisiMisi->content) {
-        $raw = strip_tags($pageVisiMisi->content, '<p><br><strong><em><h3>');
-        $parts = preg_split('/<h3[^>]*>Misi<\/h3>/i', $raw, 2);
+
+    $parseVisiMisiHtml = function (string $html) use (&$visi, &$misi, $visiFallback, $misiFallback) {
+        $raw = strip_tags($html, '<p><br><strong><em><h3><ul><ol><li>');
+        $parts = preg_split('/<h3[^>]*>\s*Misi\s*<\/h3>/i', $raw, 2);
         $visiHtml = $parts[0] ?? '';
         $misiHtml = $parts[1] ?? '';
         $visiHtml = preg_replace('/<h3[^>]*>.*?<\/h3>/i', '', $visiHtml, 1);
         $visi = trim(strip_tags($visiHtml)) ?: $visiFallback;
+
         if (preg_match_all('/<li[^>]*>(.*?)<\/li>/is', $misiHtml, $m)) {
-            $misi = array_map(fn($x) => trim(strip_tags($x)), $m[1]);
-            if (empty($misi)) $misi = $misiFallback;
+            $parsed = array_map(fn($x) => trim(strip_tags($x)), $m[1]);
+            if (!empty($parsed)) $misi = $parsed;
         }
+    };
+
+    if ($visiMisiSection && $visiMisiSection->is_active && $visiMisiSection->content) {
+        $parseVisiMisiHtml($visiMisiSection->content);
+    } elseif ($pageVisiMisi && $pageVisiMisi->content) {
+        $parseVisiMisiHtml($pageVisiMisi->content);
     }
 
     // ---- Struktur Organisasi: dari DB, fallback statis ----
@@ -410,22 +419,32 @@
                     <div class="lp-side-sub">Navigasi Internal</div>
                 </div>
 
-                <nav class="lp-side-nav">
-                    <a href="#overview" class="lp-side-link is-active">
-                        <i class="bi bi-eye-fill"></i> Tinjauan
-                    </a>
-                    <a href="#history" class="lp-side-link">
-                        <i class="bi bi-clock-history"></i> Sejarah
-                    </a>
-                    <a href="#visi-misi" class="lp-side-link">
-                        <i class="bi bi-bullseye"></i> Visi &amp; Misi
-                    </a>
-                    <a href="#akreditasi" class="lp-side-link">
-                        <i class="bi bi-patch-check-fill"></i> Akreditasi
-                    </a>
-                    <a href="#fasilitas" class="lp-side-link">
-                        <i class="bi bi-building"></i> Fasilitas
-                    </a>
+                <nav class="lp-side-nav" id="lp-profile-side-nav">
+                    @if (!$overviewSection || $overviewSection->is_active)
+                        <a href="#overview" class="lp-side-link is-active" data-section="overview">
+                            <i class="bi bi-eye-fill"></i> Tinjauan
+                        </a>
+                    @endif
+                    @if (!$sejarahSection || $sejarahSection->is_active)
+                        <a href="#history" class="lp-side-link {{ (!$overviewSection || $overviewSection->is_active) ? '' : 'is-active' }}" data-section="history">
+                            <i class="bi bi-clock-history"></i> Sejarah
+                        </a>
+                    @endif
+                    @if (!$visiMisiSection || $visiMisiSection->is_active)
+                        <a href="#visi-misi" class="lp-side-link" data-section="visi-misi">
+                            <i class="bi bi-bullseye"></i> Visi &amp; Misi
+                        </a>
+                    @endif
+                    @if (!$akreditasiSection || $akreditasiSection->is_active)
+                        <a href="#akreditasi" class="lp-side-link" data-section="akreditasi">
+                            <i class="bi bi-patch-check-fill"></i> Akreditasi
+                        </a>
+                    @endif
+                    @if ($fasilitasItems->isNotEmpty())
+                        <a href="#fasilitas" class="lp-side-link" data-section="fasilitas">
+                            <i class="bi bi-building"></i> Fasilitas
+                        </a>
+                    @endif
                 </nav>
 
                 <a href="{{ route('landing.kontak') }}" class="lp-side-cta">
@@ -436,80 +455,71 @@
             {{-- ============= CONTENT ============= --}}
             <main>
                 {{-- Hero / Overview --}}
-                <div class="lp-hero-card" id="overview">
-                    @if ($overviewSection && $overviewSection->is_active)
-                        <h1>{{ $overviewSection->title ?: 'Profil Sekolah' }}</h1>
-                        @if ($overviewSection->subtitle)
+                @if (!$overviewSection || $overviewSection->is_active)
+                    <div class="lp-hero-card" id="overview">
+                        @if ($overviewSection && $overviewSection->is_active)
+                            <h1>{{ $overviewSection->title ?: 'Profil Sekolah' }}</h1>
+                            @if ($overviewSection->subtitle)
+                                <div class="lp-hero-body">
+                                    <p class="lp-text-muted-soft">{{ $overviewSection->subtitle }}</p>
+                                </div>
+                            @endif
+                            @if ($overviewSection->content)
+                                <div class="lp-hero-body">
+                                    {!! $overviewSection->content !!}
+                                </div>
+                            @endif
+                            @if ($overviewSection->badge_text || $overviewSection->badge_extra)
+                                <div class="lp-hero-badges">
+                                    @if ($overviewSection->badge_text)
+                                        <span class="lp-hero-badge is-green">
+                                            <i class="bi bi-patch-check-fill"></i> {{ $overviewSection->badge_text }}
+                                        </span>
+                                    @endif
+                                    @if ($overviewSection->badge_extra)
+                                        <span class="lp-hero-badge">
+                                            <i class="bi bi-hash"></i> {{ $overviewSection->extra_label ?: 'NPSN' }}: {{ $overviewSection->badge_extra }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+                        @else
+                            <h1>Selamat Datang di {{ $schoolName }}</h1>
                             <div class="lp-hero-body">
-                                <p class="lp-text-muted-soft">{{ $overviewSection->subtitle }}</p>
+                                <p class="lp-text-muted-soft">Konten tinjauan belum diatur. Silakan aktifkan section <strong>Tinjauan</strong> di menu <em>Landing Page &raquo; Profil</em>.</p>
                             </div>
                         @endif
-                        @if ($overviewSection->content)
-                            <div class="lp-hero-body">
-                                {!! $overviewSection->content !!}
-                            </div>
-                        @endif
-                        @if ($overviewSection->badge_text || $overviewSection->badge_extra)
-                            <div class="lp-hero-badges">
-                                @if ($overviewSection->badge_text)
-                                    <span class="lp-hero-badge is-green">
-                                        <i class="bi {{ $overviewSection->badge_icon ?: 'bi-patch-check-fill' }}"></i> {{ $overviewSection->badge_text }}
-                                    </span>
-                                @endif
-                                @if ($overviewSection->badge_extra)
-                                    <span class="lp-hero-badge">
-                                        <i class="bi bi-hash"></i> {{ $overviewSection->extra_label ?: 'NPSN' }}: {{ $overviewSection->badge_extra }}
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
-                    @else
-                        <h1>Nurturing Future Leaders Since 1995</h1>
-                        <div class="lp-hero-body">
-                            <p>
-                                Sejarah Singkat: Elite Elementary School was founded with a vision to provide
-                                world-class education rooted in strong moral values. Over the decades, we have
-                                grown into a premier institution dedicated to academic excellence and
-                                character building.
-                            </p>
-                        </div>
-                        <div class="lp-hero-badges">
-                            <span class="lp-hero-badge is-green">
-                                <i class="bi bi-patch-check-fill"></i> Akreditasi A
-                            </span>
-                            <span class="lp-hero-badge">
-                                <i class="bi bi-hash"></i> NPSN: 20212345
-                            </span>
-                        </div>
-                    @endif
-                </div>
+                    </div>
+                @endif
 
                 {{-- Visi & Misi --}}
-                <div class="lp-section-title-row" id="visi-misi">
-                    <i class="bi bi-bullseye"></i>
-                    <h2>Visi &amp; Misi</h2>
-                </div>
+                @if (!$visiMisiSection || $visiMisiSection->is_active)
+                    <div class="lp-section-title-row" id="visi-misi">
+                        <i class="bi bi-bullseye"></i>
+                        <h2>{{ $visiMisiSection && $visiMisiSection->is_active && $visiMisiSection->title ? $visiMisiSection->title : 'Visi & Misi' }}</h2>
+                    </div>
 
-                <div class="lp-vm-grid">
-                    <div class="lp-vm-card is-visi">
-                        <div class="lp-vm-icon"><i class="bi bi-eye-fill"></i></div>
-                        <h3>Visi Kami</h3>
-                        <div class="lp-vm-text">
-                            <p>{{ $visi }}</p>
+                    <div class="lp-vm-grid">
+                        <div class="lp-vm-card is-visi">
+                            <div class="lp-vm-icon"><i class="bi bi-eye-fill"></i></div>
+                            <h3>Visi Kami</h3>
+                            <div class="lp-vm-text">
+                                <p>{{ $visi }}</p>
+                            </div>
+                        </div>
+                        <div class="lp-vm-card is-misi">
+                            <div class="lp-vm-icon"><i class="bi bi-flag-fill"></i></div>
+                            <h3>Misi Kami</h3>
+                            <div class="lp-vm-text">
+                                <ol>
+                                    @foreach ($misi as $m)
+                                        <li>{{ $m }}</li>
+                                    @endforeach
+                                </ol>
+                            </div>
                         </div>
                     </div>
-                    <div class="lp-vm-card is-misi">
-                        <div class="lp-vm-icon"><i class="bi bi-flag-fill"></i></div>
-                        <h3>Misi Kami</h3>
-                        <div class="lp-vm-text">
-                            <ol>
-                                @foreach ($misi as $m)
-                                    <li>{{ $m }}</li>
-                                @endforeach
-                            </ol>
-                        </div>
-                    </div>
-                </div>
+                @endif
 
                 {{-- Struktur Organisasi --}}
                 <div class="lp-section-title-row" id="struktur">
@@ -590,43 +600,47 @@
                 @endif
 
                 {{-- Sejarah --}}
-                <div class="lp-section-title-row" id="history">
-                    <i class="bi bi-clock-history"></i>
-                    <h2>{{ $sejarahSection && $sejarahSection->is_active ? $sejarahSection->title : 'Sejarah' }}</h2>
-                </div>
+                @if (!$sejarahSection || $sejarahSection->is_active)
+                    <div class="lp-section-title-row" id="history">
+                        <i class="bi bi-clock-history"></i>
+                        <h2>{{ $sejarahSection && $sejarahSection->is_active ? $sejarahSection->title : 'Sejarah' }}</h2>
+                    </div>
 
-                <div class="lp-hero-card" style="padding: 1.5rem 1.85rem;">
-                    @if ($sejarahSection && $sejarahSection->is_active)
-                        {!! $sejarahSection->content ?: '<p class="lp-text-muted-soft" style="margin:0; font-size:0.96rem;">Belum ada konten sejarah.</p>' !!}
-                    @else
-                        <p class="lp-text-muted-soft" style="margin:0; font-size:0.96rem;">
-                            Didirikan sejak tahun 1995, {{ $schoolName }} telah berkembang menjadi lembaga
-                            pendidikan yang dipercaya masyarakat. Perjalanan panjang ini ditandai dengan
-                            berbagai inovasi pembelajaran dan pencapaian prestasi di tingkat kota, provinsi,
-                            hingga nasional.
-                        </p>
-                    @endif
-                </div>
+                    <div class="lp-hero-card" style="padding: 1.5rem 1.85rem;">
+                        @if ($sejarahSection && $sejarahSection->is_active && $sejarahSection->content)
+                            <div class="lp-vm-text">{!! $sejarahSection->content !!}</div>
+                        @else
+                            <p class="lp-text-muted-soft" style="margin:0; font-size:0.96rem;">
+                                Didirikan sejak tahun 1995, {{ $schoolName }} telah berkembang menjadi lembaga
+                                pendidikan yang dipercaya masyarakat. Perjalanan panjang ini ditandai dengan
+                                berbagai inovasi pembelajaran dan pencapaian prestasi di tingkat kota, provinsi,
+                                hingga nasional.
+                            </p>
+                        @endif
+                    </div>
+                @endif
 
                 {{-- Akreditasi --}}
-                <div class="lp-section-title-row" id="akreditasi">
-                    <i class="bi bi-patch-check-fill"></i>
-                    <h2>{{ $akreditasiSection && $akreditasiSection->is_active ? $akreditasiSection->title : 'Akreditasi' }}</h2>
-                </div>
+                @if (!$akreditasiSection || $akreditasiSection->is_active)
+                    <div class="lp-section-title-row" id="akreditasi">
+                        <i class="bi bi-patch-check-fill"></i>
+                        <h2>{{ $akreditasiSection && $akreditasiSection->is_active ? $akreditasiSection->title : 'Akreditasi' }}</h2>
+                    </div>
 
-                <div class="lp-vm-card is-visi" style="padding: 1.5rem 1.6rem;">
-                    <div class="lp-vm-icon"><i class="bi bi-award-fill"></i></div>
-                    <h3>{{ $akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->badge_text ? $akreditasiSection->badge_text : 'Terakreditasi A' }}</h3>
-                    @if ($akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->content)
-                        {!! $akreditasiSection->content !!}
-                    @else
-                        <p class="lp-text-muted-soft" style="margin:0; font-size:0.94rem;">
-                            Status akreditasi A (Sangat Baik) diberikan oleh BAN-SM, mencerminkan
-                            komitmen kami terhadap mutu pendidikan, manajemen sekolah, dan
-                            pencapaian lulusan yang berkualitas.
-                        </p>
-                    @endif
-                </div>
+                    <div class="lp-vm-card is-visi" style="padding: 1.5rem 1.6rem;">
+                        <div class="lp-vm-icon"><i class="bi bi-award-fill"></i></div>
+                        <h3>{{ $akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->badge_text ? $akreditasiSection->badge_text : 'Terakreditasi A' }}</h3>
+                        @if ($akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->content)
+                            <div class="lp-vm-text">{!! $akreditasiSection->content !!}</div>
+                        @else
+                            <p class="lp-text-muted-soft" style="margin:0; font-size:0.94rem;">
+                                Status akreditasi A (Sangat Baik) diberikan oleh BAN-SM, mencerminkan
+                                komitmen kami terhadap mutu pendidikan, manajemen sekolah, dan
+                                pencapaian lulusan yang berkualitas.
+                            </p>
+                        @endif
+                    </div>
+                @endif
 
                 {{-- Fasilitas --}}
                 <div class="lp-section-title-row" id="fasilitas">
@@ -667,4 +681,55 @@
     </div>
 </section>
 
+@endsection
+
+@section('script')
+<script>
+(function () {
+    // Identik dengan pola scroll-spy halaman PPDB
+    var sideLinks = document.querySelectorAll('#lp-profile-side-nav .lp-side-link[data-section]');
+    var sectionIds = ['overview', 'history', 'visi-misi', 'akreditasi', 'fasilitas'];
+    var sections = sectionIds
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+
+    function setActive(id) {
+        sideLinks.forEach(function (a) {
+            a.classList.toggle('is-active', a.getAttribute('data-section') === id);
+        });
+    }
+
+    sideLinks.forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            var id = a.getAttribute('data-section');
+            var el = document.getElementById(id);
+            if (!el) return;
+            e.preventDefault();
+            var top = el.getBoundingClientRect().top + window.scrollY - 110;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+            history.replaceState(null, '', '#' + id);
+            setActive(id);
+        });
+    });
+
+    // Auto-highlight section yang sedang terlihat saat scroll
+    if ('IntersectionObserver' in window && sections.length) {
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    setActive(entry.target.id);
+                }
+            });
+        }, { rootMargin: '-30% 0px -55% 0px' });
+
+        sections.forEach(function (el) { io.observe(el); });
+    }
+
+    // Set active sesuai hash saat pertama load
+    var hash = window.location.hash.replace('#', '');
+    if (hash && sectionIds.indexOf(hash) !== -1) {
+        setActive(hash);
+    }
+})();
+</script>
 @endsection

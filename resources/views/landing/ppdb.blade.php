@@ -262,6 +262,11 @@
 {{-- ====== Hero PPDB ====== --}}
 <section class="lp-ppdb-hero">
     <div class="container text-center">
+        @if (!empty($ppdb->eyebrow))
+            <div class="lp-reveal" data-from="zoom" style="opacity:.85; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.5rem;">
+                {{ $ppdb->eyebrow }}
+            </div>
+        @endif
         <h1 class="lp-reveal" data-from="zoom">{{ $ppdb->title ?? 'Penerimaan Peserta Didik Baru' }}</h1>
         <p class="lp-reveal" data-delay="1">
             {{ $ppdb->subtitle ?? 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.' }}

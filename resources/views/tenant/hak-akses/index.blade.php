@@ -187,20 +187,23 @@
                                                                 @php
                                                                     $children = $bucket['children']->get($parent->id, collect());
                                                                     $hasChildren = $children->isNotEmpty();
+                                                                    // Semua descendant ids (termasuk cucu/cicit) untuk data-children
+                                                                    // parent-cb, supaya select-all-parent otomatis mencentang
+                                                                    // semua level di bawahnya.
+                                                                    $allDescendantIds = $bucket['descendant_ids'][$parent->id] ?? [];
                                                                 @endphp
                                                                 <div>
                                                                     <label class="menu-row flex items-center gap-2.5 rounded-md px-2 py-1.5 cursor-pointer">
-                                                                        <input type="checkbox" class="cb menu-cb parent-cb h-4 w-4 flex-shrink-0" value="{{ $parent->id }}" data-children='@json($children->pluck("id"))' @checked(in_array($parent->id, $selected))>
+                                                                        <input type="checkbox" class="cb menu-cb parent-cb h-4 w-4 flex-shrink-0" value="{{ $parent->id }}" data-children='@json($allDescendantIds)' @checked(in_array($parent->id, $selected))>
                                                                         <span class="text-sm font-medium text-slate-800">{{ $parent->nama_menu }}</span>
                                                                     </label>
                                                                     @if ($hasChildren)
                                                                         <div class="ml-7 mt-0.5 space-y-0.5 border-l-2 border-slate-200 pl-3">
-                                                                            @foreach ($children as $child)
-                                                                                <label class="menu-row flex items-center gap-2.5 rounded-md px-2 py-1 cursor-pointer">
-                                                                                    <input type="checkbox" class="cb menu-cb child-cb h-3.5 w-3.5 flex-shrink-0" value="{{ $child->id }}" data-parent="{{ $parent->id }}" @checked(in_array($child->id, $selected))>
-                                                                                    <span class="text-xs text-slate-600">{{ $child->nama_menu }}</span>
-                                                                                </label>
-                                                                            @endforeach
+                                                                            @include('tenant.hak-akses._menu-children', [
+                                                                                'children' => $children,
+                                                                                'bucket' => $bucket,
+                                                                                'selected' => $selected,
+                                                                            ])
                                                                         </div>
                                                                     @endif
                                                                 </div>
@@ -580,6 +583,31 @@
             }
             const groups = {};
             menus.forEach((m) => { (groups[m.group || 'Lainnya'] = groups[m.group || 'Lainnya'] || []).push(m); });
+
+            const collectAllDescendants = (node, acc) => {
+                (node.children || []).forEach((c) => { acc.push(c.id); collectAllDescendants(c, acc); });
+                return acc;
+            };
+            const renderTree = (parent, list, depth) => {
+                parent.forEach((m) => {
+                    const descendantIds = collectAllDescendants(m, []);
+                    const hasChildren = (m.children || []).length > 0;
+                    const isTopLevel = depth === 0;
+                    const label = document.createElement('label');
+                    label.className = 'menu-row flex items-center gap-1.5 rounded-md px-1 py-0.5 cursor-pointer';
+                    const cbClass = isTopLevel ? 'add-parent-cb h-3.5 w-3.5' : 'add-child-cb h-3 w-3';
+                    label.innerHTML = `<input type="checkbox" class="cb add-menu-cb ${cbClass} flex-shrink-0" value="${m.id}" data-children='${JSON.stringify(descendantIds)}' data-parent="${isTopLevel ? '' : m.parent_id || ''}">
+                        <span class="${isTopLevel ? 'text-[11px] font-semibold text-slate-800' : 'text-[10px] text-slate-600'}">${m.nama}</span>`;
+                    list.appendChild(label);
+                    if (hasChildren) {
+                        const sub = document.createElement('div');
+                        sub.className = 'ml-5 space-y-0.5 border-l-2 border-slate-200 pl-2';
+                        renderTree(m.children, sub, depth + 1);
+                        list.appendChild(sub);
+                    }
+                });
+            };
+
             Object.keys(groups).forEach((g) => {
                 const wrap = document.createElement('div');
                 wrap.className = 'group-card rounded-lg border border-slate-200 bg-white p-2';
@@ -589,46 +617,20 @@
                 </div>`;
                 const list = document.createElement('div');
                 list.className = 'space-y-0.5';
-                groups[g].forEach((m) => {
-                    const childIds = (m.children || []).map((c) => c.id);
-                    const hasChildren = childIds.length > 0;
-                    const label = document.createElement('label');
-                    label.className = 'menu-row flex items-center gap-1.5 rounded-md px-1 py-0.5 cursor-pointer';
-                    label.innerHTML = `<input type="checkbox" class="cb add-menu-cb add-parent-cb h-3.5 w-3.5 flex-shrink-0" value="${m.id}" data-children='${JSON.stringify(childIds)}'>
-                        <span class="text-[11px] font-semibold text-slate-800">${m.nama}</span>`;
-                    list.appendChild(label);
-                    if (hasChildren) {
-                        const sub = document.createElement('div');
-                        sub.className = 'ml-5 space-y-0.5 border-l-2 border-slate-200 pl-2';
-                        m.children.forEach((c) => {
-                            const cl = document.createElement('label');
-                            cl.className = 'menu-row flex items-center gap-1.5 rounded-md px-1 py-0.5 cursor-pointer';
-                            cl.innerHTML = `<input type="checkbox" class="cb add-menu-cb add-child-cb h-3 w-3 flex-shrink-0" value="${c.id}" data-parent="${m.id}">
-                                <span class="text-[10px] text-slate-600">${c.nama}</span>`;
-                            sub.appendChild(cl);
-                        });
-                        list.appendChild(sub);
-                    }
-                });
+                renderTree(groups[g], list, 0);
                 wrap.appendChild(list);
                 cont.appendChild(wrap);
             });
 
             cont.querySelectorAll('.add-menu-cb').forEach((cb) => {
                 cb.addEventListener('change', function () {
-                    if (this.classList.contains('add-parent-cb')) {
+                    if (this.classList.contains('add-parent-cb') || this.classList.contains('add-child-cb')) {
                         let ids = [];
                         try { ids = JSON.parse(this.dataset.children || '[]'); } catch (_) {}
                         ids.forEach((id) => {
-                            const c = cont.querySelector(`.add-child-cb[value="${id}"]`);
+                            const c = cont.querySelector(`.add-menu-cb[value="${id}"]`);
                             if (c) c.checked = this.checked;
                         });
-                    } else if (this.classList.contains('add-child-cb')) {
-                        const parent = cont.querySelector(`.add-parent-cb[value="${this.dataset.parent}"]`);
-                        if (parent) {
-                            const siblings = cont.querySelectorAll(`.add-child-cb[data-parent="${this.dataset.parent}"]`);
-                            parent.checked = siblings.length > 0 && Array.from(siblings).every((c) => c.checked);
-                        }
                     }
                 });
             });

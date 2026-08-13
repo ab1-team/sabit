@@ -283,11 +283,16 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::delete('/fasilitas/{item}', [LandingAdminController::class, 'fasilitasDestroy'])->name('fasilitas.destroy');
 
         Route::get('/profile-sections', [LandingAdminController::class, 'profileSections'])->name('profile-sections');
+        Route::put('/profile-sections', [LandingAdminController::class, 'profileSectionsUpdateAll'])->name('profile-sections.updateAll');
         Route::get('/profile-sections/{item}/edit', [LandingAdminController::class, 'profileSectionEdit'])->name('profile-sections.edit');
         Route::put('/profile-sections/{item}', [LandingAdminController::class, 'profileSectionUpdate'])->name('profile-sections.update');
+        Route::post('/profile-sections/{item}/toggle', [LandingAdminController::class, 'profileSectionToggle'])->name('profile-sections.toggle');
 
         Route::get('/ppdb-cta', [LandingAdminController::class, 'ppdbCta'])->name('ppdb-cta');
         Route::post('/ppdb-cta', [LandingAdminController::class, 'ppdbCtaStore'])->name('ppdb-cta.store');
+
+        Route::get('/ppdb-setting', [LandingAdminController::class, 'ppdbSetting'])->name('ppdb-setting');
+        Route::post('/ppdb-setting', [LandingAdminController::class, 'ppdbSettingStore'])->name('ppdb-setting.store');
 
         // Profil: sub-halaman Struktur & Fasilitas (di-link dari menu Profil).
         Route::get('/struktur', [LandingAdminController::class, 'struktur'])->name('struktur');
