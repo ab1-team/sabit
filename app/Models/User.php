@@ -25,8 +25,8 @@ class User extends Authenticatable
         'email',
         'username',
         'password',
+        'hak_akses',
     ];
-
 
     protected $hidden = [
         'password',
@@ -38,11 +38,6 @@ class User extends Authenticatable
         'password' => 'hashed',
         'hak_akses' => 'array',
     ];
-
-    public function User()
-    {
-        return $this->hasMany(User::class, 'id');
-    }
 
     public function profil()
     {

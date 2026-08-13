@@ -202,6 +202,7 @@
             modalTitle.textContent = 'Tambah Ruangan';
             modalDesc.textContent = 'Tambahkan data ruangan baru.';
             submitLabel.textContent = 'Tambah Ruangan';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#ruangan-modal');
             document.getElementById('kode_gedung').focus();
         }
@@ -219,6 +220,7 @@
             modalTitle.textContent = 'Ubah Ruangan';
             modalDesc.textContent = 'Perbarui data ruangan ' + (btn.dataset.kode || '') + '.';
             submitLabel.textContent = 'Simpan Perubahan';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#ruangan-modal');
             document.getElementById('kode_gedung').focus();
         }

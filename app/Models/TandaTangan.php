@@ -11,13 +11,7 @@ class TandaTangan extends Model
     protected $table = 'tanda_tangan';
     protected $guarded = ['id'];
 
-    public function getTandaTanganAttribute($value)
-    {
-        return stripslashes($value);
-    }
-
-    public function setTandaTanganAttribute($value)
-    {
-        $this->attributes['tanda_tangan'] = addslashes($value);
-    }
+    protected $casts = [
+        'tanda_tangan' => 'string',
+    ];
 }

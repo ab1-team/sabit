@@ -113,24 +113,21 @@ class LaporanController extends Controller
             ]);
         } elseif (in_array($file, ['pembayaran_spp', 'daftar_ulang', 'pembangunan', 'ujian_semester', 'bantuan_yayasan'], true)) {
 
-            $kelas = AnggotaKelas::where('status', 'aktif')
+            $kodeKelasList = AnggotaKelas::where('status', 'aktif')
                 ->select('kode_kelas')
                 ->distinct()
                 ->orderBy('kode_kelas')
-                ->get()
-                ->map(function ($row) {
-                    $k = Kelas::where('kode_kelas', $row->kode_kelas)->first();
-                    return (object) [
-                        'kode_kelas' => $row->kode_kelas,
-                        'nama_kelas' => $k->nama_kelas ?? $row->kode_kelas,
-                    ];
-                });
+                ->pluck('kode_kelas')
+                ->all();
+
+            $kelasMap = Kelas::whereIn('kode_kelas', $kodeKelasList)->get()->keyBy('kode_kelas');
 
             $sub_laporan = [];
-            foreach ($kelas as $k) {
+            foreach ($kodeKelasList as $kodeKelas) {
+                $k = $kelasMap[$kodeKelas] ?? null;
                 $sub_laporan[] = [
-                    'value' => (string) $k->kode_kelas,
-                    'title' => $k->kode_kelas . ' - ' . $k->nama_kelas,
+                    'value' => (string) $kodeKelas,
+                    'title' => $kodeKelas . ' - ' . ($k->nama_kelas ?? $kodeKelas),
                 ];
             }
 
@@ -249,17 +246,7 @@ class LaporanController extends Controller
             : "COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0) - COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0)";
 
         // 1) Saldo awal tahun: 1 query aggregate
-        $saldo_awal = (float) DB::table('transaksi')
-            ->whereNull('deleted_at')
-            ->where('tanggal_transaksi', '<', $tgl_awal_tahun)
-            ->where(function ($q) use ($kode) {
-                $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
-            })
-            ->selectRaw($sumExpr('rekening_debit'), [$kode, $kode])
-            ->value(DB::raw('1')); // trick agar selectRaw dipakai
-
-        // value() butuh raw lagi — kita ambil langsung via DB::select
-        $saldo_awal = (float) DB::table('transaksi')
+        $saldo_awal_raw = (float) DB::table('transaksi')
             ->whereNull('deleted_at')
             ->where('tanggal_transaksi', '<', $tgl_awal_tahun)
             ->where(function ($q) use ($kode) {
@@ -270,10 +257,8 @@ class LaporanController extends Controller
                 COALESCE(SUM(CASE WHEN rekening_kredit = ? THEN jumlah ELSE 0 END),0) AS net
             ', [$kode, $kode])
             ->value('net');
-        // Koreksi sign berdasarkan normal akun
-        if (! $isDebet) {
-            $saldo_awal = -$saldo_awal;
-        }
+
+        $saldo_awal = $isDebet ? $saldo_awal_raw : -$saldo_awal_raw;
         $data['saldo_awal'] = $saldo_awal;
 
         // 2) Kumulatif s/d bulan lalu (Jan s/d akhir bulan lalu) — 1 query
@@ -429,11 +414,13 @@ class LaporanController extends Controller
             'child',
             'child.rek_debit.rek.transaksiDebit' => function ($q) use ($tgl_awal_bulan, $tgl_akhir_bulan) {
                 $q->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
-                    ->where('rekening_kredit', 'like', '1.1.01%');
+                    ->where('rekening_kredit', 'like', '1.1.01%')
+                    ->limit(500);
             },
             'child.rek_kredit.rek.transaksiKredit' => function ($q) use ($tgl_awal_bulan, $tgl_akhir_bulan) {
                 $q->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
-                    ->where('rekening_debit', 'like', '1.1.01%');
+                    ->where('rekening_debit', 'like', '1.1.01%')
+                    ->limit(500);
             }
         ])->where('parent_id', 0)->get();
         $data['ttd'] = TandaTangan::first();
@@ -513,10 +500,31 @@ class LaporanController extends Controller
 
         $data['title'] = !empty($data['bulan']) ? $data['judul'] . ' (' . $namaBulan . ' ' . $thn . ')' : $data['judul'] . ' Tahun ' . $thn;
 
+        $rekeningIdsYangPunyaTrx = DB::table('transaksi')
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir])
+            ->where(function ($q) {
+                $q->whereNotNull('rekening_debit')->where('rekening_debit', '!=', '')
+                  ->orWhereNotNull('rekening_kredit')->where('rekening_kredit', '!=', '');
+            })
+            ->selectRaw('DISTINCT rekening_debit as kode')
+            ->unionAll(
+                DB::table('transaksi')
+                    ->whereNull('deleted_at')
+                    ->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir])
+                    ->selectRaw('DISTINCT rekening_kredit as kode')
+            )
+            ->pluck('kode')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
         $data['akun1'] = AkunLevel1::where('lev1', '<=', 3)
-            ->with(['akun2.akun3.rek' => function ($q) use ($tgl_awal, $tgl_akhir) {
-                $q->whereHas('transaksiDebit', fn($q2) => $q2->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]))
-                    ->orWhereHas('transaksiKredit', fn($q2) => $q2->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]));
+            ->with(['akun2.akun3.rek' => function ($q) use ($rekeningIdsYangPunyaTrx) {
+                if (!empty($rekeningIdsYangPunyaTrx)) {
+                    $q->whereIn('kode_akun', $rekeningIdsYangPunyaTrx);
+                }
             }])
             ->orderBy('kode_akun', 'ASC')
             ->get();
@@ -556,21 +564,30 @@ class LaporanController extends Controller
             ? 'Neraca Saldo (' . $namaBulan . ' ' . $thn . ')'
             : 'Neraca Saldo (Tahun ' . $thn . ')';
 
-        $data['rekening'] = Rekening::with([
-            'transaksiDebit' => function ($q) use ($tgl_awal, $tgl_akhir) {
-                $q->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]);
-            },
-            'transaksiKredit' => function ($q) use ($tgl_awal, $tgl_akhir) {
-                $q->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]);
-            }
-        ])
-            ->orderBy('kode_akun')
-            ->get()
-            ->transform(function ($rek) {
-                $rek->total_debit  = $rek->transaksiDebit->sum('jumlah');
-                $rek->total_kredit = $rek->transaksiKredit->sum('jumlah');
-                return $rek;
-            });
+        $kodeList = Rekening::whereNull('tgl_nonaktif')->pluck('kode_akun')->all();
+        $rekenings = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun')->get(['kode_akun', 'nama_akun']);
+
+        $debits = DB::table('transaksi')
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir])
+            ->whereIn('rekening_debit', $kodeList)
+            ->groupBy('rekening_debit')
+            ->selectRaw('rekening_debit as kode_akun, SUM(jumlah) as total')
+            ->pluck('total', 'kode_akun');
+
+        $kredits = DB::table('transaksi')
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir])
+            ->whereIn('rekening_kredit', $kodeList)
+            ->groupBy('rekening_kredit')
+            ->selectRaw('rekening_kredit as kode_akun, SUM(jumlah) as total')
+            ->pluck('total', 'kode_akun');
+
+        $data['rekening'] = $rekenings->map(function ($r) use ($debits, $kredits) {
+            $r->total_debit  = (float) ($debits[$r->kode_akun] ?? 0);
+            $r->total_kredit = (float) ($kredits[$r->kode_akun] ?? 0);
+            return $r;
+        });
         $data['ttd'] = TandaTangan::first();
 
         $view = view('laporan-keuangan.views.neraca_saldo', $data)->render();
@@ -602,7 +619,9 @@ class LaporanController extends Controller
         $data['profil'] = Profil::first();
 
         $data['akun1'] = AkunLevel1::where('lev1', '<=', 3)
-            ->with(['akun2.akun3.rek'])
+            ->with(['akun2.akun3.rek' => function ($q) {
+                $q->whereNull('tgl_nonaktif');
+            }])
             ->orderBy('kode_akun', 'ASC')
             ->get();
         
@@ -667,55 +686,72 @@ $request->validate([
             $cursor->addMonth();
         }
 
-        $anggotaKelas = AnggotaKelas::with(['getSiswa'])
+        $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn'])
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
-->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
+            ->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
                 $tahun = TahunAkademik::find($data['tahun_akademik_id']);
                 if ($tahun) {
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
             })
             ->orderBy('id')
-            ->get()
-            ->map(function ($row) use ($tglAwal, $tglAkhir, $bulanList) {
+            ->get();
 
-                $row->per_bulan = (int) ($row->spp_nominal ?? 0);
+        $akIds = $anggotaKelas->pluck('id')->all();
 
-                $sppRows = Spp::where('anggota_kelas', $row->id)
-                    ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
-                    ->orderBy('tanggal')
-                    ->get()
-                    ->keyBy(fn($s) => Carbon::parse($s->tanggal)->format('Y-m'));
+        $sppByKey = [];
+        if (!empty($akIds)) {
+            $sppAll = DB::table('spp')
+                ->whereIn('anggota_kelas', $akIds)
+                ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
+                ->get(['anggota_kelas', 'tanggal', 'nominal', 'status']);
 
-                $row->bulan_list = collect($bulanList)->map(function ($bln) use ($sppRows, $row) {
-                    $key = $bln->format('Y-m');
-                    $s = $sppRows->get($key);
-                    $nominalTagihan = (int) ($s->nominal ?? $row->per_bulan);
-                    $lunas = $s && $s->status === 'L';
-                    return (object) [
-                        'bulan'   => $bln,
-                        'tagihan' => $nominalTagihan,
-                        'bayar'   => $lunas ? $nominalTagihan : 0,
-                        'status'  => $s ? ($lunas ? 'L' : 'B') : null,
-                    ];
-                });
+            foreach ($sppAll as $s) {
+                $key = (int) $s->anggota_kelas;
+                $sppByKey[$key][substr((string) $s->tanggal, 0, 7)] = $s;
+            }
 
-                $row->target_sd_saat_ini = Spp::where('anggota_kelas', $row->id)
-                    ->where('status', 'B')
-                    ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
-                    ->sum('nominal');
+            $sppAggregate = DB::table('spp')
+                ->whereIn('anggota_kelas', $akIds)
+                ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
+                ->groupBy('anggota_kelas', 'status')
+                ->selectRaw('anggota_kelas, status, SUM(nominal) as total')
+                ->get();
+        } else {
+            $sppAggregate = collect();
+        }
 
-                $row->sd_periode_ini = Spp::where('anggota_kelas', $row->id)
-                    ->where('status', 'L')
-                    ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
-                    ->sum('nominal');
+        $aggByAk = [];
+        foreach ($sppAggregate as $a) {
+            $aggByAk[(int) $a->anggota_kelas][$a->status] = (float) $a->total;
+        }
 
-                $row->sisa = $row->target_sd_saat_ini - $row->sd_periode_ini;
+        $anggotaKelas->transform(function ($row) use ($bulanList, $sppByKey, $aggByAk) {
+            $row->per_bulan = (int) ($row->spp_nominal ?? 0);
 
-                return $row;
+            $sppRows = $sppByKey[$row->id] ?? [];
+
+            $row->bulan_list = collect($bulanList)->map(function ($bln) use ($sppRows, $row) {
+                $key = $bln->format('Y-m');
+                $s = $sppRows[$key] ?? null;
+                $nominalTagihan = (int) ($s->nominal ?? $row->per_bulan);
+                $lunas = $s && $s->status === 'L';
+                return (object) [
+                    'bulan'   => $bln,
+                    'tagihan' => $nominalTagihan,
+                    'bayar'   => $lunas ? $nominalTagihan : 0,
+                    'status'  => $s ? ($lunas ? 'L' : 'B') : null,
+                ];
             });
+
+            $row->target_sd_saat_ini = $aggByAk[$row->id]['B'] ?? 0;
+            $row->sd_periode_ini = $aggByAk[$row->id]['L'] ?? 0;
+            $row->sisa = $row->target_sd_saat_ini - $row->sd_periode_ini;
+
+            return $row;
+        });
 
         $data['anggotaKelas'] = $anggotaKelas;
         $data['bulanList']    = $bulanList;
@@ -810,35 +846,50 @@ $request->validate([
             'akhir' => $tglAkhir->locale('id'),
         ];
 
-        $anggotaKelas = AnggotaKelas::with(['getSiswa', 'getTahunAkademik'])
-            ->whereHas('getSiswa.transaksi', function ($q) use ($kodeAkun, $tglAwal, $tglAkhir) {
+        $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn,tahun_akademik', 'tahunAkademik:id,nama_tahun'])
+            ->whereHas('siswa.transaksi', function ($q) use ($kodeAkun, $tglAwal, $tglAkhir) {
                 $q->where('rekening_kredit', $kodeAkun)
                     ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir]);
             })
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
-->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
+            ->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
                 $tahun = TahunAkademik::find($data['tahun_akademik_id']);
                 if ($tahun) {
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
             })
             ->orderBy('id')
-            ->get()
-            ->map(function ($row) use ($tglAwal, $tglAkhir, $kodeAkun) {
+            ->get();
 
-                $trx = Transaksi::where('siswa_id', $row->getSiswa->id ?? 0)
-                    ->where('rekening_kredit', $kodeAkun)
-                    ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir])
-                    ->orderByDesc('tanggal_transaksi')
-                    ->get();
+        $siswaIds = $anggotaKelas->pluck('siswa.id')->filter()->unique()->values()->all();
 
-                $row->tgl_bayar_terakhir = $trx->max('tanggal_transaksi');
-                $row->realisasi = (float) $trx->sum('jumlah');
+        $trxBySiswa = [];
+        if (!empty($siswaIds)) {
+            $rows = DB::table('transaksi')
+                ->whereIn('siswa_id', $siswaIds)
+                ->where('rekening_kredit', $kodeAkun)
+                ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir])
+                ->orderByDesc('tanggal_transaksi')
+                ->get(['siswa_id', 'tanggal_transaksi', 'jumlah']);
 
-                return $row;
-            });
+            foreach ($rows as $r) {
+                $sid = (int) $r->siswa_id;
+                if (!isset($trxBySiswa[$sid])) {
+                    $trxBySiswa[$sid] = ['max' => $r->tanggal_transaksi, 'sum' => 0];
+                }
+                $trxBySiswa[$sid]['sum'] += (float) $r->jumlah;
+            }
+        }
+
+        $anggotaKelas->transform(function ($row) use ($trxBySiswa) {
+            $sid = $row->siswa?->id ?? 0;
+            $stat = $trxBySiswa[$sid] ?? null;
+            $row->tgl_bayar_terakhir = $stat['max'] ?? null;
+            $row->realisasi = $stat['sum'] ?? 0;
+            return $row;
+        });
 
         $data['anggotaKelas'] = $anggotaKelas;
 
@@ -854,7 +905,7 @@ $request->validate([
 
     private function nominalJenisBiaya(AnggotaKelas $row, int $idJp): float
     {
-        $siswa = $row->getSiswa;
+        $siswa = $row->siswa;
         if (!$siswa) {
             return 0;
         }
@@ -879,23 +930,47 @@ $request->validate([
         $start = "$tahun-01-01";
         $end   = date('Y-m-t', strtotime("$tahun-$bulan-01"));
 
-        $rekening = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun')->get();
-        foreach ($rekening as $rek) {
-            $d = (float) DB::table('transaksi')
-                ->whereNull('deleted_at')
-                ->whereBetween('tanggal_transaksi', [$start, $end])
-                ->where('rekening_debit', $rek->kode_akun)
-                ->sum('jumlah');
-            $k = (float) DB::table('transaksi')
-                ->whereNull('deleted_at')
-                ->whereBetween('tanggal_transaksi', [$start, $end])
-                ->where('rekening_kredit', $rek->kode_akun)
-                ->sum('jumlah');
+        $rekening = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun')->get(['kode_akun']);
+        $kodeList = $rekening->pluck('kode_akun')->all();
 
-            Saldo::updateOrCreate(
-                ['kode_akun' => $rek->kode_akun, 'tahun' => (int) $tahun, 'bulan' => (int) $bulan],
-                ['debit' => $d, 'kredit' => $k]
-            );
+        if (!empty($kodeList)) {
+            $debits = DB::table('transaksi')
+                ->whereNull('deleted_at')
+                ->whereBetween('tanggal_transaksi', [$start, $end])
+                ->whereIn('rekening_debit', $kodeList)
+                ->groupBy('rekening_debit')
+                ->selectRaw('rekening_debit as kode_akun, SUM(jumlah) as total')
+                ->pluck('total', 'kode_akun');
+
+            $kredits = DB::table('transaksi')
+                ->whereNull('deleted_at')
+                ->whereBetween('tanggal_transaksi', [$start, $end])
+                ->whereIn('rekening_kredit', $kodeList)
+                ->groupBy('rekening_kredit')
+                ->selectRaw('rekening_kredit as kode_akun, SUM(jumlah) as total')
+                ->pluck('total', 'kode_akun');
+
+            $rows = [];
+            $now = now();
+            foreach ($kodeList as $kode) {
+                $rows[] = [
+                    'kode_akun' => $kode,
+                    'tahun'     => (int) $tahun,
+                    'bulan'     => (int) $bulan,
+                    'debit'     => (float) ($debits[$kode] ?? 0),
+                    'kredit'    => (float) ($kredits[$kode] ?? 0),
+                    'updated_at' => $now,
+                    'created_at' => $now,
+                ];
+            }
+
+            if (!empty($rows)) {
+                DB::table('saldo')->upsert(
+                    $rows,
+                    ['kode_akun', 'tahun', 'bulan'],
+                    ['debit', 'kredit', 'updated_at']
+                );
+            }
         }
 
         $nextBulan = (int) $bulan + 1;

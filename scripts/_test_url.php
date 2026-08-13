@@ -14,8 +14,8 @@ echo "url('landing/hero-bg-2OYQfJmhSm.jpg'): " . $disk->url('landing/hero-bg-2OY
 echo "exists('landing/hero-bg-2OYQfJmhSm.jpg'): " . ($disk->exists('landing/hero-bg-2OYQfJmhSm.jpg') ? 'yes' : 'no') . PHP_EOL;
 echo "path('landing/hero-bg-2OYQfJmhSm.jpg'): " . $disk->path('landing/hero-bg-2OYQfJmhSm.jpg') . PHP_EOL;
 
-echo PHP_EOL . "=== LpSetting::heroBackgroundUrl() ===" . PHP_EOL;
-$setting = \App\Models\Landing\LpSetting::current();
+echo PHP_EOL . "=== PengaturanLanding::heroBackgroundUrl() ===" . PHP_EOL;
+$setting = \App\Models\Landing\PengaturanLanding::current();
 echo "hero_background stored: " . ($setting->hero_background ?: '(null)') . PHP_EOL;
 echo "heroBackgroundUrl(): " . $setting->heroBackgroundUrl() . PHP_EOL;
 echo "hasThemeBackground(): " . ($setting->hasThemeBackground() ? 'yes' : 'no') . PHP_EOL;

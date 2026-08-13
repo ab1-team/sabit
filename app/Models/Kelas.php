@@ -21,14 +21,6 @@ class Kelas extends Model
         return $this->belongsTo(Kurikulum::class, 'kode_kurikulum', 'nama_kurikulum');
     }
 
-    public function getResolvedKurikulumAttribute()
-    {
-        if (is_numeric($this->kode_kurikulum)) {
-            return $this->kurikulum;
-        }
-        return $this->kurikulumByName;
-    }
-
     public function siswa()
     {
         return $this->hasMany(Siswa::class, 'kode_kelas', 'kode_kelas');

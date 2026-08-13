@@ -48,8 +48,8 @@ class RouteServiceProvider extends ServiceProvider
 
     /**
      * Dua grup route terpisah berdasarkan tipe domain tenant:
-     *   - routes/tenant-landing.php => domain landing (sma1.example.test)
-     *   - routes/tenant.php         => domain admin   (admin-sma1.example.test)
+     *   - routes/tenant-halaman-publik.php => domain landing (sma1.example.test)
+     *   - routes/tenant-admin.php           => domain admin   (admin-sma1.example.test)
      *
      * Keduanya mendefinisikan URI '/' sehingga WAJIB dibatasi Route::domain().
      * Tanpa itu, Laravel menimpa route ber-URI+method identik dan grup yang
@@ -65,19 +65,19 @@ class RouteServiceProvider extends ServiceProvider
 
         $domains = $this->tenantDomains();
 
-        if (file_exists(base_path('routes/tenant-landing.php'))) {
+        if (file_exists(base_path('routes/tenant-halaman-publik.php'))) {
             foreach ($domains['landing'] as $domain) {
                 Route::domain($domain)
                     ->middleware(array_merge($base, ['domain.type:landing']))
-                    ->group(base_path('routes/tenant-landing.php'));
+                    ->group(base_path('routes/tenant-halaman-publik.php'));
             }
         }
 
-        if (file_exists(base_path('routes/tenant.php'))) {
+        if (file_exists(base_path('routes/tenant-admin.php'))) {
             foreach ($domains['admin'] as $domain) {
                 Route::domain($domain)
                     ->middleware(array_merge($base, ['domain.type:admin']))
-                    ->group(base_path('routes/tenant.php'));
+                    ->group(base_path('routes/tenant-admin.php'));
             }
         }
     }

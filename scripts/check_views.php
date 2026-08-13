@@ -17,10 +17,9 @@ $views = [
     'transaksi.index',
     'siswa.index',
     'pengaturan.invoice',
-    'landing-admin.index',
-    'landing.index',
-    'landing-admin.pengaturan',
-    'landing-admin.hero',
+    'admin-landing.indeks',
+    'halaman-publik.beranda',
+    'admin-landing.pengaturan',
 ];
 
 foreach ($views as $v) {

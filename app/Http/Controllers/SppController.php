@@ -13,6 +13,7 @@ use App\Models\Spp;
 use App\Models\TahunAkademik;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SppController extends Controller
 {
@@ -87,17 +88,13 @@ $tahun_angkatan = '';
         } else {
             $akQuery = AnggotaKelas::where('id_siswa', $id)
                 ->with([
-                    'getSiswa',
-                    'getSpp',
+                    'siswa:id,nama,nisn,kode_kelas',
+                    'spp',
                 ])->where('status', 'aktif');
 
-            if ($ta || $kelas) {
-                if ($ta)    $akQuery->where('tahun_akademik', $ta);
-                if ($kelas) $akQuery->where('kode_kelas', $kelas);
-                $anggota_kelas = $akQuery->orderByDesc('id')->first();
-            } else {
-                $anggota_kelas = $akQuery->orderByDesc('id')->first();
-            }
+            if ($ta)    $akQuery->where('tahun_akademik', $ta);
+            if ($kelas) $akQuery->where('kode_kelas', $kelas);
+            $anggota_kelas = $akQuery->orderByDesc('id')->first();
 
             if (! $anggota_kelas) {
                 return response()->json([
@@ -113,17 +110,18 @@ $tahun_angkatan = '';
                 ]);
             }
 
-            $siswa = $anggota_kelas->getSiswa;
-            $spp = $anggota_kelas->getSpp;
+            $siswa = $anggota_kelas->siswa;
+            $spp = $anggota_kelas->spp;
             $spp_perbulan = $anggota_kelas->spp_nominal;
             $target_bulan = $spp->sum('nominal');
             $sd_bulan_ini = $spp->where('status', 'L')->sum('nominal');
             $bulan_lunas = $spp->where('status', 'L')->count();
-$sumber_dana = Rekening::where('kode_akun', 'like', '1.1.01.%')->get();
+            $sumber_dana = Cache::remember('sumber_dana_1.1.01', 3600, fn () =>
+                Rekening::where('kode_akun', 'like', '1.1.01.%')->whereNull('tgl_nonaktif')->get(['kode_akun', 'nama_akun']));
             $tahun_angkatan = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
-            $jenis_biaya = JenisPembayaran::orderBy('id')->get();
+            $jenis_biaya = JenisPembayaran::orderBy('id')->get(['id', 'nama', 'kode_akun']);
             $nominalMap = JenisBiaya::where('angkatan', (string) $tahun_angkatan)
-                ->get()
+                ->get(['id_jp', 'angkatan', 'total_beban'])
                 ->groupBy(fn ($i) => $i->id_jp.'|'.$i->angkatan);
             $sppJP = $jenis_biaya->first(fn ($jp) => $jp->isSpp());
             $kodeAkunSpp = $sppJP->kode_akun ?? '';
@@ -131,10 +129,13 @@ $sumber_dana = Rekening::where('kode_akun', 'like', '1.1.01.%')->get();
                 ? Transaksi::where('rekening_debit', $kodePiutangSpp)
                     ->where('rekening_kredit', $kodeAkunSpp)
                     ->where('siswa_id', $siswa->id)
-                    ->orderBy('tanggal_transaksi')->where('deleted_at', null)
-                    ->get()
+                    ->whereNull('deleted_at')
+                    ->orderBy('tanggal_transaksi')
+                    ->get(['id', 'tanggal_transaksi', 'jumlah', 'keterangan'])
                 : collect();
         }
+
+        $profil = Profil::first();
 
         return response()->json([
             'success' => true,
@@ -147,8 +148,8 @@ $sumber_dana = Rekening::where('kode_akun', 'like', '1.1.01.%')->get();
                     'target_bulan' => $target_bulan,
                     'sd_bulan_ini' => $sd_bulan_ini,
                     'bulan_lunas' => $bulan_lunas,
-                    'sop_pts' => (int) (Profil::first()->cetak_pts ?? 3),
-                    'sop_pas' => (int) (Profil::first()->cetak_pas ?? 3),
+                    'sop_pts' => (int) ($profil->cetak_pts ?? 3),
+                    'sop_pas' => (int) ($profil->cetak_pas ?? 3),
                     'sumber_dana' => $sumber_dana,
                     'jenis_biaya' => $jenis_biaya,
                     'tahun_angkatan' => $tahun_angkatan,

@@ -204,6 +204,7 @@
             modalTitle.textContent = 'Tambah Kelas';
             modalDesc.textContent = 'Tambahkan data kelas baru.';
             submitLabel.textContent = 'Tambah Kelas';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#kelas-modal');
             document.getElementById('kode_kelas').focus();
         }
@@ -218,6 +219,7 @@
             modalTitle.textContent = 'Ubah Kelas';
             modalDesc.textContent = 'Perbarui data kelas ' + (btn.dataset.kode || '') + '.';
             submitLabel.textContent = 'Simpan Perubahan';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#kelas-modal');
             document.getElementById('kode_kelas').focus();
         }

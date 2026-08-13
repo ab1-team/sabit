@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Landing\LpAnnouncement;
-use App\Models\Landing\LpGallery;
-use App\Models\Landing\LpHeroSlide;
-use App\Models\Landing\LpMenu;
-use App\Models\Landing\LpPage;
-use App\Models\Landing\LpPost;
-use App\Models\Landing\LpSetting;
+use App\Models\Landing\PengumumanLanding;
+use App\Models\Landing\GaleriLanding;
+use App\Models\Landing\SlideHeroLanding;
+use App\Models\Landing\MenuLanding;
+use App\Models\Landing\HalamanLanding;
+use App\Models\Landing\ArtikelLanding;
+use App\Models\Landing\PengaturanLanding;
 use Illuminate\Database\Seeder;
 
 /**
@@ -41,11 +41,11 @@ class LandingPageSeeder extends Seeder
 
     private function seedSetting(string $namaSekolah, ?string $email): void
     {
-        if (LpSetting::query()->exists()) {
+        if (PengaturanLanding::query()->exists()) {
             return;
         }
 
-        LpSetting::create([
+        PengaturanLanding::create([
             'school_name' => $namaSekolah,
             'tagline' => 'Website Resmi ' . $namaSekolah,
             'email' => $email,
@@ -56,7 +56,7 @@ class LandingPageSeeder extends Seeder
 
     private function seedMenus(): void
     {
-        if (LpMenu::query()->exists()) {
+        if (MenuLanding::query()->exists()) {
             return;
         }
 
@@ -72,11 +72,11 @@ class LandingPageSeeder extends Seeder
         ];
 
         foreach ($header as $item) {
-            LpMenu::create($item + ['position' => 'header', 'is_active' => true]);
+            MenuLanding::create($item + ['position' => 'header', 'is_active' => true]);
         }
 
         // Footer: Profil sebagai induk dengan sub-menu.
-        $profil = LpMenu::create([
+        $profil = MenuLanding::create([
             'title' => 'Profil',
             'url' => '#',
             'position' => 'footer',
@@ -92,7 +92,7 @@ class LandingPageSeeder extends Seeder
         ];
 
         foreach ($subProfil as $item) {
-            LpMenu::create($item + [
+            MenuLanding::create($item + [
                 'parent_id' => $profil->id,
                 'position' => 'footer',
                 'is_active' => true,
@@ -108,7 +108,7 @@ class LandingPageSeeder extends Seeder
         ];
 
         foreach ($footer as $item) {
-            LpMenu::create($item + ['position' => 'footer', 'is_active' => true]);
+            MenuLanding::create($item + ['position' => 'footer', 'is_active' => true]);
         }
     }
 
@@ -168,7 +168,7 @@ class LandingPageSeeder extends Seeder
         ];
 
         foreach ($pages as $page) {
-            LpPage::firstOrCreate(
+            HalamanLanding::firstOrCreate(
                 ['slug' => $page['slug']],
                 $page + ['is_published' => true]
             );
@@ -177,13 +177,13 @@ class LandingPageSeeder extends Seeder
 
     private function seedHeroSlides(string $namaSekolah): void
     {
-        if (LpHeroSlide::query()->exists()) {
+        if (SlideHeroLanding::query()->exists()) {
             return;
         }
 
         // image dikosongkan: view menampilkan fallback gradient bila belum ada gambar,
         // sehingga admin dapat mengunggah gambar sendiri tanpa file placeholder di repo.
-        LpHeroSlide::create([
+        SlideHeroLanding::create([
             'title' => 'Selamat Datang di ' . $namaSekolah,
             'subtitle' => 'Mencerdaskan, membentuk karakter, dan menyiapkan generasi unggul.',
             'image' => '',
@@ -193,7 +193,7 @@ class LandingPageSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        LpHeroSlide::create([
+        SlideHeroLanding::create([
             'title' => 'Informasi Pendaftaran',
             'subtitle' => 'Dapatkan informasi penerimaan peserta didik baru.',
             'image' => '',
@@ -206,7 +206,7 @@ class LandingPageSeeder extends Seeder
 
     private function seedSamplePost(string $namaSekolah): void
     {
-        LpPost::firstOrCreate(
+        ArtikelLanding::firstOrCreate(
             ['slug' => 'selamat-datang-di-website-sekolah'],
             [
                 'title' => 'Selamat Datang di Website ' . $namaSekolah,
@@ -227,7 +227,7 @@ class LandingPageSeeder extends Seeder
 
     private function seedSampleAnnouncement(): void
     {
-        LpAnnouncement::firstOrCreate(
+        PengumumanLanding::firstOrCreate(
             ['title' => 'Contoh Pengumuman Sekolah'],
             [
                 'content' => '<p>Ini adalah contoh pengumuman. Gunakan menu Landing Page pada panel admin '
@@ -241,12 +241,12 @@ class LandingPageSeeder extends Seeder
 
     private function seedGalleryPlaceholder(): void
     {
-        if (LpGallery::query()->exists()) {
+        if (GaleriLanding::query()->exists()) {
             return;
         }
 
         // Album default tanpa gambar; admin cukup mengunggah foto ke album ini.
-        LpGallery::create([
+        GaleriLanding::create([
             'title' => 'Contoh Album Kegiatan',
             'description' => 'Unggah foto kegiatan sekolah melalui panel admin.',
             'image' => '',

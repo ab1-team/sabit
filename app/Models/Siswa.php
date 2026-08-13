@@ -46,39 +46,26 @@ class Siswa extends Model
         return $this->hasManyThrough(Spp::class, AnggotaKelas::class, 'id_siswa', 'anggota_kelas', 'id', 'id');
     }
 
-    public function getTahunAkademik()
-    {
-        return $this->tahunAkademik();
-    }
-
-    public function getKelas()
-    {
-        return $this->kelas();
-    }
-
-    public function getAnggotaKelas()
-    {
-        return $this->anggotaKelas();
-    }
-
-    public function getTransaksi()
-    {
-        return $this->transaksi();
-    }
-
     public function scopeAktif($q)
     {
-        return $q->whereHas('anggotaKelas', fn($x) => $x->where('status', 'aktif'));
+        return $q->whereExists(fn ($x) => $x->selectRaw(1)->from('anggota_kelas')
+            ->whereColumn('anggota_kelas.id_siswa', 'siswa.id')
+            ->where('status', 'aktif'));
     }
 
     public function scopeNonAktif($q)
     {
-        return $q->whereHas('anggotaKelas', fn($x) => $x->where('status', 'nonaktif'))
-            ->whereDoesntHave('anggotaKelas', fn($x) => $x->where('status', 'aktif'));
+        return $q->whereExists(fn ($x) => $x->selectRaw(1)->from('anggota_kelas')
+            ->whereColumn('anggota_kelas.id_siswa', 'siswa.id')
+            ->where('status', 'nonaktif'))
+            ->whereNotExists(fn ($x) => $x->selectRaw(1)->from('anggota_kelas')
+                ->whereColumn('anggota_kelas.id_siswa', 'siswa.id')
+                ->where('status', 'aktif'));
     }
 
     public function scopeBlokir($q)
     {
-        return $q->whereDoesntHave('anggotaKelas');
+        return $q->whereNotExists(fn ($x) => $x->selectRaw(1)->from('anggota_kelas')
+            ->whereColumn('anggota_kelas.id_siswa', 'siswa.id'));
     }
 }

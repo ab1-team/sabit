@@ -24,12 +24,13 @@ class DashboardController extends Controller
         }
 
         $summary = (clone $invoiceBase)
-            ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid, SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid, COALESCE(SUM(jumlah), 0) as total_amount")
+            ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid, SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid, COALESCE(SUM(jumlah), 0) as total_amount, COALESCE(SUM(CASE WHEN status = 'unpaid' THEN jumlah ELSE 0 END), 0) as open_amount")
             ->first();
 
+        $ownerDistinctTotal = (int) TenantAdminUser::query()->distinct()->count('id');
         $ownerScopedCount = $tid
-            ? TenantAdminUser::query()->where('tenant_id', $tid)->count()
-            : TenantAdminUser::query()->distinct()->count('id');
+            ? (int) TenantAdminUser::query()->where('tenant_id', $tid)->count()
+            : $ownerDistinctTotal;
 
         $ownerPerTenant = TenantAdminUser::query()
             ->select('tenant_id', DB::raw('COUNT(*) as total'))
@@ -43,9 +44,9 @@ class DashboardController extends Controller
             'invoice_paid'  => (int) ($summary->paid ?? 0),
             'invoice_open'  => (int) ($summary->unpaid ?? 0),
             'nominal_total' => (float) ($summary->total_amount ?? 0),
-            'nominal_open'  => (float) (clone $invoiceBase)->where('status', 'unpaid')->sum('jumlah'),
-            'owner_count'   => $tid ? (int) $ownerScopedCount : (int) TenantAdminUser::query()->distinct()->count('id'),
-            'owner_total'   => (int) TenantAdminUser::query()->distinct()->count('id'),
+            'nominal_open'  => (float) ($summary->open_amount ?? 0),
+            'owner_count'   => $tid ? $ownerScopedCount : $ownerDistinctTotal,
+            'owner_total'   => $ownerDistinctTotal,
             'tenant_total'  => count($tenants ?? []),
             'tenant_active' => $tenantStats['active'],
             'tenant_new'    => $tenantStats['new'],
@@ -59,13 +60,9 @@ class DashboardController extends Controller
             ->get();
 
         $recentSchools = $this->recentSchools($tid, 10);
-
         $recentOwners = $this->recentOwners($tid, 5);
-
         $recentPayments = $this->recentPayments($tid, 5);
-
         $chartIncome = $this->chartIncome($tid);
-
         $chartTenant = $this->chartTenantDistribution();
 
         return view('tenant.dashboard', [
@@ -106,7 +103,9 @@ class DashboardController extends Controller
 
     private function recentSchools(?string $tid, int $limit)
     {
-        $base = Tenant::query()->with('domains');
+        $base = Tenant::query()->with([
+            'domains' => fn($q) => $q->select('id', 'tenant_id', 'domain', 'type'),
+        ]);
         if ($tid) {
             $base->where('id', $tid);
         }
@@ -115,12 +114,12 @@ class DashboardController extends Controller
             $admin = $t->domains->firstWhere('type', 'admin');
             $landing = $t->domains->firstWhere('type', 'landing');
             return (object) [
-                'id'           => $t->id,
-                'nama'         => $t->nama_sekolah ?? $t->id,
-                'email'        => $t->email,
-                'domain_admin' => $admin->domain ?? null,
+                'id'             => $t->id,
+                'nama'           => $t->nama_sekolah ?? $t->id,
+                'email'          => $t->email,
+                'domain_admin'   => $admin->domain ?? null,
                 'domain_landing' => $landing->domain ?? null,
-                'created_at'   => $t->created_at,
+                'created_at'     => $t->created_at,
             ];
         });
     }
@@ -132,14 +131,18 @@ class DashboardController extends Controller
             $base->where('tenant_id', $tid);
         }
 
-        return $base->orderByDesc('id')->limit($limit)->get()->map(function ($u) {
-            $tenant = $u->tenant_id ? Tenant::find($u->tenant_id) : null;
+        $users = $base->orderByDesc('id')->limit($limit)->get();
+        $tenantIds = $users->pluck('tenant_id')->filter()->unique()->all();
+        $tenantsById = Tenant::whereIn('id', $tenantIds)->get()->keyBy('id');
+
+        return $users->map(function ($u) use ($tenantsById) {
+            $tenant = $u->tenant_id ? ($tenantsById[$u->tenant_id] ?? null) : null;
             return (object) [
-                'id'        => $u->id,
-                'nama'      => $u->nama_lengkap,
-                'email'     => $u->email,
-                'tenant_id' => $u->tenant_id,
-                'tenant'    => $tenant?->nama_sekolah ?? $u->tenant_id,
+                'id'         => $u->id,
+                'nama'       => $u->nama_lengkap,
+                'email'      => $u->email,
+                'tenant_id'  => $u->tenant_id,
+                'tenant'     => $tenant?->nama_sekolah ?? $u->tenant_id,
                 'created_at' => $u->created_at,
             ];
         });
@@ -152,8 +155,12 @@ class DashboardController extends Controller
             $base->where('tenant_id', $tid);
         }
 
-        return $base->orderByDesc('tgl_transaksi')->orderByDesc('idt')->limit($limit)->get()->map(function ($t) {
-            $tenant = $t->tenant_id ? Tenant::find($t->tenant_id) : null;
+        $trxs = $base->orderByDesc('tgl_transaksi')->orderByDesc('idt')->limit($limit)->get();
+        $tenantIds = $trxs->pluck('tenant_id')->filter()->unique()->all();
+        $tenantsById = Tenant::whereIn('id', $tenantIds)->get()->keyBy('id');
+
+        return $trxs->map(function ($t) use ($tenantsById) {
+            $tenant = $t->tenant_id ? ($tenantsById[$t->tenant_id] ?? null) : null;
             return (object) [
                 'id'         => $t->idt,
                 'idv'        => $t->idv,
@@ -208,11 +215,18 @@ class DashboardController extends Controller
 
     private function chartTenantDistribution(): array
     {
-        $tenants = Tenant::query()->with('domains')->get();
-        $withAdmin = $tenants->filter(fn ($t) => $t->domains->firstWhere('type', 'admin'))->count();
-        $withLanding = $tenants->filter(fn ($t) => $t->domains->firstWhere('type', 'landing'))->count();
-        $new = $tenants->where('created_at', '>=', Carbon::now()->subDays(30))->count();
-        $total = max($tenants->count(), 1);
+        $row = DB::table('tenants as t')
+            ->leftJoin('domains as d', 'd.tenant_id', '=', 't.id')
+            ->selectRaw("
+                COUNT(DISTINCT t.id) as total,
+                COUNT(DISTINCT CASE WHEN d.type = 'admin' THEN t.id END) as with_admin,
+                SUM(CASE WHEN t.created_at >= ? THEN 1 ELSE 0 END) as new_30d
+            ", [Carbon::now()->subDays(30)])
+            ->first();
+
+        $total = (int) ($row->total ?? 0);
+        $withAdmin = (int) ($row->with_admin ?? 0);
+        $new = (int) ($row->new_30d ?? 0);
 
         return [
             'labels'  => ['Aktif', 'Baru (30 hari)', 'Lainnya'],
@@ -221,7 +235,7 @@ class DashboardController extends Controller
                 $new,
                 max($total - $withAdmin - $new, 0),
             ],
-            'total'   => $tenants->count(),
+            'total'   => $total,
         ];
     }
 }

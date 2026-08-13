@@ -18,41 +18,48 @@ class BackfillAnggotaKelas extends Command
     {
         $dry = (bool) $this->option('dry-run');
 
-        $siswa = Siswa::whereDoesntHave('anggotaKelas')->get();
-
-        if ($siswa->isEmpty()) {
-            $this->info('Semua siswa sudah punya anggota_kelas.');
-            return self::SUCCESS;
-        }
-
-        $this->info("Ditemukan {$siswa->count()} siswa tanpa anggota_kelas.");
         $created = 0;
+        $found = 0;
+        $firstBatch = true;
 
-        foreach ($siswa as $s) {
-            $tglMasuk = $s->tgl_masuk
-                ? Carbon::parse($s->tgl_masuk)
-                : Carbon::now();
+        Siswa::whereDoesntHave('anggotaKelas')
+            ->select(['id', 'nama', 'tgl_masuk', 'tahun_akademik', 'tingkat', 'kode_kelas', 'status_siswa'])
+            ->chunkById(500, function ($siswa) use ($dry, &$created, &$found, &$firstBatch) {
+                if ($firstBatch) {
+                    $this->info("Memproses siswa tanpa anggota_kelas dalam chunk...");
+                    $firstBatch = false;
+                }
+                foreach ($siswa as $s) {
+                    $found++;
+                    $tglMasuk = $s->tgl_masuk
+                        ? Carbon::parse($s->tgl_masuk)
+                        : Carbon::now();
 
-            $row = [
-                'id_siswa'       => $s->id,
-                'tahun_akademik' => $this->resolveTahunAkademik($s->tahun_akademik),
-                'tingkat'        => (string) ($s->tingkat ?? ''),
-                'kode_kelas'     => (string) ($s->kode_kelas ?? ''),
-                'tgl_masuk'      => $tglMasuk->format('Y-m-d'),
-                'tgl_keluar'     => $tglMasuk->copy()->addYear()->format('Y-m-d'),
-                'status'         => ($s->status_siswa ?? 'aktif') === 'aktif' ? 'aktif' : 'nonaktif',
-            ];
+                    $row = [
+                        'id_siswa'       => $s->id,
+                        'tahun_akademik' => $this->resolveTahunAkademik($s->tahun_akademik),
+                        'tingkat'        => (string) ($s->tingkat ?? ''),
+                        'kode_kelas'     => (string) ($s->kode_kelas ?? ''),
+                        'tgl_masuk'      => $tglMasuk->format('Y-m-d'),
+                        'tgl_keluar'     => $tglMasuk->copy()->addYear()->format('Y-m-d'),
+                        'status'         => ($s->status_siswa ?? 'aktif') === 'aktif' ? 'aktif' : 'nonaktif',
+                    ];
 
-            if ($dry) {
-                $this->line("[dry] siswa#{$s->id} {$s->nama} -> " . json_encode($row));
-                continue;
-            }
+                    if ($dry) {
+                        $this->line("[dry] siswa#{$s->id} {$s->nama} -> " . json_encode($row));
+                        continue;
+                    }
 
-            AnggotaKelas::create($row);
-            $created++;
+                    AnggotaKelas::create($row);
+                    $created++;
+                }
+            });
+
+        if ($found === 0) {
+            $this->info('Semua siswa sudah punya anggota_kelas.');
+        } else {
+            $this->info($dry ? 'Dry-run selesai.' : "Selesai. {$created} anggota_kelas dibuat dari {$found} siswa.");
         }
-
-        $this->info($dry ? 'Dry-run selesai.' : "Selesai. {$created} anggota_kelas dibuat.");
         return self::SUCCESS;
     }
 

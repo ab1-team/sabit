@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\TenantInvoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Yajra\DataTables\Facades\DataTables;
 
 class TenantInvoiceController extends Controller
@@ -42,9 +43,9 @@ class TenantInvoiceController extends Controller
                 ->filterColumn('tenant_nama', function ($q, $kw) {
                     $ids = \App\Models\Tenant::query()
                         ->where(function ($qq) use ($kw) {
-                            $qq->where('id', 'like', "%{$kw}%")
-                                ->orWhere('nama_sekolah', 'like', "%{$kw}%")
-                                ->orWhere('email', 'like', "%{$kw}%");
+                            $qq->where('id', 'like', "{$kw}%")
+                                ->orWhere('nama_sekolah', 'like', "{$kw}%")
+                                ->orWhere('email', 'like', "{$kw}%");
                         })
                         ->pluck('id')
                         ->all();
@@ -163,14 +164,16 @@ class TenantInvoiceController extends Controller
 
     private function tenantMap(): array
     {
-        $model = config('tenancy.tenant_model');
-
-        return $model::query()->get()->mapWithKeys(function ($t) {
-            $nama = $t->nama_sekolah ?? $t->id;
-
-            return [(string) $t->id => $nama];
-        })->all();
+        return Cache::remember('tenant_map_simple', 600, function () {
+            $model = config('tenancy.tenant_model');
+            return $model::query()
+                ->select('id', 'nama_sekolah')
+                ->get()
+                ->mapWithKeys(function ($t) {
+                    $nama = $t->nama_sekolah ?? $t->id;
+                    return [(string) $t->id => $nama];
+                })
+                ->all();
+        });
     }
 }
-
-

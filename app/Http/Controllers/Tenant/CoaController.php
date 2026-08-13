@@ -13,7 +13,7 @@ class CoaController extends BaseSchoolController
     public function index(Tenant $tenant)
     {
         return $this->runInTenant($tenant, function () use ($tenant) {
-            $rekenings = Rekening::with('akunLevel3')
+            $rekenings = Rekening::with(['akunLevel3' => fn ($q) => $q->orderBy('kode_akun')])
                 ->orderBy('kode_akun')
                 ->get();
 

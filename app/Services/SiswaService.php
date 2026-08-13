@@ -150,16 +150,23 @@ class SiswaService
         $mulai = Carbon::create($tahunMasuk, 7, 1);
         $akhir = $mulai->copy()->addYear()->subDay();
 
+        $rows = [];
         while ($mulai->lte($akhir)) {
-            Spp::firstOrCreate([
+            $rows[] = [
                 'anggota_kelas' => $anggota->id,
                 'tanggal'       => $mulai->format('Y-m-d'),
-            ], [
                 'kode'          => $mulai->format('ym') . $anggota->id_siswa,
                 'nominal'       => (string) $nominal,
-            ]);
+                'status'        => 'B',
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ];
             $mulai->addMonth();
         }
+
+        if (empty($rows)) return;
+
+        DB::table('spp')->insertOrIgnore($rows);
     }
 
     public function splitKelas(string $kelas): array

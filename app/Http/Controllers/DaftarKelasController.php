@@ -343,8 +343,11 @@ class DaftarKelasController extends Controller
         $periodeRoman = $periode === '1' ? 'I' : 'II';
         $jenisUjian = ($kat === 'uts' ? 'UJIAN TENGAH SEMESTER' : 'PENILAIAN AKHIR SEMESTER').' '.$periodeRoman;
 
-        $data['siswaList'] = $siswaAll->map(function ($siswa) use ($syarat) {
-            $bulanLunas = Spp::bulanLunasBySiswa((int) $siswa->id);
+        $siswaIds = $siswaAll->pluck('id')->all();
+        $lunasMap = Spp::bulanLunasBySiswaBulk($siswaIds);
+
+        $data['siswaList'] = $siswaAll->map(function ($siswa) use ($syarat, $lunasMap) {
+            $bulanLunas = $lunasMap[$siswa->id] ?? 0;
             return [
                 'siswa'        => $siswa,
                 'bulan_lunas'  => $bulanLunas,

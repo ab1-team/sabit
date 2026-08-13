@@ -18,6 +18,7 @@ use App\Models\Rekening;
 use App\Models\Saldo;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Response;
 use Yajra\DataTables\Facades\DataTables;
@@ -34,9 +35,9 @@ class TransaksiController extends Controller
     public function index()
     {
         $title = 'Jurnal Umum';
-        $jenisTransaksi = JenisTransaksi::all();
-        $rekening = Rekening::orderBy('kode_akun', 'asc')->get();
-        $totalSaldo = (float) Saldo::selectRaw('SUM(debit - kredit) as total')->value('total');
+        $jenisTransaksi = JenisTransaksi::orderBy('nama')->get(['id', 'nama', 'kode_akun']);
+        $rekening = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun', 'asc')->get(['kode_akun', 'nama_akun']);
+        $totalSaldo = (float) DB::table('saldo')->sum(DB::raw('debit - kredit'));
 
         return view('transaksi.index', compact('title', 'jenisTransaksi', 'rekening', 'totalSaldo'));
     }
@@ -726,13 +727,14 @@ $request->validate([
     public function pembayaranSPPDetail($id)
     {
         $siswa = Siswa::with([
-            'getKelas',
-            'getTransaksi' => function ($q) {
+            'kelas',
+            'transaksi' => function ($q) {
                 $q->whereNull('deleted_at')
-                    ->orderByDesc('id')
-                    ->with(['spp', 'rekeningDebit', 'rekeningKredit']);
+                    ->latest('id')
+                    ->limit(200)
+                    ->with(['spp', 'rekeningDebit:id,kode_akun,nama_akun', 'rekeningKredit:id,kode_akun,nama_akun']);
             }
-        ])->findOrFail($id);
+        ])->findOrFail($id, ['id', 'nama', 'nisn', 'nis', 'nipd', 'kode_kelas']);
 
         return view('transaksi.map_arsip.rincian', compact('siswa'));
     }
@@ -804,14 +806,14 @@ $anggota_kelas = AnggotaKelas::where('id_siswa', $id)
 
         $header = $transaksis->first();
         $lembaga = Profil::first()->nama;
-        $allSpps = collect();
 
-        foreach ($transaksis as $transaksi) {
-            $sppKodes = array_values(array_filter((array) $transaksi->kode_spp, fn ($v) => $v !== null && $v !== ''));
+        $allKodeSpp = $transaksis
+            ->flatMap(fn ($t) => array_filter((array) $t->kode_spp, fn ($v) => $v !== null && $v !== ''))
+            ->unique()
+            ->values()
+            ->all();
 
-            $spps = $sppKodes ? Spp::whereIn('kode', $sppKodes)->get() : collect();
-            $allSpps = $allSpps->merge($spps);
-        }
+        $allSpps = $allKodeSpp ? Spp::whereIn('kode', $allKodeSpp)->get() : collect();
 
         $data = [
             'title'         => 'Kwitansi Pembayaran SPP',
@@ -898,11 +900,7 @@ return view('transaksi.map_arsip.view.cetak-pada-kartu', [
         if ($ta)    $akQuery->where('tahun_akademik', $ta);
         if ($kelas) $akQuery->where('kode_kelas', $kelas);
 
-        $anggotaAktif = $akQuery->orderByDesc('id')->first()
-            ?? \App\Models\AnggotaKelas::where('id_siswa', $siswa->id)
-                ->where('status', 'aktif')
-                ->orderByDesc('id')
-                ->first();
+        $anggotaAktif = $akQuery->orderByDesc('id')->first();
 
         $data = [
             'siswa'         => $siswa,
@@ -947,11 +945,7 @@ $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-kartu-spp', $data)
         if ($ta)    $akQuery->where('tahun_akademik', $ta);
         if ($kelas) $akQuery->where('kode_kelas', $kelas);
 
-        $anggotaAktif = $akQuery->orderByDesc('id')->first()
-            ?? \App\Models\AnggotaKelas::where('id_siswa', $siswa->id)
-                ->where('status', 'aktif')
-                ->orderByDesc('id')
-                ->first();
+        $anggotaAktif = $akQuery->orderByDesc('id')->first();
 
         $sopPts = (int) ($profil->cetak_pts ?? 3);
         $sopPas = (int) ($profil->cetak_pas ?? 3);

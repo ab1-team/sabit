@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,26 +14,32 @@ class Profil extends Model
     protected $table = 'profil';
     protected $guarded = ['id'];
 
-    protected static ?self $cached = null;
+    private const CACHE_KEY = 'profil:singleton';
+    private const CACHE_TTL = 3600;
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget(self::CACHE_KEY));
+        static::deleted(fn () => Cache::forget(self::CACHE_KEY));
+    }
 
     protected static function safeFirst(): ?self
     {
-        if (self::$cached !== null) {
-            return self::$cached;
-        }
-        try {
-            if (!Schema::hasTable('profil')) {
-                return self::$cached = null;
+        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+            try {
+                if (!Schema::hasTable('profil')) {
+                    return null;
+                }
+                return self::first();
+            } catch (\Throwable $e) {
+                return null;
             }
-            return self::$cached = self::first();
-        } catch (\Throwable $e) {
-            return self::$cached = null;
-        }
+        });
     }
 
     public static function flushCache(): void
     {
-        self::$cached = null;
+        Cache::forget(self::CACHE_KEY);
     }
 
     protected static function defaultLogo(): string

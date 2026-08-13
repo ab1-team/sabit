@@ -8,6 +8,7 @@ use App\Models\Siswa;
 use App\Models\Transaksi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -28,21 +29,23 @@ class DashboardController extends Controller
         $bulanAwal  = Carbon::now()->startOfMonth();
         $bulanAkhir = Carbon::now()->endOfMonth();
 
-        // ============== STATISTIK SISWA (2 query ringan) ==============
-        $totalSiswa = (int) DB::table('siswa')->count();
-        $aktifSiswa = (int) DB::table('anggota_kelas')
+        // ============== STATISTIK SISWA (cache 60 detik untuk hindari full count berulang) ==============
+        $totalSiswa = Cache::remember('dash:total_siswa', 60, fn () => (int) DB::table('siswa')->count());
+        $aktifSiswa = Cache::remember('dash:aktif_siswa', 60, fn () => (int) DB::table('anggota_kelas')
             ->where('status', 'aktif')
             ->distinct()
-            ->count('id_siswa');
+            ->count('id_siswa'));
         $siswaCount    = $totalSiswa;
         $siswaAktif    = $aktifSiswa;
         $siswaNonAktif = max(0, $totalSiswa - $aktifSiswa);
         $siswaBlokir   = 0;
 
         // ============== JENIS BIAYA ==============
-$jenis_biaya = JenisBiaya::whereHas('get_jenis_pembayaran', fn ($q) => $q->where('nama', 'like', '%SPP%'))
-            ->orderBy('angkatan', 'desc')
-            ->get(['id', 'angkatan', 'total_beban', 'id_jp']);
+        $jenis_biaya = JenisBiaya::query()
+            ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+            ->where('jenis_pembayaran.nama', 'like', 'SPP%')
+            ->orderBy('jenis_biaya.angkatan', 'desc')
+            ->get(['jenis_biaya.id', 'jenis_biaya.angkatan', 'jenis_biaya.total_beban', 'jenis_biaya.id_jp']);
 
         // ============== PEMASUKAN (1 query aggregate, 2 nilai) ==============
         $pemasukanRow = DB::table('transaksi')
@@ -60,24 +63,37 @@ $jenis_biaya = JenisBiaya::whereHas('get_jenis_pembayaran', fn ($q) => $q->where
         // ============== TUNGGAKAN SPP ==============
         [$tunggakanSpp, $totalTunggakanSpp, $jumlahSiswaMenunggak] = $this->hitungTunggakanSpp(false);
 
-        // ============== CHART 12 BULAN (1 query aggregate) ==============
-        $from = Carbon::now()->subMonths(11)->startOfMonth();
-        $to   = Carbon::now()->endOfMonth();
-        $chartByMonth = DB::table('transaksi')
+        // ============== CHART 12 BULAN (1 query aggregate, 12 kolom CASE) ==============
+        $from = Carbon::now()->subMonths(11)->startOfMonth()->toDateString();
+        $to   = Carbon::now()->endOfMonth()->toDateString();
+
+        $selects = [];
+        $bindings = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $m = Carbon::now()->subMonths($i);
+            $ym = $m->format('Y-m');
+            $selects[] = "COALESCE(SUM(CASE WHEN DATE_FORMAT(tanggal_transaksi, '%Y-%m') = ? THEN jumlah ELSE 0 END), 0) AS m_{$i}";
+            $bindings[] = $ym;
+        }
+
+        $chartRow = DB::table('transaksi')
             ->whereNull('deleted_at')
             ->whereBetween('tanggal_transaksi', [$from, $to])
             ->where('rekening_debit', 'like', '1.1.01.%')
-            ->selectRaw('MONTH(tanggal_transaksi) AS m, SUM(jumlah) AS total')
-            ->groupBy('m')
-            ->pluck('total', 'm')
-            ->all();
+            ->selectRaw(implode(', ', $selects), $bindings)
+            ->first();
+
+        $chartByMonth = [];
+        foreach ($chartRow as $key => $val) {
+            $chartByMonth[$key] = (float) $val;
+        }
 
         $labelsBulanan = [];
         $pendapatanBulanan = [];
         for ($i = 11; $i >= 0; $i--) {
             $m = Carbon::now()->subMonths($i);
             $labelsBulanan[]     = $m->translatedFormat('M y');
-            $pendapatanBulanan[] = (float) ($chartByMonth[(int) $m->format('m')] ?? 0);
+            $pendapatanBulanan[] = (float) ($chartByMonth["m_{$i}"] ?? 0);
         }
 
         // ============== RECENT TRANSAKSI (select kolom minimum) ==============

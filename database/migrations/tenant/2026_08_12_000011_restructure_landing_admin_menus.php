@@ -85,6 +85,24 @@ return new class extends Migration
 
         $now = now();
 
+        // Pastikan parent Landing Page (id=15) ada. Parent ini sebelumnya
+        // hanya dibuat oleh MenuStructureSeeder, tapi seeder jalan setelah
+        // semua migrasi tenant selesai — sehingga migrasi lain yang insert
+        // child dengan parent_id=15 gagal FK constraint. Jadikan parent
+        // idempotent di sini.
+        DB::table('menu')->insertOrIgnore([
+            'id'         => self::PARENT_LANDING_ID,
+            'parent_id'  => null,
+            'nama_menu'  => 'Landing Page',
+            'route'      => '#',
+            'icon'       => 'language',
+            'urutan'     => 15,
+            'status'     => 'aktif',
+            'group'      => 'landing',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
         // 1) Rename sub-menu existing.
         foreach (self::RENAMES as $id => $newName) {
             DB::table('menu')->where('id', $id)->update([

@@ -14,19 +14,40 @@ class Keuangan
     {
         $saldo = 0;
 
+        $kodeAkunList = $lev3->rek->pluck('kode_akun')->all();
+        if (empty($kodeAkunList)) {
+            return 0;
+        }
+
+        $debitQuery = DB::table('transaksi')
+            ->whereIn('rekening_debit', $kodeAkunList)
+            ->whereNull('deleted_at')
+            ->select('rekening_debit as kode_akun');
+
+        $kreditQuery = DB::table('transaksi')
+            ->whereIn('rekening_kredit', $kodeAkunList)
+            ->whereNull('deleted_at')
+            ->select('rekening_kredit as kode_akun');
+
+        if ($tgl_awal && $tgl_akhir) {
+            $debitQuery->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]);
+            $kreditQuery->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]);
+        }
+
+        $debits = $debitQuery->groupBy('rekening_debit')
+            ->selectRaw('rekening_debit as kode_akun, SUM(jumlah) as total')
+            ->pluck('total', 'kode_akun');
+
+        $kredits = $kreditQuery->groupBy('rekening_kredit')
+            ->selectRaw('rekening_kredit as kode_akun, SUM(jumlah) as total')
+            ->pluck('total', 'kode_akun');
+
         foreach ($lev3->rek as $rekening) {
-            $total_debit = $rekening->transaksiDebit()
-                ->when($tgl_awal && $tgl_akhir, fn($q) => $q->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]))
-                ->sum('jumlah');
-
-            $total_kredit = $rekening->transaksiKredit()
-                ->when($tgl_awal && $tgl_akhir, fn($q) => $q->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]))
-                ->sum('jumlah');
-
+            $d = (float) ($debits[$rekening->kode_akun] ?? 0);
+            $k = (float) ($kredits[$rekening->kode_akun] ?? 0);
             $saldo_rekening = $rekening->jenis_mutasi === 'debet'
-                ? $total_debit - $total_kredit
-                : $total_kredit - $total_debit;
-
+                ? $d - $k
+                : $k - $d;
             $saldo += $saldo_rekening;
         }
 
@@ -41,115 +62,97 @@ class Keuangan
 
     public function listLabaRugi(string $tgl): array
     {
-        // Pendapatan (4.1.%)
-        $pendapatan = Rekening::where('kode_akun', 'LIKE', '4.1.%')
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
-                return $rek;
-            });
+        $pendapatanQ = Rekening::query()->where('kode_akun', 'LIKE', '4.1.%');
+        $bebanQ = Rekening::query()->where(function ($q) {
+            $q->where('kode_akun', 'LIKE', '5.1.%')
+              ->orWhere(function ($q2) {
+                  $q2->where('kode_akun', 'LIKE', '5.2.%')
+                     ->where('kode_akun', '!=', '5.2.01.01');
+              });
+        });
+        $bpQ = Rekening::query()->where('kode_akun', '5.2.01.01');
+        $penQ = Rekening::query()->where(function ($q) {
+            $q->where('kode_akun', 'LIKE', '4.2.%')
+              ->orWhere(function ($q2) {
+                  $q2->where('kode_akun', 'LIKE', '4.3.%')
+                     ->whereNotIn('kode_akun', ['4.3.01.01', '4.3.01.02', '4.3.01.03']);
+              });
+        });
+        $pendlQ = Rekening::query()->whereIn('kode_akun', ['4.3.01.01', '4.3.01.02', '4.3.01.03']);
+        $bebQ = Rekening::query()->where('kode_akun', 'LIKE', '5.3.%')
+            ->where('kode_akun', '!=', '5.4.01.01');
+        $phQ = Rekening::query()->where('kode_akun', 'LIKE', '5.4.%');
 
-        // Beban (5.1.% dan 5.2.% kecuali 5.2.01.01)
-        $beban = Rekening::where(function ($q) {
-                $q->where('kode_akun', 'LIKE', '5.1.%')
-                  ->orWhere(function ($q2) {
-                      $q2->where('kode_akun', 'LIKE', '5.2.%')
-                         ->where('kode_akun', '!=', '5.2.01.01');
-                  });
-            })
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
-                return $rek;
-            });
+        $allKodeAkun = collect()
+            ->merge($pendapatanQ->pluck('kode_akun'))
+            ->merge($bebanQ->pluck('kode_akun'))
+            ->merge($bpQ->pluck('kode_akun'))
+            ->merge($penQ->pluck('kode_akun'))
+            ->merge($pendlQ->pluck('kode_akun'))
+            ->merge($bebQ->pluck('kode_akun'))
+            ->merge($phQ->pluck('kode_akun'))
+            ->unique()
+            ->values()
+            ->all();
 
-        // Beban penyusutan (5.2.01.01)
-        $bp = Rekening::where('kode_akun', '5.2.01.01')
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
-                return $rek;
-            });
+        if (empty($allKodeAkun)) {
+            return [
+                'pendapatan' => collect(), 'beban' => collect(), 'bp' => collect(),
+                'pen' => collect(), 'pendl' => collect(), 'beb' => collect(), 'ph' => collect(),
+            ];
+        }
 
-        // Pendapatan lain-lain (4.2.% + 4.3.% kecuali 4.3.01.0x)
-        $pen = Rekening::where(function ($q) {
-                $q->where('kode_akun', 'LIKE', '4.2.%')
-                  ->orWhere(function ($q2) {
-                      $q2->where('kode_akun', 'LIKE', '4.3.%')
-                         ->whereNotIn('kode_akun', [
-                             '4.3.01.01',
-                             '4.3.01.02',
-                             '4.3.01.03',
-                         ]);
-                  });
-            })
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
-                return $rek;
-            });
+        $debits = DB::table('transaksi')
+            ->whereIn('rekening_debit', $allKodeAkun)
+            ->whereNull('deleted_at')
+            ->where('tanggal_transaksi', '<=', $tgl)
+            ->groupBy('rekening_debit')
+            ->selectRaw('rekening_debit as kode_akun, SUM(jumlah) as total')
+            ->pluck('total', 'kode_akun');
 
-        // Pendapatan denda / lain-lain (4.3.01.0x)
-        $pendl = Rekening::whereIn('kode_akun', [
-                '4.3.01.01',
-                '4.3.01.02',
-                '4.3.01.03'
-            ])
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
-                return $rek;
-            });
+        $kredits = DB::table('transaksi')
+            ->whereIn('rekening_kredit', $allKodeAkun)
+            ->whereNull('deleted_at')
+            ->where('tanggal_transaksi', '<=', $tgl)
+            ->groupBy('rekening_kredit')
+            ->selectRaw('rekening_kredit as kode_akun, SUM(jumlah) as total')
+            ->pluck('total', 'kode_akun');
 
-        // Beban lain-lain (5.3.% kecuali 5.4.01.01)
-        $beb = Rekening::where('kode_akun', 'LIKE', '5.3.%')
-            ->where('kode_akun', '!=', '5.4.01.01')
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
+        $attachSaldo = function ($collection) use ($debits, $kredits) {
+            return $collection->map(function ($rek) use ($debits, $kredits) {
+                $d = (float) ($debits[$rek->kode_akun] ?? 0);
+                $k = (float) ($kredits[$rek->kode_akun] ?? 0);
+                $rek->saldo = $rek->normal == 'D' ? $d - $k : $k - $d;
                 return $rek;
             });
-
-        // Penyusutan & hutang (5.4.%)
-        $ph = Rekening::where('kode_akun', 'LIKE', '5.4.%')
-            ->orderBy('kode_akun')
-            ->get()
-            ->map(function ($rek) use ($tgl) {
-                $rek->saldo = $this->hitungLabarugi($rek, $tgl);
-                return $rek;
-            });
+        };
 
         return [
-            'pendapatan' => $pendapatan,
-            'beban'      => $beban,
-            'bp'         => $bp,
-            'pen'        => $pen,
-            'pendl'      => $pendl,
-            'beb'        => $beb,
-            'ph'         => $ph,
+            'pendapatan' => $attachSaldo($pendapatanQ->orderBy('kode_akun')->get()),
+            'beban'      => $attachSaldo($bebanQ->orderBy('kode_akun')->get()),
+            'bp'         => $attachSaldo($bpQ->orderBy('kode_akun')->get()),
+            'pen'        => $attachSaldo($penQ->orderBy('kode_akun')->get()),
+            'pendl'      => $attachSaldo($pendlQ->orderBy('kode_akun')->get()),
+            'beb'        => $attachSaldo($bebQ->orderBy('kode_akun')->get()),
+            'ph'         => $attachSaldo($phQ->orderBy('kode_akun')->get()),
         ];
     }
 
     private function hitungLabarugi(Rekening $rek, string $tgl): float
     {
-        $debit = $rek->transaksiDebit()
+        $debit = (float) $rek->transaksiDebit()
             ->where('tanggal_transaksi', '<=', $tgl)
-            ->sum('jumlah'); 
+            ->whereNull('deleted_at')
+            ->sum('jumlah');
 
-        $kredit = $rek->transaksiKredit()
+        $kredit = (float) $rek->transaksiKredit()
             ->where('tanggal_transaksi', '<=', $tgl)
-            ->sum('jumlah');  
+            ->whereNull('deleted_at')
+            ->sum('jumlah');
 
-        // Sesuaikan apakah akun normal debit/kredit
         return $rek->normal == 'D' ? $debit - $kredit : $kredit - $debit;
     }
-    
+
     public function saldoKas($tgl_akhir, $mode = 'akhir')
     {
         $tanggal = explode('-', $tgl_akhir);
@@ -163,24 +166,31 @@ class Keuangan
             $range_akhir = $tgl_akhir;
         }
 
-        // Ambil semua rekening kas (id)
-        $rekeningKas = Rekening::where('kode_akun', 'like', '1.1.01%')
-                        ->orWhere('kode_akun', 'like', '1.1.02%')
-                        ->pluck('kode_akun');
+        $rekeningKas = Rekening::query()
+            ->where(function ($q) {
+                $q->where('kode_akun', 'like', '1.1.01%')
+                  ->orWhere('kode_akun', 'like', '1.1.02%');
+            })
+            ->pluck('kode_akun')
+            ->all();
 
-        // Hitung total debit & kredit dari transaksi
-        $total_debit = Transaksi::whereIn('rekening_debit', $rekeningKas)
-                        ->whereBetween('tanggal_transaksi', [$range_awal, $range_akhir])
-                        ->sum('jumlah');
+        if (empty($rekeningKas)) {
+            return 0;
+        }
 
-        $total_kredit = Transaksi::whereIn('rekening_kredit', $rekeningKas)
-                        ->whereBetween('tanggal_transaksi', [$range_awal, $range_akhir])
-                        ->sum('jumlah');
+        $total_debit = (float) DB::table('transaksi')
+            ->whereIn('rekening_debit', $rekeningKas)
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_transaksi', [$range_awal, $range_akhir])
+            ->sum('jumlah');
 
-        // Karena kas = akun aktiva → normal debit
-        $saldo = $total_debit - $total_kredit;
+        $total_kredit = (float) DB::table('transaksi')
+            ->whereIn('rekening_kredit', $rekeningKas)
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_transaksi', [$range_awal, $range_akhir])
+            ->sum('jumlah');
 
-        return $saldo;
+        return $total_debit - $total_kredit;
     }
 
     public function romawi($angka)
@@ -212,14 +222,17 @@ class Keuangan
         }
         return ($awal_kredit - $awal_debit) + ($saldo_kredit - $saldo_debit);
     }
-      public static function hitungSaldoCALK($rekening, $tgl_awal = null, $tgl_akhir = null)
+
+    public static function hitungSaldoCALK($rekening, $tgl_awal = null, $tgl_akhir = null)
     {
         $total_debit = $rekening->transaksiDebit()
             ->when($tgl_awal && $tgl_akhir, fn($q) => $q->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]))
+            ->whereNull('deleted_at')
             ->sum('jumlah');
 
         $total_kredit = $rekening->transaksiKredit()
             ->when($tgl_awal && $tgl_akhir, fn($q) => $q->whereBetween('tanggal_transaksi', [$tgl_awal, $tgl_akhir]))
+            ->whereNull('deleted_at')
             ->sum('jumlah');
 
         $saldo_rekening = $rekening->jenis_mutasi === 'debet'
@@ -234,6 +247,4 @@ class Keuangan
         $formatted = Angka::format(abs($nilai), 2);
         return $nilai < 0 ? '(' . $formatted . ')' : $formatted;
     }
-
-
 }

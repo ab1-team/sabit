@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Spp extends Model
 {
@@ -29,12 +30,25 @@ class Spp extends Model
 
     public static function bulanLunasBySiswa(int $idSiswa): int
     {
-        return self::query()
-            ->whereHas('anggotaKelas', function ($q) use ($idSiswa) {
-                $q->where('id_siswa', $idSiswa);
-            })
-            ->where('status', 'L')
+        return (int) DB::table('spp')
+            ->join('anggota_kelas', 'anggota_kelas.id', '=', 'spp.anggota_kelas')
+            ->where('anggota_kelas.id_siswa', $idSiswa)
+            ->where('spp.status', 'L')
             ->count();
+    }
+
+    public static function bulanLunasBySiswaBulk(array $idsSiswa): array
+    {
+        if (empty($idsSiswa)) return [];
+        $rows = DB::table('spp')
+            ->join('anggota_kelas', 'anggota_kelas.id', '=', 'spp.anggota_kelas')
+            ->whereIn('anggota_kelas.id_siswa', $idsSiswa)
+            ->where('spp.status', 'L')
+            ->groupBy('anggota_kelas.id_siswa')
+            ->selectRaw('anggota_kelas.id_siswa, COUNT(*) as total')
+            ->pluck('total', 'id_siswa')
+            ->all();
+        return array_map('intval', $rows);
     }
 
     public function transaksi()
@@ -45,10 +59,5 @@ class Spp extends Model
     public function anggotaKelas()
     {
         return $this->belongsTo(AnggotaKelas::class, 'anggota_kelas', 'id');
-    }
-
-    public function getAnggotaKelas()
-    {
-        return $this->anggotaKelas();
     }
 }

@@ -188,6 +188,7 @@
             modalTitle.textContent = 'Tambah Kurikulum';
             modalDesc.textContent = 'Tambahkan data kurikulum baru.';
             submitLabel.textContent = 'Tambah Kurikulum';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#kurikulum-modal');
             document.getElementById('nama_kurikulum').focus();
         }
@@ -201,6 +202,7 @@
             modalTitle.textContent = 'Ubah Kurikulum';
             modalDesc.textContent = 'Perbarui data kurikulum ' + (btn.dataset.nama || '') + '.';
             submitLabel.textContent = 'Simpan Perubahan';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#kurikulum-modal');
             document.getElementById('nama_kurikulum').focus();
         }

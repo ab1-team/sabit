@@ -15,7 +15,8 @@ class TransaksiController extends Controller
     {
         if ($request->ajax()) {
             $tid = $this->currentTenantId($request);
-            $data = TenantInvoice::with(['user', 'hasTransaksi'])
+            $data = TenantInvoice::with(['user' => fn($q) => $q->select('id', 'nama_lengkap')])
+                ->withCount('hasTransaksi')
                 ->where('status', 'unpaid')
                 ->when($tid, fn ($q) => $q->where('admin_invoice.tenant_id', $tid))
                 ->select('admin_invoice.*');
@@ -40,6 +41,7 @@ class TransaksiController extends Controller
         $tid = $this->currentTenantId($request);
         $rekenings = TenantRekening::query()
             ->when($tid, fn ($q) => $q->where('tenant_id', $tid))
+            ->where('status', 'aktif')
             ->orderBy('nama_rekening')
             ->get(['kd_rekening', 'nama_rekening']);
         return view('tenant.transaksi.index', [
@@ -103,5 +105,3 @@ class TransaksiController extends Controller
         return $request->attributes->get('current_tenant_id');
     }
 }
-
-

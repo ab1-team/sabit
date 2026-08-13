@@ -12,6 +12,23 @@ return new class extends Migration
             return;
         }
 
+        // Parent id=15 (Landing Page) mungkin sudah ada dari migrasi
+        // sebelumnya atau MenuStructureSeeder. Insert ulang dengan
+        // insertOrIgnore agar aman di re-run dan tidak muncul FK violation
+        // bila migrasi 000002 belum sempat membuat parent-nya.
+        DB::table('menu')->insertOrIgnore([
+            'id'         => 15,
+            'nama_menu'  => 'Landing Page',
+            'route'      => '#',
+            'icon'       => 'language',
+            'urutan'     => 15,
+            'status'     => 'aktif',
+            'group'      => 'landing',
+            'parent_id'  => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $rows = [
             ['nama_menu' => 'Acara / Agenda',        'route' => '/app/landing/events',         'icon' => 'event',      'urutan' => 24, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['nama_menu' => 'Section Profil',        'route' => '/app/landing/profile-sections', 'icon' => 'article',  'urutan' => 25, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],

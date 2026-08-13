@@ -57,7 +57,14 @@ class TenantDatabaseSeeder extends Seeder
             ->all();
 
         // ID menu bendahara: semua menu aktif KECUALI grup landing.
-        $bendaharaMenuIds = array_values(array_diff($allMenuIds, $landingMenuIds));
+$bendaharaMenuIds = array_values(array_diff($allMenuIds, $landingMenuIds));
+
+        // Jabatan harus di-seed SEBELUM user default di bawah karena FK
+        // users.id_jabatan -> jabatan.id. Tanpa ini, insert user pertama
+        // akan gagal "Cannot add or update a child row".
+        $this->call([
+            JabatanSeeder::class,
+        ]);
 
         // Default operator sekolah (login pakai tabel users tenant)
         // hak_akses disimpan sebagai ID menu eksplisit (array), bukan wildcard.
@@ -104,7 +111,7 @@ class TenantDatabaseSeeder extends Seeder
         ]);
 
         // Paket data master: ruangan, kelas, jurusan, jenis_transaksi, jenis_biaya,
-        // jenis_pembayaran, jenis_laporan, sub_laporan, jabatan.
+        // jenis_pembayaran, jenis_laporan, sub_laporan.
         $this->call([
             RuanganSeeder::class,
             KelasSeeder::class,
@@ -114,7 +121,6 @@ class TenantDatabaseSeeder extends Seeder
             JenisBiayaSeeder::class,
             JenisLaporanSeeder::class,
             SubLaporansSeeder::class,
-            JabatanSeeder::class,
         ]);
 
         // COA template lengkap: L1 (kategori), L2 (kelompok), L3 (subkelompok),
@@ -180,8 +186,8 @@ class TenantDatabaseSeeder extends Seeder
             'saldo'        => 0,
         ]);
 
-        TandaTangan::firstOrCreate([], [
-            'TandaTangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+TandaTangan::firstOrCreate([], [
+            'tanda_tangan' => '<table class="p0" border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
 <tbody>
 <tr>
 <td style="width: 33.3333%;">&nbsp;</td>

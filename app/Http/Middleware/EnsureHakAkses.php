@@ -7,21 +7,10 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Menegakkan hak_akses di level route, bukan hanya menyembunyikan menu di sidebar.
- *
- * hak_akses pada tabel users tenant berisi array ID menu (integer eksplisit,
- * tidak ada wildcard '*'). Middleware ini memetakan nama group menu (mis.
- * "landing") ke ID menu-nya, lalu memastikan user punya salah satu ID
- * tersebut lewat array_intersect.
- *
- * Untuk "superadmin" (admin tenant), gunakan saja ID seluruh menu aktif di
- * hak_akses saat pembuatannya — middleware secara otomatis lolos karena
- * array_intersect akan selalu non-kosong untuk group manapun.
- */
 class EnsureHakAkses
 {
     public function handle(Request $request, Closure $next, string $group): Response
@@ -35,7 +24,6 @@ class EnsureHakAkses
         $hakAkses = $user->hak_akses ?? [];
 
         if (in_array('*', (array) $hakAkses, true)) {
-            // Backward-compat: tenant lama mungkin masih pakai wildcard.
             return $next($request);
         }
 
@@ -48,12 +36,7 @@ class EnsureHakAkses
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
-        $groupMenuIds = DB::table('menu')
-            ->where('group', $group)
-            ->where('status', 'aktif')
-            ->pluck('id')
-            ->map(fn ($v) => (int) $v)
-            ->all();
+        $groupMenuIds = $this->groupMenuIds($group);
 
         if (empty($groupMenuIds)) {
             abort(403, 'Menu untuk grup ini belum tersedia.');
@@ -64,5 +47,34 @@ class EnsureHakAkses
         }
 
         return $next($request);
+    }
+
+    private function groupMenuIds(string $group): array
+    {
+        $cacheKey = "menu:group:{$group}";
+
+        return Cache::remember($cacheKey, 7200, function () use ($group) {
+            return DB::table('menu')
+                ->where('group', $group)
+                ->where('status', 'aktif')
+                ->pluck('id')
+                ->map(fn ($v) => (int) $v)
+                ->all();
+        });
+    }
+
+    public static function flushGroupCache(string $group): void
+    {
+        Cache::forget("menu:group:{$group}");
+    }
+
+    public static function flushAllGroupCache(): void
+    {
+        $groups = DB::table('menu')->distinct()->pluck('group')->all();
+        foreach ($groups as $g) {
+            if ($g !== null) {
+                Cache::forget("menu:group:{$g}");
+            }
+        }
     }
 }

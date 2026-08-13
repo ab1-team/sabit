@@ -42,43 +42,46 @@ class TahunAkademikController extends BaseSchoolController
         });
     }
 
-    public function update(Request $request, Tenant $tenant, TahunAkademik $TahunAkademik)
+    public function update(Request $request, Tenant $tenant, $tahunAkademik)
     {
-        return $this->runInTenant($tenant, function () use ($request, $TahunAkademik, $tenant) {
+        return $this->runInTenant($tenant, function () use ($request, $tahunAkademik, $tenant) {
+            $ta = TahunAkademik::findOrFail($tahunAkademik);
             $data = $request->validate([
                 'nama_tahun' => ['required', 'string', 'max:30'],
                 'keterangan' => ['nullable', 'string', 'max:191'],
                 'status'     => ['required', 'in:aktif,nonaktif'],
             ]);
 
-            $TahunAkademik->update($data);
+            $ta->update($data);
             if ($data['status'] === 'aktif') {
-                $TahunAkademik->aktifkan();
+                $ta->aktifkan();
             }
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
-                ->with('success', "Tahun akademik {$TahunAkademik->nama_tahun} diperbarui");
+                ->with('success', "Tahun akademik {$ta->nama_tahun} diperbarui");
         });
     }
 
-    public function destroy(Tenant $tenant, TahunAkademik $TahunAkademik)
+    public function destroy(Tenant $tenant, $tahunAkademik)
     {
-        return $this->runInTenant($tenant, function () use ($TahunAkademik, $tenant) {
-            $nama = $TahunAkademik->nama_tahun;
-            $TahunAkademik->delete();
+        return $this->runInTenant($tenant, function () use ($tahunAkademik, $tenant) {
+            $ta = TahunAkademik::findOrFail($tahunAkademik);
+            $nama = $ta->nama_tahun;
+            $ta->delete();
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
                 ->with('success', "Tahun akademik {$nama} dihapus");
         });
     }
 
-    public function aktifkan(Tenant $tenant, TahunAkademik $TahunAkademik)
+    public function aktifkan(Tenant $tenant, $tahunAkademik)
     {
-        return $this->runInTenant($tenant, function () use ($TahunAkademik, $tenant) {
-            $TahunAkademik->aktifkan();
+        return $this->runInTenant($tenant, function () use ($tahunAkademik, $tenant) {
+            $ta = TahunAkademik::findOrFail($tahunAkademik);
+            $ta->aktifkan();
 
             return redirect()->route('tenant.tenant.tahun-akademik.index', $tenant)
-                ->with('success', "Tahun akademik {$TahunAkademik->nama_tahun} diaktifkan");
+                ->with('success', "Tahun akademik {$ta->nama_tahun} diaktifkan");
         });
     }
 }

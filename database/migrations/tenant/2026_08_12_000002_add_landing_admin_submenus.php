@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Tambah entry menu admin untuk section CRUD landing page baru
@@ -19,6 +20,27 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('menu')) {
+            return;
+        }
+
+        // Pastikan parent id=15 (Landing Page) sudah ada sebelum insert child.
+        // Parent ini awalnya hanya dibuat oleh MenuStructureSeeder, tapi
+        // seeder dipanggil setelah semua migrasi tenant selesai. Tanpa baris
+        // ini, insert child dengan parent_id=15 akan gagal FK constraint.
+        DB::table('menu')->insertOrIgnore([
+            'id'         => 15,
+            'nama_menu'  => 'Landing Page',
+            'route'      => '#',
+            'icon'       => 'language',
+            'urutan'     => 15,
+            'status'     => 'aktif',
+            'group'      => 'landing',
+            'parent_id'  => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $rows = [
             ['id' => 19, 'nama_menu' => 'Program / Berita',   'route' => '/app/landing/posts',                'icon' => 'article',       'urutan' => 19, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 20, 'nama_menu' => 'Pengumuman',         'route' => '/app/landing/announcements',        'icon' => 'campaign',      'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],

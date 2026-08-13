@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Landing\LpAnnouncement;
-use App\Models\Landing\LpEvent;
-use App\Models\Landing\LpGallery;
-use App\Models\Landing\LpHeroSlide;
-use App\Models\Landing\LpMenu;
-use App\Models\Landing\LpPage;
-use App\Models\Landing\LpPost;
-use App\Models\Landing\LpPpdbFaq;
-use App\Models\Landing\LpPpdbRequirement;
-use App\Models\Landing\LpPpdbSchedule;
-use App\Models\Landing\LpPpdbSetting;
-use App\Models\Landing\LpPpdbStage;
-use App\Models\Landing\LpSetting;
-use App\Models\Landing\LpVideo;
+use App\Models\Landing\PengumumanLanding;
+use App\Models\Landing\AcaraLanding;
+use App\Models\Landing\GaleriLanding;
+use App\Models\Landing\SlideHeroLanding;
+use App\Models\Landing\MenuLanding;
+use App\Models\Landing\HalamanLanding;
+use App\Models\Landing\ArtikelLanding;
+use App\Models\Landing\FaqPpdb;
+use App\Models\Landing\PersyaratanPpdb;
+use App\Models\Landing\JadwalPpdb;
+use App\Models\Landing\PengaturanPpdb;
+use App\Models\Landing\TahapanPpdb;
+use App\Models\Landing\PengaturanLanding;
+use App\Models\Landing\VideoLanding;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Seeder;
@@ -188,7 +188,7 @@ class LandingPageDummySeeder extends Seeder
 
     private function seedSetting(string $namaSekolah, string $email): void
     {
-        $setting = LpSetting::query()->first() ?? new LpSetting();
+        $setting = PengaturanLanding::query()->first() ?? new PengaturanLanding();
         $setting->fill([
             'school_name'      => $namaSekolah,
             'tagline'          => 'Mendidik dengan Hati, Meraih Prestasi',
@@ -211,11 +211,11 @@ class LandingPageDummySeeder extends Seeder
 
     private function seedMenus(): void
     {
-        if (LpMenu::query()->exists()) {
+        if (MenuLanding::query()->exists()) {
             return;
         }
 
-        $home = LpMenu::create([
+        $home = MenuLanding::create([
             'title'      => 'Home',
             'url'        => '/',
             'position'   => 'header',
@@ -223,7 +223,7 @@ class LandingPageDummySeeder extends Seeder
             'is_active'  => true,
         ]);
 
-        $profil = LpMenu::create([
+        $profil = MenuLanding::create([
             'title'      => 'Profil',
             'url'        => '#',
             'position'   => 'header',
@@ -238,7 +238,7 @@ class LandingPageDummySeeder extends Seeder
             ['title' => 'Sambutan Kepala Sekolah', 'url' => '/sambutan-kepala-sekolah'],
         ];
         foreach ($profilSubs as $i => $sub) {
-            LpMenu::create($sub + [
+            MenuLanding::create($sub + [
                 'parent_id'  => $profil->id,
                 'position'   => 'header',
                 'sort_order' => $i + 1,
@@ -254,16 +254,16 @@ class LandingPageDummySeeder extends Seeder
             ['title' => 'Kontak',     'url' => '/kontak',     'sort_order' => 7],
         ];
         foreach ($headerRest as $m) {
-            LpMenu::create($m + ['position' => 'header', 'is_active' => true]);
+            MenuLanding::create($m + ['position' => 'header', 'is_active' => true]);
         }
 
         // Footer mirror (lebih lengkap, untuk review konsistensi).
-        $footerProfil = LpMenu::create([
+        $footerProfil = MenuLanding::create([
             'title' => 'Profil', 'url' => '/profil',
             'position' => 'footer', 'sort_order' => 1, 'is_active' => true,
         ]);
         foreach ($profilSubs as $i => $sub) {
-            LpMenu::create($sub + [
+            MenuLanding::create($sub + [
                 'parent_id' => $footerProfil->id,
                 'position' => 'footer', 'sort_order' => $i + 1, 'is_active' => true,
             ]);
@@ -276,7 +276,7 @@ class LandingPageDummySeeder extends Seeder
             ['title' => 'Kontak Kami', 'url' => '/kontak',    'sort_order' => 6],
         ];
         foreach ($footerRest as $m) {
-            LpMenu::create($m + ['position' => 'footer', 'is_active' => true]);
+            MenuLanding::create($m + ['position' => 'footer', 'is_active' => true]);
         }
     }
 
@@ -340,7 +340,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($pages as $page) {
-            LpPage::updateOrCreate(
+            HalamanLanding::updateOrCreate(
                 ['slug' => $page['slug']],
                 $page + ['is_published' => true]
             );
@@ -393,7 +393,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($slides as $s) {
-            LpHeroSlide::updateOrCreate(
+            SlideHeroLanding::updateOrCreate(
                 ['sort_order' => $s['sort_order']],
                 $s + ['is_active' => true]
             );
@@ -421,7 +421,7 @@ class LandingPageDummySeeder extends Seeder
             $slug = Str::slug($title);
             $imgKey = 'post-' . ($i + 1);
 
-            LpPost::updateOrCreate(
+            ArtikelLanding::updateOrCreate(
                 ['slug' => $slug],
                 [
                     'title'        => $title,
@@ -462,7 +462,7 @@ class LandingPageDummySeeder extends Seeder
         foreach ($events as $i => [$title, $loc, $time]) {
             $start = now()->addDays(($i + 1) * 5);
 
-            LpEvent::updateOrCreate(
+            AcaraLanding::updateOrCreate(
                 ['title' => $title],
                 [
                     'description' => 'Acara ' . $title . ' akan dilaksanakan sesuai jadwal. '
@@ -496,7 +496,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($items as $i => [$title, $album]) {
-            LpGallery::updateOrCreate(
+            GaleriLanding::updateOrCreate(
                 ['title' => $title],
                 [
                     'description' => 'Dokumentasi ' . $title . ' yang dilaksanakan oleh sekolah.',
@@ -525,7 +525,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($items as $i => $title) {
-            LpAnnouncement::updateOrCreate(
+            PengumumanLanding::updateOrCreate(
                 ['title' => $title],
                 [
                     'content'      => '<p>' . e($title) . ' - Mohon memperhatikan informasi ini dengan seksama. '
@@ -550,7 +550,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($videos as $i => [$title, $ytId]) {
-            LpVideo::updateOrCreate(
+            VideoLanding::updateOrCreate(
                 ['title' => $title],
                 [
                     'description' => 'Video dokumentasi ' . $title . ' dalam format YouTube.',
@@ -564,7 +564,7 @@ class LandingPageDummySeeder extends Seeder
 
     private function seedPpdb(string $namaSekolah): void
     {
-        $ppdb = LpPpdbSetting::query()->first() ?? new LpPpdbSetting();
+        $ppdb = PengaturanPpdb::query()->first() ?? new PengaturanPpdb();
         $ppdb->fill([
             'school_name'    => $namaSekolah,
             'eyebrow'        => 'Penerimaan Peserta Didik Baru',
@@ -614,7 +614,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($requirements as $req) {
-            LpPpdbRequirement::updateOrCreate(
+            PersyaratanPpdb::updateOrCreate(
                 ['title' => $req['title']],
                 [
                     'group'        => $req['group'],
@@ -635,7 +635,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($stages as $s) {
-            LpPpdbStage::updateOrCreate(
+            TahapanPpdb::updateOrCreate(
                 ['title' => $s['title']],
                 $s + ['is_published' => true]
             );
@@ -649,7 +649,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($schedules as $sc) {
-            LpPpdbSchedule::updateOrCreate(
+            JadwalPpdb::updateOrCreate(
                 ['gelombang' => $sc['gelombang']],
                 $sc + ['is_published' => true]
             );
@@ -684,7 +684,7 @@ class LandingPageDummySeeder extends Seeder
         ];
 
         foreach ($faqs as $f) {
-            LpPpdbFaq::updateOrCreate(
+            FaqPpdb::updateOrCreate(
                 ['question' => $f['question']],
                 $f + ['is_published' => true]
             );

@@ -8,6 +8,7 @@ use App\Models\Profil;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -54,17 +55,16 @@ class AuthController extends Controller
         $request->session()->regenerate();
         $profil = Profil::first();
         session()->put('profil', $profil);
-        $profil = Profil::first();
-        session()->put('profil', $profil);
 
         // Tentukan tujuan redirect setelah login.
         // - User yang punya hak akses menu Beranda (id=1) -> ke dashboard utama.
         // - User tanpa hak akses Beranda (mis. administrator landing) -> langsung
         //   ke /app/landing agar tidak masuk halaman yang bukan wewenangnya.
         $hakAkses = (array) ($user->hak_akses ?? []);
-        $berandaMenu = DB::table('menu')->where('nama_menu', 'Beranda')->first();
+        $berandaMenu = Cache::remember('menu:beranda', 3600, fn () =>
+            DB::table('menu')->where('nama_menu', 'Beranda')->first());
         $hasBerandaAccess = $berandaMenu && in_array((int) $berandaMenu->id, array_map('intval', $hakAkses), true);
-        $landingRoute = $hasBerandaAccess ? 'app.dashboard' : 'app.landing.index';
+        $landingRoute = $hasBerandaAccess ? 'app.dashboard' : 'app.admin-landing.index';
 
         $showPiutangPrompt = false;
         $bulanLabel = null;

@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class HakAksesPusatController extends Controller
 {
+    private const SNAPSHOT_TTL = 600;
+
     public function index(Request $request)
     {
         $tenants = Tenant::query()
@@ -20,91 +23,12 @@ class HakAksesPusatController extends Controller
             ->get();
 
         $perTenant = [];
-        $allMenus = null;
-        $firstTenant = null;
 
         foreach ($tenants as $t) {
             $snapshot = null;
             $dbStatus = 'ok';
             try {
-                $snapshot = $this->runInTenant($t, function () {
-                    $menus = DB::table('menu')
-                        ->where('status', 'aktif')
-                        ->orderBy('group')
-                        ->orderBy('urutan')
-                        ->get();
-
-                    $byId = $menus->keyBy('id');
-
-                    // Untuk tampilan hak-akses, tempatkan child selalu di bawah
-                    // parent-nya (abaikan group child jika parent ada). Group
-                    // child tetap dipakai pada logika middleware (lihat
-                    // EnsureHakAkses), sehingga opsi hak-akses tetap konsisten
-                    // dengan akses route yang sebenarnya.
-                    $menus = $menus->map(function ($m) use ($byId) {
-                        if ($m->parent_id && isset($byId[$m->parent_id])) {
-                            $parentGroup = $byId[$m->parent_id]->group;
-                            // Selalu pakai group parent untuk konsistensi UI,
-                            // termasuk jika parent tidak punya group (null).
-                            $m->group = $parentGroup;
-                        }
-
-                        return $m;
-                    });
-
-                    $grouped = $menus->groupBy(fn ($m) => $m->group ?: 'Lainnya')->map(function ($items) use ($byId) {
-                        // Tentukan top-level parents: menu dengan parent_id NULL,
-                        // atau menu yang parent-nya bukan menu aktif manapun.
-                        // Ini memungkinkan nested children (mis. PPDB > sub-menu
-                        // PPDB) tetap tampil sebagai sub-dropdown di dalam
-                        // group yang sama.
-                        $topLevel = $items->filter(function ($m) use ($byId) {
-                            if ($m->parent_id === null) {
-                                return true;
-                            }
-                            // Parent ada tapi di group berbeda → orphan, anggap top-level
-                            // (logic group mutation di atas sudah menyamakan group,
-                            // jadi这种情况 shouldn't happen; ini fallback).
-                            return !isset($byId[$m->parent_id]);
-                        })->values();
-
-                        // Bangun tree children per parent_id, dengan support
-                        // multi-level (sub-anak dikumpulkan di children[key]
-                        // bersama cucu, dst).
-                        $children = $items->whereNotNull('parent_id')->groupBy('parent_id');
-
-                        // Pre-compute descendant ids per parent (termasuk cucu/cicit)
-                        // supaya view bisa menandai semua sub-children saat
-                        // parent di-select-all.
-                        $descendantIds = [];
-                        foreach ($children as $pid => $kids) {
-                            $descendantIds[$pid] = $this->flattenDescendants($pid, $children);
-                        }
-
-                        return [
-                            'parents' => $topLevel,
-                            'children' => $children,
-                            'descendant_ids' => $descendantIds,
-                        ];
-                    });
-
-                    $users = User::orderBy('nama')->get();
-
-                    return [
-                        'grouped' => $grouped,
-                        'users' => $users->map(function ($u) {
-                            return [
-                                'id' => $u->id,
-                                'nama' => $u->nama,
-                                'username' => $u->username,
-                                'email' => $u->email,
-                                'telepon' => $u->telepon,
-                                'id_jabatan' => $u->id_jabatan,
-                                'hak_akses' => collect($u->hak_akses ?? [])->map(fn ($v) => (int) $v)->all(),
-                            ];
-                        })->all(),
-                    ];
-                });
+                $snapshot = $this->getTenantSnapshot($t);
             } catch (\Throwable $e) {
                 \Log::warning('HakAksesPusat: skip tenant', ['tenant' => $t->id, 'err' => $e->getMessage()]);
                 $msg = $e->getMessage();
@@ -114,7 +38,7 @@ class HakAksesPusatController extends Controller
             }
 
             $perTenant[$t->id] = array_merge(
-                $snapshot ?? ['grouped' => collect(), 'users' => []],
+                $snapshot ?? ['grouped' => collect(), 'users' => [], 'menus' => []],
                 ['db_status' => $dbStatus]
             );
         }
@@ -122,7 +46,7 @@ class HakAksesPusatController extends Controller
         return view('tenant.hak-akses.index', [
             'tenants' => $tenants,
             'perTenant' => $perTenant,
-            'menusByTenant' => $this->buildMenusByTenant($tenants),
+            'menusByTenant' => $this->buildMenusByTenantFromSnapshot($tenants, $perTenant),
         ]);
     }
 
@@ -155,6 +79,8 @@ class HakAksesPusatController extends Controller
             $user->hak_akses = $this->normalizeMenuIds($data['hak_akses'] ?? []);
             $user->save();
 
+            $this->flushTenantCache($tenant);
+
             return response()->json([
                 'ok' => true,
                 'user' => [
@@ -174,7 +100,7 @@ class HakAksesPusatController extends Controller
             'telepon' => ['nullable', 'string', 'max:30'],
         ]);
 
-        return $this->runInTenant($tenant, function () use ($data, $userId) {
+        return $this->runInTenant($tenant, function () use ($data, $userId, $tenant) {
             $user = User::find($userId);
             if (!$user) {
                 return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
@@ -183,6 +109,8 @@ class HakAksesPusatController extends Controller
             $user->email = $data['email'] ?? null;
             $user->telepon = $data['telepon'] ?? null;
             $user->save();
+
+            $this->flushTenantCache($tenant);
 
             return response()->json(['ok' => true]);
         });
@@ -193,7 +121,7 @@ class HakAksesPusatController extends Controller
         $raw = $request->input('menu_ids', []);
         $menuIds = $this->normalizeMenuIds($raw);
 
-        return $this->runInTenant($tenant, function () use ($menuIds, $userId) {
+        return $this->runInTenant($tenant, function () use ($menuIds, $userId, $tenant) {
             $user = User::find($userId);
             if (!$user) {
                 return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
@@ -201,14 +129,12 @@ class HakAksesPusatController extends Controller
             $user->hak_akses = $menuIds;
             $user->save();
 
+            $this->flushTenantCache($tenant);
+
             return response()->json(['ok' => true, 'count' => count($user->hak_akses)]);
         });
     }
 
-    /**
-     * Normalisasi input menu_ids ke array<int> yang bersih.
-     * Terima: [1,2], ["1","2"], "1,2", atau nilai gabungan.
-     */
     private function normalizeMenuIds($raw): array
     {
         if (is_string($raw)) {
@@ -237,14 +163,9 @@ class HakAksesPusatController extends Controller
             }
         }
 
-return array_values(array_unique($ids));
+        return array_values(array_unique($ids));
     }
 
-    /**
-     * Kumpulkan semua id descendant dari sebuah parent secara rekursif
-     * (anak, cucu, cicit, ...) dari map children[parent_id => Collection].
-     * Return: array<int>.
-     */
     private function flattenDescendants(int $parentId, $childrenMap, array &$visited = []): array
     {
         if (isset($visited[$parentId])) {
@@ -263,7 +184,7 @@ return array_values(array_unique($ids));
 
     public function destroyUser(Tenant $tenant, $userId)
     {
-        return $this->runInTenant($tenant, function () use ($userId) {
+        return $this->runInTenant($tenant, function () use ($userId, $tenant) {
             $user = User::find($userId);
             if (!$user) {
                 return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
@@ -277,6 +198,8 @@ return array_values(array_unique($ids));
             $username = $user->username;
             $user->delete();
 
+            $this->flushTenantCache($tenant);
+
             return response()->json(['ok' => true, 'username' => $username]);
         });
     }
@@ -287,13 +210,15 @@ return array_values(array_unique($ids));
             'password' => ['required', 'string', 'min:6', 'max:60'],
         ]);
 
-        return $this->runInTenant($tenant, function () use ($data, $userId) {
+        return $this->runInTenant($tenant, function () use ($data, $userId, $tenant) {
             $user = User::find($userId);
             if (!$user) {
                 return response()->json(['ok' => false, 'message' => 'User tidak ditemukan.'], 404);
             }
             $user->password = Hash::make($data['password']);
             $user->save();
+
+            $this->flushTenantCache($tenant);
 
             return response()->json(['ok' => true]);
         });
@@ -336,8 +261,6 @@ return array_values(array_unique($ids));
         $prevDefault = Config::get('database.default');
         Config::set('database.default', $connName);
 
-        // Override global default connection resolver agar Eloquent model
-        // (termasuk User) otomatis pakai koneksi tenant selama callback.
         $resolver = \Illuminate\Database\Eloquent\Model::getConnectionResolver();
         \Illuminate\Database\Eloquent\Model::setConnectionResolver(new class($connName) implements \Illuminate\Database\ConnectionResolverInterface {
             public function __construct(private string $conn) {}
@@ -357,58 +280,97 @@ return array_values(array_unique($ids));
         }
     }
 
-    private function buildMenusByTenant($tenants): array
+    private function getTenantSnapshot(Tenant $t): array
+    {
+        $cacheKey = "tenant:hak_akses:{$t->id}";
+
+        return Cache::remember($cacheKey, self::SNAPSHOT_TTL, function () use ($t) {
+            return $this->runInTenant($t, function () {
+                $menus = DB::table('menu')
+                    ->where('status', 'aktif')
+                    ->orderBy('group')
+                    ->orderBy('urutan')
+                    ->get(['id', 'parent_id', 'group', 'nama_menu', 'urutan']);
+
+                $byId = $menus->keyBy('id');
+
+                $menus = $menus->map(function ($m) use ($byId) {
+                    if ($m->parent_id && isset($byId[$m->parent_id])) {
+                        $m->group = $byId[$m->parent_id]->group;
+                    }
+                    return $m;
+                });
+
+                $grouped = $menus->groupBy(fn ($m) => $m->group ?: 'Lainnya')->map(function ($items) use ($byId) {
+                    $topLevel = $items->filter(function ($m) use ($byId) {
+                        if ($m->parent_id === null) return true;
+                        return !isset($byId[$m->parent_id]);
+                    })->values();
+
+                    $children = $items->whereNotNull('parent_id')->groupBy('parent_id');
+
+                    $descendantIds = [];
+                    foreach ($children as $pid => $kids) {
+                        $descendantIds[$pid] = $this->flattenDescendants($pid, $children);
+                    }
+
+                    return [
+                        'parents' => $topLevel,
+                        'children' => $children,
+                        'descendant_ids' => $descendantIds,
+                    ];
+                });
+
+                $users = User::orderBy('nama')
+                    ->get(['id', 'nama', 'username', 'email', 'telepon', 'id_jabatan', 'hak_akses']);
+
+                $usersArr = $users->map(function ($u) {
+                    return [
+                        'id' => $u->id,
+                        'nama' => $u->nama,
+                        'username' => $u->username,
+                        'email' => $u->email,
+                        'telepon' => $u->telepon,
+                        'id_jabatan' => $u->id_jabatan,
+                        'hak_akses' => collect($u->hak_akses ?? [])->map(fn ($v) => (int) $v)->all(),
+                    ];
+                })->all();
+
+                $menusArr = $menus->map(function ($m) use ($byId) {
+                    $parentId = $m->parent_id ? (int) $m->parent_id : null;
+                    $group = null;
+                    if ($parentId && isset($byId[$parentId])) {
+                        $group = $byId[$parentId]->group;
+                    } else {
+                        $group = $m->group;
+                    }
+                    return [
+                        'id' => (int) $m->id,
+                        'nama' => $m->nama_menu,
+                        'parent_id' => $parentId,
+                        'group' => $group,
+                    ];
+                })->all();
+
+                return [
+                    'grouped' => $grouped,
+                    'users' => $usersArr,
+                    'menus' => $menusArr,
+                ];
+            });
+        });
+    }
+
+    private function buildMenusByTenantFromSnapshot($tenants, array $perTenant): array
     {
         $out = [];
         foreach ($tenants as $t) {
-            $items = [];
-            try {
-                $items = $this->runInTenant($t, function () {
-                    $menus = DB::table('menu')
-                        ->where('status', 'aktif')
-                        ->orderBy('group')
-                        ->orderBy('urutan')
-                        ->get();
-
-                    $byId = $menus->keyBy('id');
-                    $items = [];
-                    foreach ($menus as $m) {
-                        $parentId = $m->parent_id ? (int) $m->parent_id : null;
-                        // Untuk konsistensi UI, group child mengikuti group parent
-                        // (sama dengan logika index()). Group asli child tetap
-                        // dipakai oleh middleware EnsureHakAkses.
-                        $group = null;
-                        if ($parentId && isset($byId[$parentId])) {
-                            $group = $byId[$parentId]->group;
-                        } else {
-                            $group = $m->group;
-                        }
-                        $items[] = [
-                            'id' => (int) $m->id,
-                            'nama' => $m->nama_menu,
-                            'parent_id' => $parentId,
-                            'group' => $group,
-                        ];
-                    }
-
-                    return $items;
-                });
-            } catch (\Throwable $e) {
-                \Log::warning('HakAksesPusat: skip tenant menus', ['tenant' => $t->id, 'err' => $e->getMessage()]);
-            }
-
-$items = $items ?? [];
-            $tree = $this->buildMenuTree($items);
-            $out[$t->id] = $tree;
+            $items = $perTenant[$t->id]['menus'] ?? [];
+            $out[$t->id] = $this->buildMenuTree($items);
         }
-
         return $out;
     }
 
-    /**
-     * Bangun tree nested dari flat list menu. Top-level adalah menu dengan
-     * parent_id NULL; child/anak/cucu/cicit disusun bertingkat.
-     */
     private function buildMenuTree(array $items): array
     {
         $byParent = [];
@@ -434,5 +396,9 @@ $items = $items ?? [];
 
         return $build(0);
     }
-}
 
+    private function flushTenantCache(Tenant $tenant): void
+    {
+        Cache::forget("tenant:hak_akses:{$tenant->id}");
+    }
+}

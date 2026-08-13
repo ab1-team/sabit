@@ -6,16 +6,9 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Sinkronkan hak_akses user di tenant saat ini dengan menu aktif grup
- * 'landing'. User yang sebelumnya sudah punya akses ke salah satu menu
- * landing (id 15..17) akan otomatis mendapat menu landing baru (id 18+)
- * yang ditambahkan lewat migration.
- *
- * Aman untuk dijalankan berulang: idempotent.
- */
 class SyncLandingHakAkses extends Command
 {
     protected $signature = 'landing:sync-hak-akses {--dry-run : Hanya tampilkan perubahan tanpa simpan}';
@@ -31,12 +24,14 @@ class SyncLandingHakAkses extends Command
             return self::FAILURE;
         }
 
-        $landingMenuIds = DB::table('menu')
-            ->where('group', 'landing')
-            ->where('status', 'aktif')
-            ->pluck('id')
-            ->map(fn ($v) => (int) $v)
-            ->all();
+        $landingMenuIds = Cache::remember('menu:group:landing', 7200, function () {
+            return DB::table('menu')
+                ->where('group', 'landing')
+                ->where('status', 'aktif')
+                ->pluck('id')
+                ->map(fn ($v) => (int) $v)
+                ->all();
+        });
 
         if (empty($landingMenuIds)) {
             $this->warn('Tidak ada menu landing aktif di tenant ini.');
@@ -47,52 +42,54 @@ class SyncLandingHakAkses extends Command
         $updated = 0;
         $skipped = 0;
 
-        User::query()->each(function (User $user) use ($landingMenuIds, $dryRun, &$updated, &$skipped) {
-            $current = collect((array) ($user->hak_akses ?? []))
-                ->map(fn ($v) => (int) $v)
-                ->filter()
-                ->all();
+        User::query()
+            ->select(['id', 'username', 'hak_akses'])
+            ->chunkById(300, function ($users) use ($landingMenuIds, $dryRun, &$updated, &$skipped) {
+                foreach ($users as $user) {
+                    $current = collect((array) ($user->hak_akses ?? []))
+                        ->map(fn ($v) => (int) $v)
+                        ->filter()
+                        ->all();
 
-            $hasAllAccess = in_array('*', $current, true);
-            $hasLanding = (bool) array_intersect($current, [15, 16, 17]);
+                    $hasAllAccess = in_array('*', $current, true);
+                    $hasLanding = (bool) array_intersect($current, [15, 16, 17]);
 
-            // User 'admin' / 'landing' maupun user wildcard dapat semua menu landing.
-            // User biasa yang punya salah satu menu landing dianggap admin landing,
-            // dapat seluruh menu landing. User tanpa akses landing di-skip.
-            $isLandingAdmin = in_array(strtolower((string) $user->username), ['admin', 'landing'], true)
-                || $hasAllAccess
-                || $hasLanding;
+                    $isLandingAdmin = in_array(strtolower((string) $user->username), ['admin', 'landing'], true)
+                        || $hasAllAccess
+                        || $hasLanding;
 
-            if (!$isLandingAdmin) {
-                $skipped++;
-                return;
-            }
+                    if (!$isLandingAdmin) {
+                        $skipped++;
+                        continue;
+                    }
 
-            $merged = collect($current)
-                ->merge($landingMenuIds)
-                ->unique()
-                ->map(fn ($v) => (int) $v)
-                ->values()
-                ->all();
+                    $merged = collect($current)
+                        ->merge($landingMenuIds)
+                        ->unique()
+                        ->map(fn ($v) => (int) $v)
+                        ->values()
+                        ->all();
 
-            if ($merged === $current) {
-                return;
-            }
+                    if ($merged === $current) {
+                        continue;
+                    }
 
-            if ($dryRun) {
-                $this->line(sprintf(
-                    '[dry-run] %s: %s → %s',
-                    $user->username,
-                    implode(',', $current),
-                    implode(',', $merged)
-                ));
-            } else {
-                $user->hak_akses = $merged;
-                $user->save();
-            }
+                    if ($dryRun) {
+                        $this->line(sprintf(
+                            '[dry-run] %s: %s → %s',
+                            $user->username,
+                            implode(',', $current),
+                            implode(',', $merged)
+                        ));
+                    } else {
+                        DB::table('users')
+                            ->where('id', $user->id)
+                            ->update(['hak_akses' => json_encode($merged)]);
+                    }
 
-            $updated++;
-        });
+                    $updated++;
+                }
+            });
 
         $this->info(sprintf(
             '%s%d user di-update, %d dilewati (tanpa hak akses landing).',

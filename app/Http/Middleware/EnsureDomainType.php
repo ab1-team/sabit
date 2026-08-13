@@ -7,35 +7,36 @@ namespace App\Http\Middleware;
 use App\Models\Domain;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Memastikan host request cocok dengan tipe domain yang diizinkan route.
- *
- * Tenancy hanya tahu "domain ini milik tenant siapa", bukan "domain ini untuk apa".
- * Middleware ini menutup celah tersebut: tanpa pengecekan ini, /app/dashboard bisa
- * dibuka dari domain landing yang publik.
- */
 class EnsureDomainType
 {
     public function handle(Request $request, Closure $next, string $type): Response
     {
         $host = $request->getHost();
+        $cacheKey = "domain:type:{$host}";
 
-        $domain = Domain::query()
-            ->where('domain', $host)
-            ->first();
+        $typeActual = Cache::remember($cacheKey, 7200, function () use ($host) {
+            $d = Domain::query()->where('domain', $host)->select('type')->first();
+            return $d?->type;
+        });
 
-        if (!$domain) {
+        if (!$typeActual) {
             abort(404);
         }
 
-        if ($domain->type !== $type) {
+        if ($typeActual !== $type) {
             abort(404);
         }
 
-        $request->attributes->set('domain_type', $domain->type);
+        $request->attributes->set('domain_type', $typeActual);
 
         return $next($request);
+    }
+
+    public static function flushHostCache(string $host): void
+    {
+        Cache::forget("domain:type:{$host}");
     }
 }

@@ -35,24 +35,4 @@ class AnggotaKelas extends Model
     {
         return $this->hasMany(Spp::class, 'anggota_kelas', 'id');
     }
-
-    public function getTahunAkademik()
-    {
-        return $this->tahunAkademik();
-    }
-
-    public function getKelas()
-    {
-        return $this->kelas();
-    }
-
-    public function getSiswa()
-    {
-        return $this->siswa();
-    }
-
-    public function getSpp()
-    {
-        return $this->spp();
-    }
 }

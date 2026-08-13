@@ -202,6 +202,7 @@
             modalTitle.textContent = 'Tambah Tahun Akademik';
             modalDesc.textContent = 'Tambahkan tahun akademik baru.';
             submitLabel.textContent = 'Tambah Tahun Akademik';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#ta-modal');
             document.getElementById('nama_tahun').focus();
         }
@@ -215,6 +216,7 @@
             modalTitle.textContent = 'Ubah Tahun Akademik';
             modalDesc.textContent = 'Perbarui tahun akademik ' + (btn.dataset.nama || '') + '.';
             submitLabel.textContent = 'Simpan Perubahan';
+            setModalState(true);
             if (window.initFancyInputs) window.initFancyInputs('#ta-modal');
             document.getElementById('nama_tahun').focus();
         }

@@ -60,13 +60,29 @@ class MigrasiSiswaImport implements
         }
         $namaTahun = $tahunAkademik->nama_tahun;
 
+        $kodeKelasList = $rows->pluck('kode_kelas')
+            ->map(fn ($v) => trim((string) $v))
+            ->filter()
+            ->unique()
+            ->all();
+
+        $kelasMap = Kelas::whereIn('kode_kelas', $kodeKelasList)->get()->keyBy('kode_kelas');
+
+        $nisnList = $rows->pluck('nisn')
+            ->map(fn ($v) => trim((string) $v))
+            ->filter()
+            ->unique()
+            ->all();
+
+        $existingMap = Siswa::whereIn('nisn', $nisnList)->get()->keyBy('nisn');
+
         foreach ($rows as $rowIndex => $row) {
             $rowNum = $rowIndex + 2;
             $row = $this->normalize($row->toArray());
 
             try {
-                DB::transaction(function () use ($row, $rowNum, $namaTahun) {
-                    $this->processRow($row, $rowNum, $namaTahun);
+                DB::transaction(function () use ($row, $rowNum, $namaTahun, $kelasMap, $existingMap) {
+                    $this->processRow($row, $rowNum, $namaTahun, $kelasMap, $existingMap);
                 });
             } catch (\Throwable $e) {
                 $this->failed++;
@@ -83,7 +99,7 @@ class MigrasiSiswaImport implements
         }
     }
 
-    private function processRow(array $row, int $rowNum, string $namaTahun): void
+    private function processRow(array $row, int $rowNum, string $namaTahun, $kelasMap, $existingMap): void
     {
         $required = ['nik', 'nama', 'jenis_kelamin', 'nipd', 'nisn', 'no_kk', 'tanggal_lahir', 'kode_kelas'];
         foreach ($required as $f) {
@@ -103,7 +119,7 @@ class MigrasiSiswaImport implements
         }
 
         $kodeKelas = trim((string) $row['kode_kelas']);
-        $kelas = Kelas::where('kode_kelas', $kodeKelas)->first();
+        $kelas = $kelasMap[$kodeKelas] ?? null;
         if (!$kelas) {
             throw new \RuntimeException("Kode kelas '{$kodeKelas}' tidak ditemukan di tabel kelas.");
         }
@@ -113,7 +129,7 @@ class MigrasiSiswaImport implements
         $kodeJurusan = $kelas->kode_kurikulum ?? null;
 
         $nisn = trim((string) $row['nisn']);
-        $existing = Siswa::where('nisn', $nisn)->first();
+        $existing = $existingMap[$nisn] ?? null;
 
         $password = trim((string) ($row['password'] ?? ''));
         if ($password === '') {
@@ -206,23 +222,31 @@ class MigrasiSiswaImport implements
         $akhir = $mulai->copy()->addYear()->subDay();
 
         $existingTanggal = Spp::where('anggota_kelas', $anggota->id)
+            ->whereBetween('tanggal', [$mulai->format('Y-m-d'), $akhir->format('Y-m-d')])
             ->pluck('tanggal')
-            ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->toArray();
+            ->map(fn ($d) => substr((string) $d, 0, 10))
+            ->flip()
+            ->all();
 
+        $rows = [];
         while ($mulai->lte($akhir)) {
             $tgl = $mulai->format('Y-m-d');
-            if (!in_array($tgl, $existingTanggal, true)) {
-                Spp::firstOrCreate([
+            if (!isset($existingTanggal[$tgl])) {
+                $rows[] = [
                     'anggota_kelas' => $anggota->id,
                     'tanggal' => $tgl,
-                ], [
                     'kode' => $mulai->format('ym') . $anggota->id_siswa,
                     'nominal' => '0',
                     'status' => 'B',
-                ]);
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
             $mulai->addMonth();
+        }
+
+        if (!empty($rows)) {
+            DB::table('spp')->insertOrIgnore($rows);
         }
     }
 

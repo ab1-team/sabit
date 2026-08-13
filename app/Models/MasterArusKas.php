@@ -9,7 +9,6 @@ class MasterArusKas extends Model
 {
     use HasFactory;
     protected $table = 'master_arus_kas';
-    
 
     public function child()
     {
@@ -18,14 +17,11 @@ class MasterArusKas extends Model
 
     public function rek_debit()
     {
-        return $this->belongsTo(AkunLevel3::class, 'debit', 'kode_akun')->orderBy('kode_akun', 'ASC');
+        return $this->belongsTo(AkunLevel3::class, 'debit', 'kode_akun');
     }
 
     public function rek_kredit()
     {
-        return $this->belongsTo(AkunLevel3::class, 'kredit', 'kode_akun')->orderBy('kode_akun', 'ASC');
+        return $this->belongsTo(AkunLevel3::class, 'kredit', 'kode_akun');
     }
-
-    
-
 }

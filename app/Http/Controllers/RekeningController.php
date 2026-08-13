@@ -12,9 +12,9 @@ class RekeningController extends Controller
     public function tree()
     {
         $akun1 = AkunLevel1::with([
-            'akun2',
-            'akun2.akun3',
-            'akun2.akun3.rek',
+            'akun2' => fn ($q) => $q->orderBy('kode_akun'),
+            'akun2.akun3' => fn ($q) => $q->orderBy('kode_akun'),
+            'akun2.akun3.rek' => fn ($q) => $q->whereNull('tgl_nonaktif')->orderBy('kode_akun'),
         ])->orderBy('kode_akun')->get();
 
         return view('rekening.tree', [
