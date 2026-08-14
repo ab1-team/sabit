@@ -38,16 +38,17 @@
             content: "";
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, rgba(30,27,75,.45) 0%, rgba(49,46,129,.35) 50%, rgba(76,29,149,.45) 100%);
+            background: linear-gradient(135deg, rgba(30,27,75,.10) 0%, rgba(49,46,129,.08) 50%, rgba(76,29,149,.10) 100%);
             pointer-events: none;
             z-index: 0;
         }
 
         .glass {
-            background: rgba(255,255,255,.88);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border: 1px solid rgba(255,255,255,.6);
+            background: rgba(255,255,255,.82);
+            backdrop-filter: saturate(180%) blur(14px);
+            -webkit-backdrop-filter: saturate(180%) blur(14px);
+            border: 1px solid rgba(255,255,255,.7);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.4) inset;
         }
 
         .field input { transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
