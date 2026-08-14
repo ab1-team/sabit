@@ -2,37 +2,65 @@
 
 @section('style')
     @include('admin-landing._gaya')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
     <style>
-        .lp-ann-row td { vertical-align: middle; }
-        /* Samakan ukuran tombol icon aksi (edit & hapus) */
-        .lp-ann-row .btn.btn-sm {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: .4rem;
+        #lpAnnTable {
+            width: 100% !important;
+            table-layout: auto;
         }
-        .lp-ann-row .btn.btn-sm .material-symbols-rounded {
-            font-size: 17px;
-            line-height: 1;
+        .lp-ann-table-scroll {
+            overflow-x: auto;
         }
-        .lp-ann-title {
+        /* Pastikan sel-sel konten panjang tidak ter-truncate oleh
+           aturan table-nowrap global dari material-dashboard. */
+        #lpAnnTable.table.table-nowrap td,
+        #lpAnnTable.table.table-nowrap th {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        #lpAnnTable thead th {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+            font-size: .72rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: .85rem 1rem;
+            white-space: nowrap;
+        }
+        #lpAnnTable tbody td {
+            padding: .85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+        #lpAnnTable tbody tr:last-child td { border-bottom: 0; }
+        #lpAnnTable tbody tr { transition: background-color .15s ease; }
+        #lpAnnTable tbody tr:hover { background-color: #f8fafc; }
+
+        #lpAnnTable .lp-row-title-cell {
+            min-width: 240px;
+        }
+        #lpAnnTable .lp-row-title-cell .lp-ann-title {
+            font-size: .92rem;
+            line-height: 1.35;
             font-weight: 600;
             color: #1f2937;
-            line-height: 1.25;
+            word-break: break-word;
         }
-        .lp-ann-content {
+        #lpAnnTable .lp-ann-content {
             color: #64748b;
             font-size: .82rem;
-            max-width: 380px;
+            margin-top: .15rem;
+            max-width: 480px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        .lp-ann-file {
+
+        #lpAnnTable .lp-ann-file {
             display: inline-flex;
             align-items: center;
             gap: .3rem;
@@ -41,25 +69,103 @@
             border-radius: .35rem;
             font-size: .75rem;
             color: #475569;
-            max-width: 160px;
+            max-width: 180px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .lp-ann-file .material-symbols-rounded { font-size: 16px; }
-        .lp-ann-empty {
-            padding: 3rem 1rem;
-            text-align: center;
-            color: #94a3b8;
+        #lpAnnTable .lp-ann-file .material-symbols-rounded { font-size: 16px; }
+
+        /* Style DataTables wrapper – konsisten dengan posts & galleries */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #475569;
+            font-size: .8125rem;
         }
-        .lp-ann-empty .material-symbols-rounded { font-size: 48px; opacity: .55; }
-        .lp-ann-toolbar {
-            display: flex;
-            justify-content: space-between;
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: inline-flex;
             align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
+            gap: .5rem;
+            font-weight: 500;
+        }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #d4d8dd !important;
+            border-radius: .5rem !important;
+            padding: .4rem .65rem !important;
+            font-size: .875rem !important;
+            color: #1f2937;
+            background: #fff;
+            box-shadow: none !important;
+        }
+        .dataTables_wrapper .dataTables_length select { min-width: 72px; }
+        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #1d4ed8 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
+        }
+        .dataTables_wrapper .dataTables_info { padding-top: 1rem; color: #64748b !important; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: 1rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            padding: 0 .65rem !important;
+            margin: 0 2px !important;
+            border-radius: .5rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #fff !important;
+            color: #475569 !important;
+            font-weight: 600;
+            font-size: .8125rem;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
+            background: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1d4ed8 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #fff !important;
+            box-shadow: 0 1px 2px rgba(29,78,216,.25);
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            color: #cbd5e1 !important;
+            background: #f8fafc !important;
+            border-color: #f1f5f9 !important;
+            cursor: not-allowed;
+        }
+        .dataTables_empty {
+            padding: 3rem 1rem !important;
+            color: #94a3b8 !important;
+        }
+
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100%;
+                min-width: 0;
+                margin-left: 0 !important;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                min-width: 2rem;
+                height: 2rem;
+                font-size: .75rem;
+                padding: 0 .5rem !important;
+                margin: 0 1px !important;
+            }
         }
     </style>
 @endsection
@@ -71,86 +177,111 @@
     @endif
 
     @php
-        $titleSlot = '<h5 class="lp-page-title mb-1">'.e($title).'</h5>'
-            .'<p class="text-muted small mb-0">Pengumuman tampil di halaman landing publik dan dashboard.</p>';
         $addBtn = '<a href="'.e(route('app.admin-landing.announcements.create')).'" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1">'
-            .'<span class="material-symbols-rounded" style="font-size:16px;">add</span> Tambah Pengumuman</a>';
+            .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>'
+            .'<span class="align-middle">Tambah Pengumuman</span></a>';
     @endphp
-    @include('admin-landing._header-halaman', [
-        'subtitle' => 'Landing Page',
-        'actions' => $addBtn,
-        'titleSlot' => $titleSlot,
-    ])
+    <div class="d-flex justify-content-end mb-3">
+        {!! $addBtn !!}
+    </div>
 
-    <div class="card mb-4">
-        <div class="card-body p-3">
-            @if ($announcements->isEmpty())
-                <div class="lp-ann-empty">
-                    <span class="material-symbols-rounded">campaign</span>
-                    <div class="mt-2">Belum ada pengumuman.</div>
-                    <a href="{{ route('app.admin-landing.announcements.create') }}" class="btn btn-sm btn-primary mt-3 d-inline-flex align-items-center gap-1">
-                        <span class="material-symbols-rounded" style="font-size:16px;">add</span>
-                        Tambah Pengumuman Pertama
-                    </a>
+    <div class="card my-3">
+        <div class="card-body px-3 py-3">
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small mb-3">
+                    <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                 </div>
-            @else
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Pengumuman</th>
-                                <th style="width:150px">Tanggal</th>
-                                <th style="width:200px">Lampiran</th>
-                                <th style="width:110px">Status</th>
-                                <th style="width:120px" class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($announcements as $item)
-                                <tr class="lp-ann-row">
-                                    <td>
-                                        <div class="lp-ann-title">{{ $item->title }}</div>
-                                        @if ($item->content)
-                                            <div class="lp-ann-content">{!! \Illuminate\Support\Str::limit(strip_tags($item->content), 140) !!}</div>
-                                        @endif
-                                    </td>
-                                    <td class="text-muted small">{{ $item->published_at?->format('d M Y') ?: '—' }}</td>
-                                    <td>
-                                        @if ($item->file)
-                                            <span class="lp-ann-file" title="{{ $item->file }}">
-                                                <span class="material-symbols-rounded">attach_file</span>
-                                                <span>{{ $item->file }}</span>
-                                            </span>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @include('admin-landing.pengumuman._status', ['item' => $item])
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="d-flex gap-1 justify-content-end">
-                                            <a href="{{ route('app.admin-landing.announcements.edit', $item->id) }}"
-                                               class="btn btn-sm btn-outline-primary" title="Edit">
-                                                <span class="material-symbols-rounded" style="font-size:16px;">edit</span>
-                                            </a>
-                                            @include('admin-landing._komponen.formulir-hapus', [
-                                                'action' => route('app.admin-landing.announcements.destroy', $item->id),
-                                                'confirm' => 'Hapus pengumuman ini?',
-                                                'iconOnly' => true,
-                                            ])
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-3">{{ $announcements->links() }}</div>
             @endif
+            <div class="lp-ann-table-scroll">
+                <table id="lpAnnTable" class="table table-striped table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width:260px">Pengumuman</th>
+                            <th style="width:130px;min-width:130px">Tanggal</th>
+                            <th style="width:200px;min-width:200px">Lampiran</th>
+                            <th style="width:110px;min-width:110px">Status</th>
+                            <th class="text-center" style="width:100px;min-width:100px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 @endsection
 
+@section('script')
+<script>
+    $(document).ready(function() {
+        $('#lpAnnTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: '{{ route('app.admin-landing.announcements.data') }}',
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            searching: true,
+            info: true,
+            autoWidth: false,
+            scrollX: true,
+            responsive: false,
+            order: [[1, 'desc']],
+            language: {
+                lengthMenu: 'Tampilkan _MENU_ data',
+                search: 'Cari:',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty: 'Tidak ada pengumuman.',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                zeroRecords: 'Tidak ada pengumuman yang cocok.',
+                emptyTable: 'Belum ada pengumuman.',
+                loadingRecords: 'Memuat…',
+                processing: 'Memproses…',
+                paginate: { first: '«', last: '»', next: '›', previous: '‹' },
+            },
+            columns: [
+                { data: 'title_col', name: 'title', orderable: true, searchable: true, className: 'lp-row-title-cell' },
+                { data: 'published_at', name: 'published_at', orderable: true, searchable: false },
+                { data: 'file_col', name: 'file', orderable: false, searchable: true },
+                { data: 'status_col', name: 'is_published', orderable: true, searchable: true },
+                { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' },
+            ],
+        });
+
+        // Konfirmasi hapus untuk form yang di-render oleh DataTables (di luar DOM awal)
+        $(document).on('submit', 'form[data-confirm]', function(e) {
+            var $form = $(this);
+            if ($form.data('confirm-bound')) return;
+            $form.data('confirm-bound', true);
+            e.preventDefault();
+            var msg = $form.attr('data-confirm') || 'Yakin ingin menghapus data ini?';
+            Swal.fire({
+                title: 'Hapus data?',
+                text: msg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    $.ajax({
+                        url: $form.attr('action'),
+                        method: 'POST',
+                        data: $form.serialize(),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    }).done(function() {
+                        Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                        $('#lpAnnTable').DataTable().ajax.reload(null, false);
+                    }).fail(function() {
+                        Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                    });
+                }
+            });
+        });
+    });
+</script>
 @include('admin-landing._skrip')
+@endsection

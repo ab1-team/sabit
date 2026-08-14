@@ -222,6 +222,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::delete('/pengaturan/custom-background', [AdminLandingController::class, 'hapusCustomBackground'])->name('pengaturan.custom.destroy');
 
         Route::get('/posts', [AdminLandingController::class, 'posts'])->name('posts');
+        Route::get('/posts/data', [AdminLandingController::class, 'postsData'])->name('posts.data');
         Route::get('/posts/create', [AdminLandingController::class, 'postCreate'])->name('posts.create');
         Route::post('/posts', [AdminLandingController::class, 'postStore'])->name('posts.store');
         Route::get('/posts/{post}/edit', [AdminLandingController::class, 'postEdit'])->name('posts.edit');
@@ -229,6 +230,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::delete('/posts/{post}', [AdminLandingController::class, 'postDestroy'])->name('posts.destroy');
 
         Route::get('/announcements', [AdminLandingController::class, 'announcements'])->name('announcements');
+        Route::get('/announcements/data', [AdminLandingController::class, 'announcementsData'])->name('announcements.data');
         Route::get('/announcements/create', [AdminLandingController::class, 'announcementCreate'])->name('announcements.create');
         Route::post('/announcements', [AdminLandingController::class, 'announcementStore'])->name('announcements.store');
         Route::get('/announcements/{announcement}/edit', [AdminLandingController::class, 'announcementEdit'])->name('announcements.edit');
@@ -236,6 +238,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::delete('/announcements/{announcement}', [AdminLandingController::class, 'announcementDestroy'])->name('announcements.destroy');
 
         Route::get('/galleries', [AdminLandingController::class, 'galleries'])->name('galleries');
+        Route::get('/galleries/data', [AdminLandingController::class, 'galleriesData'])->name('galleries.data');
         Route::get('/galleries/create', [AdminLandingController::class, 'galleryCreate'])->name('galleries.create');
         Route::post('/galleries', [AdminLandingController::class, 'galleryStore'])->name('galleries.store');
         Route::get('/galleries/{gallery}/edit', [AdminLandingController::class, 'galleryEdit'])->name('galleries.edit');
@@ -270,6 +273,8 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
 
         // Kontak: pesan masuk form landing.
         Route::get('/contact-messages', [AdminLandingController::class, 'contactMessages'])->name('contact-messages');
+        Route::get('/contact-messages/data', [AdminLandingController::class, 'contactMessagesData'])->name('contact-messages.data');
+        Route::post('/contact-messages/{message}/status', [AdminLandingController::class, 'contactMessageStatus'])->name('contact-messages.status');
         Route::post('/contact-messages/{message}/mark', [AdminLandingController::class, 'contactMessageMark'])->name('contact-messages.mark');
         Route::delete('/contact-messages/{message}', [AdminLandingController::class, 'contactMessageDestroy'])->name('contact-messages.destroy');
 

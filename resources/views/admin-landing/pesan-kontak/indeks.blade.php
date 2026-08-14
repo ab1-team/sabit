@@ -2,95 +2,146 @@
 
 @section('style')
     @include('admin-landing._gaya')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
     <style>
-        .lp-msg-toolbar .lp-search {
-            position: relative;
-            display: flex;
+        #lpMsgTable {
+            width: 100% !important;
+            table-layout: auto;
+        }
+        .lp-msg-table-scroll {
+            overflow-x: auto;
+        }
+        /* Pastikan sel-sel konten panjang tidak ter-truncate oleh
+           aturan table-nowrap global dari material-dashboard. */
+        #lpMsgTable.table.table-nowrap td,
+        #lpMsgTable.table.table-nowrap th {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        #lpMsgTable thead th {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+            font-size: .72rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: .85rem 1rem;
+            white-space: nowrap;
+        }
+        #lpMsgTable tbody td {
+            padding: .85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        #lpMsgTable tbody tr:last-child td { border-bottom: 0; }
+        #lpMsgTable tbody tr { transition: background-color .15s ease; }
+        #lpMsgTable tbody tr:hover { background-color: #f8fafc; }
+
+        /* Sel pengirim & subject – bold jika status masih 'baru' */
+        #lpMsgTable .lp-msg-new {
+            background-color: rgba(37,99,235,.03);
+        }
+
+        /* Tombol toggle status – loading state */
+        .lp-toggle-status:disabled,
+        .lp-toggle-status.is-loading {
+            opacity: .65;
+            cursor: not-allowed;
+        }
+
+        /* Style DataTables wrapper – konsisten dengan halaman admin-landing lain */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #475569;
+            font-size: .8125rem;
+        }
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: inline-flex;
             align-items: center;
-            background: #fff;
-            border: 1px solid #d4d8dd;
-            border-radius: .55rem;
-            height: 44px;
-            padding: 0 .65rem;
-            transition: border-color .15s ease, box-shadow .15s ease;
+            gap: .5rem;
+            font-weight: 500;
         }
-        .lp-msg-toolbar .lp-search:focus-within {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12);
-        }
-        .lp-msg-toolbar .lp-search .material-symbols-rounded {
-            color: #64748b;
-            font-size: 20px;
-            margin-right: .5rem;
-        }
-        .lp-msg-toolbar .lp-search input {
-            border: 0;
-            outline: 0;
-            background: transparent;
-            flex: 1;
-            height: 100%;
-            font-size: .92rem;
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #d4d8dd !important;
+            border-radius: .5rem !important;
+            padding: .4rem .65rem !important;
+            font-size: .875rem !important;
             color: #1f2937;
-            padding: 0;
+            background: #fff;
+            box-shadow: none !important;
         }
-        .lp-msg-toolbar .lp-search input::placeholder { color: #94a3b8; }
-        .lp-msg-toolbar .lp-search-clear {
-            border: 0;
-            background: transparent;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: .15rem;
-            border-radius: 50%;
+        .dataTables_wrapper .dataTables_length select { min-width: 72px; }
+        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #1d4ed8 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
+        }
+        .dataTables_wrapper .dataTables_info { padding-top: 1rem; color: #64748b !important; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: 1rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            box-sizing: border-box;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-        }
-        .lp-msg-toolbar .lp-search-clear:hover { color: #1f2937; background: #f1f5f9; }
-        .lp-msg-toolbar .lp-search-clear .material-symbols-rounded { font-size: 18px; margin: 0; }
-
-        .lp-msg-toolbar .form-select {
-            height: 44px;
-            border-radius: .55rem;
-            border-color: #d4d8dd;
-            box-shadow: none !important;
-            font-size: .92rem;
-        }
-        .lp-msg-toolbar .form-select:focus {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
-        }
-        /* Samakan tinggi Select2 dengan search (44px) */
-        .lp-msg-toolbar .select2-container .select2-selection {
-            height: 44px !important;
-            border-radius: .55rem !important;
-            border-color: #d4d8dd !important;
+            min-width: 2.25rem;
+            height: 2.25rem;
             padding: 0 .65rem !important;
-            display: flex !important;
-            align-items: center !important;
+            margin: 0 2px !important;
+            border-radius: .5rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #fff !important;
+            color: #475569 !important;
+            font-weight: 600;
+            font-size: .8125rem;
+            cursor: pointer;
+            transition: all .15s ease;
         }
-        .lp-msg-toolbar .select2-container .select2-selection__rendered {
-            line-height: 44px !important;
-            padding-left: 0 !important;
-            font-size: .92rem;
-            color: #1f2937;
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
+            background: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1d4ed8 !important;
         }
-        .lp-msg-toolbar .select2-container .select2-selection__arrow {
-            height: 42px !important;
-        }
-        .lp-msg-toolbar .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-        .lp-msg-toolbar .select2-container--bootstrap-5:focus-within .select2-selection {
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #1d4ed8 !important;
             border-color: #1d4ed8 !important;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
+            color: #fff !important;
+            box-shadow: 0 1px 2px rgba(29,78,216,.25);
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            color: #cbd5e1 !important;
+            background: #f8fafc !important;
+            border-color: #f1f5f9 !important;
+            cursor: not-allowed;
+        }
+        .dataTables_empty {
+            padding: 3rem 1rem !important;
+            color: #94a3b8 !important;
         }
 
-        .lp-msg-row td { vertical-align: middle; }
-        .lp-msg-subj { max-width: 360px; }
-        .lp-msg-empty {
-            padding: 3rem 1rem;
-            text-align: center;
-            color: #94a3b8;
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100%;
+                min-width: 0;
+                margin-left: 0 !important;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                min-width: 2rem;
+                height: 2rem;
+                font-size: .75rem;
+                padding: 0 .5rem !important;
+                margin: 0 1px !important;
+            }
         }
-        .lp-msg-empty .material-symbols-rounded { font-size: 48px; opacity: .55; }
     </style>
 @endsection
 
@@ -100,114 +151,34 @@
         <div class="alert alert-success py-2 small mb-3">{{ session('success') }}</div>
     @endif
 
-    @php
-        $unreadCount = $messages->getCollection()->where('is_read', false)->count();
-        $titleSlot = '<h5 class="lp-page-title mb-1">'.e($title).'</h5>'
-            .'<p class="text-muted small mb-0">Pesan dari formulir kontak di halaman landing publik (/kontak).'
-            .($unreadCount > 0 ? ' <span class="badge bg-primary ms-1">'.$unreadCount.' belum dibaca</span>' : '')
-            .'</p>';
-    @endphp
-    @include('admin-landing._header-halaman', [
-        'subtitle' => 'Landing Page',
-        'titleSlot' => $titleSlot,
-    ])
-
-    <form method="GET" action="{{ route('app.admin-landing.contact-messages') }}" id="lpMsgFilter" class="card mb-3 lp-msg-toolbar">
-        <div class="card-body p-3">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-9">
-                    <div class="lp-search">
-                        <span class="material-symbols-rounded">search</span>
-                        <input type="text" name="q" id="lpMsgQ" value="{{ $q }}" placeholder="Cari nama, email, subjek, atau isi pesan..." autocomplete="off">
-                        <button type="button" class="lp-search-clear" id="lpMsgClear" title="Bersihkan pencarian">
-                            <span class="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="status" id="lpMsgStatus" class="form-select">
-                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua status</option>
-                        <option value="unread" {{ $status === 'unread' ? 'selected' : '' }}>Belum dibaca</option>
-                        <option value="read" {{ $status === 'read' ? 'selected' : '' }}>Sudah dibaca</option>
-                    </select>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="text-muted small">
+            Pesan dari formulir kontak di halaman landing publik
+            <span class="text-muted">/kontak</span>.
         </div>
-    </form>
+    </div>
 
-    <div class="card mb-4">
-        <div class="card-body p-3">
-            @if ($messages->isEmpty())
-                <div class="lp-msg-empty">
-                    <span class="material-symbols-rounded">mail</span>
-                    <div class="mt-2">Belum ada pesan masuk.</div>
+    <div class="card my-3">
+        <div class="card-body px-3 py-3">
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small mb-3">
+                    <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                 </div>
-            @else
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width:40px"></th>
-                                <th>Pengirim</th>
-                                <th>Subjek</th>
-                                <th style="width:150px">Tanggal</th>
-                                <th style="width:200px" class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($messages as $msg)
-                                <tr class="lp-msg-row {{ $msg->is_read ? '' : 'fw-semibold' }}">
-                                    <td class="text-center">
-                                        @if ($msg->is_read)
-                                            <span class="material-symbols-rounded text-muted" style="font-size:18px;" title="Sudah dibaca">mark_email_read</span>
-                                        @else
-                                            <span class="material-symbols-rounded text-primary" style="font-size:18px;" title="Belum dibaca">mark_email_unread</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div>{{ $msg->name ?: 'Anonim' }}</div>
-                                        <div class="text-muted small fw-normal">{{ $msg->email ?: '—' }}</div>
-                                    </td>
-                                    <td class="lp-msg-subj">
-                                        <div>{{ $msg->subject ?: '(tanpa subjek)' }}</div>
-                                        <div class="text-muted small fw-normal text-truncate" style="max-width:360px;">{{ \Illuminate\Support\Str::limit($msg->message, 90) }}</div>
-                                    </td>
-                                    <td class="text-muted small fw-normal">{{ $msg->created_at?->format('d M Y H:i') ?: '—' }}</td>
-                                    <td class="text-end">
-                                        <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-primary lp-view-message"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#lpMessageModal"
-                                                    data-name="{{ e($msg->name) }}"
-                                                    data-email="{{ e($msg->email) }}"
-                                                    data-subject="{{ e($msg->subject) }}"
-                                                    data-message="{{ e($msg->message) }}"
-                                                    data-date="{{ $msg->created_at?->format('d M Y H:i') }}"
-                                                    title="Lihat detail">
-                                                <span class="material-symbols-rounded" style="font-size:16px;">visibility</span>
-                                            </button>
-                                            <form action="{{ route('app.admin-landing.contact-messages.mark', $msg->id) }}" method="POST" class="lp-ajax d-inline">
-                                                @csrf
-                                                <input type="hidden" name="is_read" value="{{ $msg->is_read ? 0 : 1 }}">
-                                                <button type="submit" class="btn btn-sm {{ $msg->is_read ? 'btn-outline-secondary' : 'btn-outline-success' }}" title="{{ $msg->is_read ? 'Tandai belum dibaca' : 'Tandai sudah dibaca' }}">
-                                                    <span class="material-symbols-rounded" style="font-size:16px;">{{ $msg->is_read ? 'mark_email_unread' : 'mark_email_read' }}</span>
-                                                </button>
-                                            </form>
-                                            @include('admin-landing._komponen.formulir-hapus', [
-                                                'action' => route('app.admin-landing.contact-messages.destroy', $msg->id),
-                                                'confirm' => 'Hapus pesan ini?',
-                                                'iconOnly' => true,
-                                            ])
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-3">{{ $messages->links() }}</div>
             @endif
+            <div class="lp-msg-table-scroll">
+                <table id="lpMsgTable" class="table table-striped table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width:230px">Pengirim</th>
+                            <th style="min-width:280px">Subjek</th>
+                            <th style="width:140px;min-width:140px">Status</th>
+                            <th style="width:130px;min-width:130px">Tanggal</th>
+                            <th class="text-center" style="width:90px;min-width:90px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -240,57 +211,147 @@
 
 @section('script')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+$(document).ready(function() {
+    const table = $('#lpMsgTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route('app.admin-landing.contact-messages.data') }}',
+        paging: true,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        searching: true,
+        info: true,
+        autoWidth: false,
+        scrollX: true,
+        responsive: false,
+        order: [[3, 'desc']],
+        language: {
+            lengthMenu: 'Tampilkan _MENU_ data',
+            search: 'Cari:',
+            info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+            infoEmpty: 'Tidak ada pesan.',
+            infoFiltered: '(difilter dari _MAX total)',
+            zeroRecords: 'Tidak ada pesan yang cocok.',
+            emptyTable: 'Belum ada pesan masuk.',
+            loadingRecords: 'Memuat…',
+            processing: 'Memproses…',
+            paginate: { first: '«', last: '»', next: '›', previous: '‹' },
+        },
+        columns: [
+            { data: 'sender',      name: 'name',    orderable: true,  searchable: true },
+            { data: 'subject_col', name: 'subject', orderable: true,  searchable: true },
+            { data: 'status_col',  name: 'status',  orderable: true,  searchable: false },
+            { data: 'created_at',  name: 'created_at', orderable: true, searchable: false },
+            { data: 'action',      name: 'action',  orderable: false, searchable: false, className: 'text-center' },
+        ],
+        rowCallback: function(row, data) {
+            // Highlight baris dengan status 'baru' (default)
+            if (data && data.status === 'baru') {
+                row.classList.add('lp-msg-new');
+            }
+        },
+    });
+
+    // Tombol toggle status: maju ke status berikutnya via fetch
+    $('#lpMsgTable').on('click', '.lp-toggle-status', function() {
+        const btn = this;
+        const id  = btn.dataset.id;
+        const currentStatus = btn.dataset.current;
+        const nextStatus    = btn.dataset.next;
+        const labelNext     = btn.dataset.labelNext;
+        if (!id || !nextStatus) return;
+        btn.classList.add('is-loading');
+        btn.disabled = true;
+
+        const url = '{{ url('/app/admin-landing/contact-messages') }}/' + id + '/status';
+        const fd = new FormData();
+        fd.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        fd.append('status', nextStatus);
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: fd,
+        }).then(function(r) {
+            return r.json().then(function(d) { return { status: r.status, data: d }; });
+        }).then(function(out) {
+            if (out.status === 422) {
+                Swal.fire({ icon: 'error', title: 'Status tidak valid', timer: 1800, showConfirmButton: false });
+                table.ajax.reload(null, false);
+                return;
+            }
+            if (out.data && out.data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Status diubah ke "' + labelNext + '"',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 1400,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                });
+                table.ajax.reload(null, false);
+            } else {
+                Swal.fire({ icon: 'error', title: (out.data && out.data.msg) || 'Gagal memperbarui status' });
+                btn.disabled = false;
+                btn.classList.remove('is-loading');
+            }
+        }).catch(function() {
+            Swal.fire({ icon: 'error', title: 'Cek koneksi Anda.' });
+            btn.disabled = false;
+            btn.classList.remove('is-loading');
+        });
+    });
+
     // Modal detail pesan
     const modal = document.getElementById('lpMessageModal');
     if (modal) {
-        modal.addEventListener('show.bs.modal', function (event) {
+        modal.addEventListener('show.bs.modal', function(event) {
             const btn = event.relatedTarget;
-            document.getElementById('lpMsgName').textContent = btn.dataset.name || '—';
-            document.getElementById('lpMsgEmail').textContent = btn.dataset.email || '—';
+            document.getElementById('lpMsgName').textContent    = btn.dataset.name || '—';
+            document.getElementById('lpMsgEmail').textContent   = btn.dataset.email || '—';
             document.getElementById('lpMsgSubject').textContent = btn.dataset.subject || '(tanpa subjek)';
-            document.getElementById('lpMsgDate').textContent = btn.dataset.date || '—';
-            document.getElementById('lpMsgBody').textContent = btn.dataset.message || '—';
+            document.getElementById('lpMsgDate').textContent    = btn.dataset.date || '—';
+            document.getElementById('lpMsgBody').textContent    = btn.dataset.message || '—';
         });
     }
 
-    // Select2 untuk filter status (auto-submit saat ganti)
-    const $status = $('#lpMsgStatus');
-    if ($status.length && window.jQuery && $.fn.select2) {
-        $status.select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumResultsForSearch: Infinity,
-            language: { noResults: () => 'Tidak ditemukan' }
-        }).on('change', function () {
-            document.getElementById('lpMsgFilter').submit();
-        });
-    } else if ($status.length) {
-        $status.addEventListener('change', function () {
-            document.getElementById('lpMsgFilter').submit();
-        });
-    }
-
-    // Submit otomatis saat tekan Enter di kolom cari
-    const q = document.getElementById('lpMsgQ');
-    if (q) {
-        q.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('lpMsgFilter').submit();
+    // Konfirmasi hapus untuk form yang di-render oleh DataTables (di luar DOM awal)
+    $(document).on('submit', 'form[data-confirm]', function(e) {
+        const $form = $(this);
+        if ($form.data('confirm-bound')) return;
+        $form.data('confirm-bound', true);
+        e.preventDefault();
+        const msg = $form.attr('data-confirm') || 'Yakin ingin menghapus data ini?';
+        Swal.fire({
+            title: 'Hapus data?',
+            text: msg,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, hapus',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+        }).then(function(r) {
+            if (r.isConfirmed) {
+                $.ajax({
+                    url: $form.attr('action'),
+                    method: 'POST',
+                    data: $form.serialize(),
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                }).done(function() {
+                    Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                    table.ajax.reload(null, false);
+                }).fail(function() {
+                    Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                });
             }
         });
-    }
-
-    // Tombol clear
-    const clearBtn = document.getElementById('lpMsgClear');
-    if (clearBtn && q) {
-        clearBtn.addEventListener('click', function () {
-            q.value = '';
-            q.focus();
-            document.getElementById('lpMsgFilter').submit();
-        });
-    }
+    });
 });
 </script>
 @endsection

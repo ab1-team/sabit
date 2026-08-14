@@ -627,7 +627,7 @@
             overflow: hidden;
             position: relative;
             box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.2);
-            aspect-ratio: 4/5;
+            aspect-ratio: 1 / 1;
         }
         .lp-welcome-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .lp-welcome-img::after {

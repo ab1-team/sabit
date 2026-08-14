@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Trait LandingAdminResponse - helper untuk mengirim response
@@ -92,9 +93,16 @@ class AdminLandingController extends Controller
     {
         $tenant = tenant();
 
+        $heroSlide = \App\Models\Landing\SlideHeroLanding::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->first();
+
         return view('admin-landing.pengaturan', [
             'title' => 'Pengaturan Landing Page',
             'setting' => PengaturanLanding::current(),
+            'heroTitle' => $heroSlide?->title,
+            'heroSubtitle' => $heroSlide?->subtitle,
             'landingUrl' => $tenant?->landingUrl(),
         ]);
     }
@@ -113,6 +121,15 @@ class AdminLandingController extends Controller
     private function pengaturanSections(): array
     {
         return [
+            'hero' => [
+                'label' => 'Hero Beranda',
+                'fields' => [], // sentinel: tidak disimpan via fill() — ditangani di cabang khusus.
+                'rules' => [
+                    'hero_title' => ['nullable', 'string', 'max:150'],
+                    'hero_subtitle' => ['nullable', 'string', 'max:255'],
+                ],
+                'messages' => [],
+            ],
             'identitas' => [
                 'label' => 'Identitas Sekolah',
                 'fields' => ['school_name', 'tagline', 'logo', 'favicon'],
@@ -568,6 +585,50 @@ class AdminLandingController extends Controller
             unset($data['badges']);
         }
 
+        // Section 'hero' — update title/subtitle pada baris PERTAMA
+        // tabel lp_slide_hero (model SlideHeroLanding). Baris diambil
+        // berurutan sort_order ASC, id ASC (tie-break). Kalau tabel
+        // kosong, otomatis dibuat slide baru dengan is_active=true.
+        if ($sectionKey === 'hero') {
+            $title = isset($data['hero_title']) ? trim((string) $data['hero_title']) : '';
+            $subtitle = isset($data['hero_subtitle']) ? trim((string) $data['hero_subtitle']) : '';
+            $title = $title !== '' ? $title : null;
+            $subtitle = $subtitle !== '' ? $subtitle : null;
+
+            $slide = \App\Models\Landing\SlideHeroLanding::query()
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+            if (!$slide) {
+                $slide = new \App\Models\Landing\SlideHeroLanding();
+                $slide->sort_order = 1;
+                $slide->is_active = true;
+            }
+            $slide->title = $title;
+            $slide->subtitle = $subtitle;
+            $slide->save();
+
+            // Section hero tidak menyentuh $setting (PengaturanLanding),
+            // sehingga skip fill() di bawah.
+            if ($this->wantsJsonResponse($request)) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => 'Hero Beranda berhasil disimpan.',
+                    'section' => 'hero',
+                    'saved_fields' => ['hero_title', 'hero_subtitle'],
+                    'values' => $this->buildSectionValues('hero', $setting),
+                    'hero_background_url' => $setting->heroBackgroundUrl(),
+                    'hero_background_key' => $setting->activeThemeBackgroundKey(),
+                    'hero_background_meta' => null,
+                    'landing_url' => tenant()?->landingUrl(),
+                    'redirect' => route('app.admin-landing.pengaturan'),
+                ]);
+            }
+            return redirect()
+                ->route('app.admin-landing.pengaturan')
+                ->with('success', 'Hero Beranda berhasil disimpan.');
+        }
+
         // Filter $data HANYA ke kolom yang di-whitelist untuk section ini.
         // Ini mencegah field dari section lain (yang ikut terkirim via form
         // lain di halaman yang sama) men-overwrite data DB.
@@ -605,6 +666,7 @@ class AdminLandingController extends Controller
                 'msg' => $msg,
                 'section' => $sectionKey,
                 'saved_fields' => array_keys($payload),
+                'values' => $this->buildSectionValues($sectionKey, $setting),
                 'hero_background_url' => $setting->heroBackgroundUrl(),
                 'hero_background_key' => $setting->activeThemeBackgroundKey(),
                 'hero_background_meta' => $newFileMeta,
@@ -656,27 +718,6 @@ class AdminLandingController extends Controller
 
     public function posts(Request $request)
     {
-        $q = trim((string) $request->query('q', ''));
-        $status = $request->query('status', 'all');
-        $category = trim((string) $request->query('category', ''));
-
-        $posts = ArtikelLanding::query()
-            ->when($q !== '', function ($w) use ($q) {
-                $w->where(function ($x) use ($q) {
-                    $x->where('title', 'like', "%{$q}%")
-                        ->orWhere('category', 'like', "%{$q}%")
-                        ->orWhere('tags', 'like', "%{$q}%")
-                        ->orWhere('excerpt', 'like', "%{$q}%");
-                });
-            })
-            ->when($status === 'published', fn ($w) => $w->where('is_published', true))
-            ->when($status === 'draft', fn ($w) => $w->where('is_published', false))
-            ->when($category !== '', fn ($w) => $w->where('category', $category))
-            ->orderByDesc('published_at')
-            ->orderByDesc('id')
-            ->paginate(12)
-            ->withQueryString();
-
         $categories = ArtikelLanding::query()
             ->whereNotNull('category')
             ->where('category', '!=', '')
@@ -686,12 +727,61 @@ class AdminLandingController extends Controller
 
         return view('admin-landing.artikel.indeks', [
             'title' => 'Program / Berita',
-            'posts' => $posts,
-            'q' => $q,
-            'status' => $status,
-            'category' => $category,
             'categories' => $categories,
         ]);
+    }
+
+    public function postsData(Request $request)
+    {
+        $query = ArtikelLanding::query()
+            ->orderByDesc('published_at')
+            ->orderByDesc('id');
+
+        return DataTables::eloquent($query)
+            ->editColumn('title', function ($row) {
+                $star = $row->is_featured
+                    ? '<span class="material-symbols-rounded lp-featured-star" title="Ditampilkan di beranda">star</span> '
+                    : '';
+                $excerpt = $row->excerpt
+                    ? '<div class="lp-row-excerpt">'.e(\Illuminate\Support\Str::limit(strip_tags($row->excerpt), 100)).'</div>'
+                    : '';
+                return $star
+                    .'<div class="lp-row-title">'.e($row->title).'</div>'
+                    .$excerpt
+                    .'<div class="lp-row-slug">/'.e($row->slug).'</div>';
+            })
+            ->editColumn('image', function ($row) {
+                if ($row->image) {
+                    $url = \Illuminate\Support\Facades\Storage::disk('public')->url('landing/'.$row->image);
+                    return '<img src="'.$url.'" class="lp-thumb" alt="">';
+                }
+                return '<span class="lp-thumb-empty material-symbols-rounded">image</span>';
+            })
+            ->editColumn('category', function ($row) {
+                return $row->category
+                    ? '<span class="lp-cat-chip">'.e($row->category).'</span>'
+                    : '<span class="text-muted small">—</span>';
+            })
+            ->editColumn('published_at', function ($row) {
+                return $row->published_at
+                    ? '<span class="text-muted small">'.$row->published_at->format('d M Y').'</span>'
+                    : '<span class="text-muted small">—</span>';
+            })
+            ->editColumn('is_published', function ($row) {
+                return $row->is_published
+                    ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
+                    : '<span class="lp-status-badge is-draft">Draft</span>';
+            })
+            ->addColumn('action', function ($row) {
+                $edit = '<a href="'.route('app.admin-landing.posts.edit', $row->id).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit artikel"><span class="material-symbols-rounded">edit</span></a>';
+                $del = '<form action="'.route('app.admin-landing.posts.destroy', $row->id).'" method="POST" class="d-inline" data-confirm="Hapus artikel &quot;'.e($row->title).'&quot;?" style="display:inline">'
+                    .csrf_field().method_field('DELETE')
+                    .'<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus artikel"><span class="material-symbols-rounded">delete</span></button>'
+                    .'</form>';
+                return '<div class="lp-table-actions">'.$edit.$del.'</div>';
+            })
+            ->rawColumns(['title', 'image', 'category', 'published_at', 'is_published', 'action'])
+            ->toJson();
     }
 
     public function postCreate()
@@ -768,23 +858,77 @@ class AdminLandingController extends Controller
 
     private function validatePost(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'excerpt' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'category' => ['nullable', 'string', 'max:100'],
-            'tags' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'published_at' => ['nullable', 'date'],
         ]);
+
+        // Tag otomatis diturunkan dari kategori (slug-friendly) supaya konsisten
+        // tanpa meminta input tambahan dari pengguna.
+        $data['tags'] = !empty($data['category']) ? $data['category'] : null;
+
+        return $data;
     }
 
     public function announcements()
     {
         return view('admin-landing.pengumuman.indeks', [
             'title' => 'Pengumuman',
-            'announcements' => PengumumanLanding::orderByDesc('published_at')->orderByDesc('id')->paginate(15)->withQueryString(),
         ]);
+    }
+
+    public function announcementsData()
+    {
+        $query = PengumumanLanding::query();
+
+        return DataTables::eloquent($query)
+            ->addColumn('title_col', function ($a) {
+                $html = '<div class="lp-ann-title">'.e($a->title).'</div>';
+                if (!empty($a->content)) {
+                    $excerpt = \Illuminate\Support\Str::limit(strip_tags($a->content), 140);
+                    $html .= '<div class="lp-ann-content">'.e($excerpt).'</div>';
+                }
+                return $html;
+            })
+            ->addColumn('file_col', function ($a) {
+                if (!empty($a->file)) {
+                    return '<span class="lp-ann-file" title="'.e($a->file).'">'
+                        .'<span class="material-symbols-rounded">attach_file</span>'
+                        .'<span>'.e($a->file).'</span></span>';
+                }
+                return '<span class="text-muted small">—</span>';
+            })
+            ->addColumn('status_col', function ($a) {
+                return $a->is_published
+                    ? '<span class="lp-status-badge is-published">Aktif</span>'
+                    : '<span class="lp-status-badge is-draft">Draft</span>';
+            })
+            ->addColumn('action', function ($a) {
+                $edit = route('app.admin-landing.announcements.edit', $a->id);
+                $destroy = route('app.admin-landing.announcements.destroy', $a->id);
+                $html  = '<div class="lp-table-actions justify-content-center">';
+                $html .= '<a href="'.e($edit).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit">';
+                $html .= '<span class="material-symbols-rounded">edit</span></a>';
+                $html .= '<form action="'.e($destroy).'" method="POST" data-confirm="Hapus pengumuman &quot;'.e($a->title).'&quot; ?" class="d-inline">';
+                $html .= csrf_field().method_field('DELETE');
+                $html .= '<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus">';
+                $html .= '<span class="material-symbols-rounded">delete</span></button>';
+                $html .= '</form></div>';
+                return $html;
+            })
+            ->editColumn('published_at', function ($a) {
+                return $a->published_at ? $a->published_at->format('Y-m-d H:i:s') : '';
+            })
+            ->editColumn('is_published', function ($a) {
+                return $a->is_published ? 1 : 0;
+            })
+            ->rawColumns(['title_col', 'file_col', 'status_col', 'action'])
+            ->orderColumn('published_at', 'published_at $1')
+            ->make(true);
     }
 
     public function announcementCreate()
@@ -867,30 +1011,67 @@ class AdminLandingController extends Controller
 
     public function galleries(Request $request)
     {
-        $q = trim((string) $request->query('q', ''));
-        $status = $request->query('status', 'all');
-
-        $galleries = GaleriLanding::query()
-            ->when($q !== '', function ($w) use ($q) {
-                $w->where(function ($x) use ($q) {
-                    $x->where('title', 'like', "%{$q}%")
-                        ->orWhere('album', 'like', "%{$q}%")
-                        ->orWhere('description', 'like', "%{$q}%");
-                });
-            })
-            ->when($status === 'published', fn ($w) => $w->where('is_published', true))
-            ->when($status === 'draft', fn ($w) => $w->where('is_published', false))
-            ->orderBy('sort_order')
-            ->orderByDesc('id')
-            ->paginate(12)
-            ->withQueryString();
-
         return view('admin-landing.galeri.indeks', [
             'title' => 'Galeri',
-            'galleries' => $galleries,
-            'q' => $q,
-            'status' => $status,
         ]);
+    }
+
+    public function galleriesData(Request $request)
+    {
+        $query = GaleriLanding::query();
+
+        return DataTables::eloquent($query)
+            ->addColumn('image', function ($g) {
+                if ($g->image) {
+                    $url = Storage::disk('public')->url('landing/'.$g->image);
+                    return '<img src="'.e($url).'" alt="" class="lp-gallery-thumb">';
+                }
+                return '<span class="lp-gallery-thumb-empty"><span class="material-symbols-rounded">image</span></span>';
+            })
+            ->addColumn('title_col', function ($g) {
+                $html = '<div class="lp-gallery-title">'.e($g->title).'</div>';
+                if (!empty($g->description)) {
+                    $excerpt = \Illuminate\Support\Str::limit(strip_tags($g->description), 90);
+                    $html .= '<small>'.e($excerpt).'</small>';
+                }
+                return $html;
+            })
+            ->addColumn('album_col', function ($g) {
+                if (!empty($g->album)) {
+                    return '<span class="badge text-bg-light border">'.e($g->album).'</span>';
+                }
+                return '<span class="text-muted small">—</span>';
+            })
+            ->addColumn('sort_col', function ($g) {
+                return '<span class="text-muted small">'.e($g->sort_order ?? 0).'</span>';
+            })
+            ->addColumn('status_col', function ($g) {
+                return $g->is_published
+                    ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
+                    : '<span class="lp-status-badge is-draft">Draft</span>';
+            })
+            ->addColumn('action', function ($g) {
+                $edit = route('app.admin-landing.galleries.edit', $g->id);
+                $destroy = route('app.admin-landing.galleries.destroy', $g->id);
+                $html  = '<div class="lp-table-actions justify-content-center">';
+                $html .= '<a href="'.e($edit).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit foto">';
+                $html .= '<span class="material-symbols-rounded">edit</span></a>';
+                $html .= '<form action="'.e($destroy).'" method="POST" data-confirm="'.e('Hapus foto "'.$g->title.'" ?').'" class="d-inline">';
+                $html .= csrf_field().method_field('DELETE');
+                $html .= '<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus foto">';
+                $html .= '<span class="material-symbols-rounded">delete</span></button>';
+                $html .= '</form></div>';
+                return $html;
+            })
+            ->editColumn('sort_order', function ($g) {
+                return (int) ($g->sort_order ?? 0);
+            })
+            ->editColumn('is_published', function ($g) {
+                return $g->is_published ? 1 : 0;
+            })
+            ->rawColumns(['image', 'title_col', 'album_col', 'sort_col', 'status_col', 'action'])
+            ->orderColumn('sort_order', 'sort_order $1')
+            ->make(true);
     }
 
     public function galleryCreate()
@@ -1438,43 +1619,136 @@ class AdminLandingController extends Controller
 
     public function contactMessages(Request $request)
     {
-        $q = trim((string) $request->query('q', ''));
-        $status = $request->query('status', 'all');
-
-        $query = PesanKontakLanding::query()->orderByDesc('id');
-        if ($q !== '') {
-            $query->where(function ($w) use ($q) {
-                $w->where('name', 'like', "%{$q}%")
-                  ->orWhere('email', 'like', "%{$q}%")
-                  ->orWhere('subject', 'like', "%{$q}%")
-                  ->orWhere('message', 'like', "%{$q}%");
-            });
-        }
-        if ($status === 'unread') {
-            $query->where('is_read', false);
-        } elseif ($status === 'read') {
-            $query->where('is_read', true);
-        }
-
-        $messages = $query->paginate(20)->withQueryString();
-
         return view('admin-landing.pesan-kontak.indeks', [
             'title' => 'Pesan Masuk',
-            'messages' => $messages,
-            'q' => $q,
-            'status' => $status,
         ]);
     }
 
-    public function contactMessageMark(Request $request, $message)
+    public function contactMessagesData()
+    {
+        $query = PesanKontakLanding::query();
+
+        return DataTables::eloquent($query)
+            ->addColumn('sender', function ($m) {
+                $name = $m->name ?: 'Anonim';
+                $email = $m->email ?: '—';
+                $bold = $m->status === PesanKontakLanding::STATUS_BARU ? ' fw-semibold' : '';
+                return '<div class="'.$bold.'">'.e($name).'</div>'
+                    .'<div class="text-muted small fw-normal">'.e($email).'</div>';
+            })
+            ->addColumn('subject_col', function ($m) {
+                $subj = $m->subject ?: '(tanpa subjek)';
+                $excerpt = \Illuminate\Support\Str::limit(strip_tags($m->message), 90);
+                $bold = $m->status === PesanKontakLanding::STATUS_BARU ? ' fw-semibold' : '';
+                return '<div class="'.$bold.'">'.e($subj).'</div>'
+                    .'<div class="text-muted small fw-normal text-truncate" style="max-width:380px;">'.e($excerpt).'</div>';
+            })
+            ->addColumn('status_col', function ($m) {
+                // Badge read-only untuk menampilkan status (default: 'baru')
+                $badgeClass = $m->statusBadgeClass();
+                $label = $m->statusLabel();
+                return '<span class="'.$badgeClass.'">'.e($label).'</span>';
+            })
+            ->addColumn('action', function ($m) {
+                // Tombol toggle: maju ke status berikutnya (atau kembali ke 'baru' jika sudah selesai)
+                $nextStatus = match ($m->status) {
+                    PesanKontakLanding::STATUS_BARU     => PesanKontakLanding::STATUS_DIBACA,
+                    PesanKontakLanding::STATUS_DIBACA   => PesanKontakLanding::STATUS_SELESAI,
+                    default                              => PesanKontakLanding::STATUS_BARU,
+                };
+                $toggleIcon  = match ($m->status) {
+                    PesanKontakLanding::STATUS_BARU     => 'mark_email_read',
+                    PesanKontakLanding::STATUS_DIBACA   => 'task_alt',
+                    default                              => 'mark_email_unread',
+                };
+                $toggleTitle = match ($m->status) {
+                    PesanKontakLanding::STATUS_BARU     => 'Tandai sudah dibaca',
+                    PesanKontakLanding::STATUS_DIBACA   => 'Tandai selesai',
+                    default                              => 'Buka lagi (baru)',
+                };
+                $toggleOutline = match ($m->status) {
+                    PesanKontakLanding::STATUS_BARU     => 'btn-outline-primary',
+                    PesanKontakLanding::STATUS_DIBACA   => 'btn-outline-success',
+                    default                              => 'btn-outline-secondary',
+                };
+
+                $btnView = '<button type="button" class="btn btn-sm btn-outline-primary lp-view-message btn-icon" '
+                    .'data-bs-toggle="modal" data-bs-target="#lpMessageModal" '
+                    .'data-id="'.e((string) $m->id).'" '
+                    .'data-name="'.e($m->name).'" '
+                    .'data-email="'.e($m->email).'" '
+                    .'data-subject="'.e($m->subject).'" '
+                    .'data-message="'.e($m->message).'" '
+                    .'data-date="'.e($m->created_at?->format('d M Y H:i') ?: '').'" '
+                    .'title="Lihat detail">'
+                    .'<span class="material-symbols-rounded">visibility</span></button>';
+
+                $btnToggle = '<button type="button" class="btn btn-sm '.e($toggleOutline).' lp-toggle-status btn-icon" '
+                    .'data-id="'.e((string) $m->id).'" '
+                    .'data-current="'.e($m->status).'" '
+                    .'data-next="'.e($nextStatus).'" '
+                    .'data-label-current="'.e($m->statusLabel()).'" '
+                    .'data-label-next="'.e(match ($nextStatus) {
+                        PesanKontakLanding::STATUS_DIBACA  => 'Dibaca',
+                        PesanKontakLanding::STATUS_SELESAI => 'Selesai',
+                        default                              => 'Baru',
+                    }).'" '
+                    .'title="'.e($toggleTitle).'">'
+                    .'<span class="material-symbols-rounded">'.e($toggleIcon).'</span></button>';
+
+                $destroy = route('app.admin-landing.contact-messages.destroy', $m->id);
+                $btnDel  = '<form action="'.e($destroy).'" method="POST" data-confirm="Hapus pesan ini?" class="d-inline">'
+                    .csrf_field().method_field('DELETE')
+                    .'<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus">'
+                    .'<span class="material-symbols-rounded">delete</span></button>'
+                    .'</form>';
+
+                return '<div class="lp-table-actions justify-content-center">'.$btnView.$btnToggle.$btnDel.'</div>';
+            })
+            ->editColumn('created_at', function ($m) {
+                return $m->created_at ? $m->created_at->format('Y-m-d H:i:s') : '';
+            })
+            ->rawColumns(['sender', 'subject_col', 'status_col', 'action'])
+            ->orderColumn('created_at', 'created_at $1')
+            ->make(true);
+    }
+
+    public function contactMessageStatus(Request $request, $message)
     {
         $model = PesanKontakLanding::findOrFail($message);
-        $model->is_read = $request->boolean('is_read', true);
+        $data = $request->validate([
+            'status' => ['required', 'in:'.implode(',', PesanKontakLanding::STATUSES)],
+        ]);
+        $oldStatus = $model->status;
+        $model->status = $data['status'];
+        // Set is_read = true setiap kali status berubah dari 'baru' ke yang lain
+        if ($oldStatus === PesanKontakLanding::STATUS_BARU && $model->status !== PesanKontakLanding::STATUS_BARU) {
+            $model->is_read = true;
+        }
         $model->save();
 
         return $this->saveSuccess(
             $request,
-            $model->is_read ? 'Pesan ditandai sudah dibaca.' : 'Pesan ditandai belum dibaca.',
+            'Status pesan diperbarui menjadi "'.$model->statusLabel().'".',
+            null,
+            ['status' => $model->status, 'label' => $model->statusLabel(), 'badge_class' => $model->statusBadgeClass()]
+        );
+    }
+
+    public function contactMessageMark(Request $request, $message)
+    {
+        // Kompatibilitas mundur: redirect ke update status 'dibaca'
+        $model = PesanKontakLanding::findOrFail($message);
+        $markRead = $request->boolean('is_read', true);
+        $model->status = $markRead ? PesanKontakLanding::STATUS_DIBACA : PesanKontakLanding::STATUS_BARU;
+        if ($markRead) {
+            $model->is_read = true;
+        }
+        $model->save();
+
+        return $this->saveSuccess(
+            $request,
+            $markRead ? 'Pesan ditandai sudah dibaca.' : 'Pesan ditandai belum dibaca.',
             'app.admin-landing.contact-messages'
         );
     }
@@ -1740,6 +2014,124 @@ class AdminLandingController extends Controller
      * - key preset valid -> simpan key
      * - null/kosong -> pertahankan nilai lama
      */
+    /**
+     * Susun payload 'values' per section untuk dikirim ke klien via JSON,
+     * agar JS bisa menyegarkan card tanpa reload halaman.
+     *
+     * - 'identitas' : teks school_name/tagline + URL & filename logo & favicon
+     *                (mengikuti pola view: Storage::disk('public')->url('landing/...'))
+     * - 'kontak'    : teks email/phone/whatsapp/address/google_maps_url
+     * - 'medsos'    : teks facebook/instagram/youtube/tiktok
+     * - 'background': key aktif + URL background + metadata file (kalau custom)
+     * - 'warna'     : theme_button_color (hex uppercase) + theme_text_color
+     * - 'sambutan'  : teks quote/head_name/head_role/paragraph_1/paragraph_2 +
+     *                URL foto (kalau uploaded) atau URL apa adanya
+     */
+    private function buildSectionValues(string $sectionKey, PengaturanLanding $setting): array
+    {
+        $disk = Storage::disk('public');
+
+        switch ($sectionKey) {
+            case 'hero':
+                $slide = \App\Models\Landing\SlideHeroLanding::query()
+                    ->orderBy('sort_order')
+                    ->orderBy('id')
+                    ->first();
+                return [
+                    'hero_title' => $slide?->title,
+                    'hero_subtitle' => $slide?->subtitle,
+                ];
+
+            case 'identitas':
+                $logoUrl = $setting->logo ? $disk->url('landing/' . $setting->logo) : null;
+                $faviconUrl = $setting->favicon ? $disk->url('landing/' . $setting->favicon) : null;
+                return [
+                    'school_name' => $setting->school_name,
+                    'tagline' => $setting->tagline,
+                    'logo_url' => $logoUrl,
+                    'logo_filename' => $setting->logo,
+                    'favicon_url' => $faviconUrl,
+                    'favicon_filename' => $setting->favicon,
+                ];
+
+            case 'kontak':
+                return [
+                    'email' => $setting->email,
+                    'phone' => $setting->phone,
+                    'whatsapp' => $setting->whatsapp,
+                    'address' => $setting->address,
+                    'google_maps_url' => $setting->google_maps_url,
+                ];
+
+            case 'medsos':
+                return [
+                    'facebook' => $setting->facebook,
+                    'instagram' => $setting->instagram,
+                    'youtube' => $setting->youtube,
+                    'tiktok' => $setting->tiktok,
+                ];
+
+            case 'background':
+                $isCustom = (bool) $setting->hero_background && str_starts_with((string) $setting->hero_background, 'custom:');
+                $meta = null;
+                if ($isCustom) {
+                    $f = substr((string) $setting->hero_background, strlen('custom:'));
+                    if ($f !== '' && $disk->exists($this->diskPath($f))) {
+                        $fullPath = $disk->path($this->diskPath($f));
+                        [$w, $h] = getimagesize($fullPath) ?: [0, 0];
+                        $bytes = filesize($fullPath);
+                        $meta = [
+                            'name' => $f,
+                            'width' => $w,
+                            'height' => $h,
+                            'size_label' => $bytes >= 1048576
+                                ? number_format($bytes / 1048576, 2) . ' MB'
+                                : number_format($bytes / 1024, 0) . ' KB',
+                        ];
+                    }
+                }
+                return [
+                    'hero_background_key' => $setting->activeThemeBackgroundKey(),
+                    'hero_background_url' => $setting->heroBackgroundUrl(),
+                    'hero_background_meta' => $meta,
+                    'is_custom' => $isCustom,
+                ];
+
+            case 'warna':
+                return [
+                    'theme_button_color' => $setting->activeThemeButtonColor(),
+                    'theme_text_color' => $setting->activeThemeTextColor(),
+                ];
+
+            case 'sambutan':
+                $stored = $setting->welcome ?: [];
+                $photo = $stored['photo'] ?? null;
+                $photoUrl = null;
+                if (is_string($photo) && $photo !== '') {
+                    if (str_starts_with($photo, 'uploaded:')) {
+                        $f = substr($photo, strlen('uploaded:'));
+                        if ($f !== '') {
+                            $photoUrl = $disk->url('landing/' . $f);
+                        }
+                    } else {
+                        $photoUrl = $photo;
+                    }
+                }
+                return [
+                    'photo_url' => $photoUrl,
+                    'photo_raw' => $photo,
+                    'quote' => $stored['quote'] ?? null,
+                    'paragraph_1' => $stored['paragraph_1'] ?? null,
+                    'paragraph_2' => $stored['paragraph_2'] ?? null,
+                    'head_name' => $stored['head_name'] ?? null,
+                    'head_role' => $stored['head_role'] ?? null,
+                ];
+
+            default:
+                return [];
+        }
+    }
+
     private function resolveThemeColor(?string $choice, ?string $customHex, array $validKeys): ?string
     {
         if ($choice === 'custom') {

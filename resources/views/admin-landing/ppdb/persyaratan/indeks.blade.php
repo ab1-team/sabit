@@ -355,9 +355,9 @@
             removeBtnSelector: '[data-role="remove"], .btn-remove-row',
             wysiwyg: false,
             afterAppend: function (row) {
-                // Baris baru langsung terbuka agar user bisa langsung mengetik
-                row.classList.remove('is-collapsed');
-                row.classList.add('is-open');
+                // Baris baru tetap tertutup — admin harus klik header untuk membuka & mengedit.
+                row.classList.add('is-collapsed');
+                row.classList.remove('is-open');
                 bindReqToggle(row);
             },
             gatherPayload: function (row) {

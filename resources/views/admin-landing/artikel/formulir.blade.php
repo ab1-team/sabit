@@ -8,38 +8,36 @@
             border-radius: .75rem !important;
             background: #fff;
         }
-        .lp-post-form-card .card-body {
-            padding: 1rem 1.1rem;
-        }
+        .lp-post-form-card > .card-body { padding: .9rem 1.05rem; }
 
-        /* Field sederhana: label di atas, input standar, tinggi konsisten 42px */
+        /* Field: ringkas, label kecil, input seragam */
         .lp-field {
             display: flex;
             flex-direction: column;
-            gap: .35rem;
-            margin-bottom: .9rem;
+            gap: .3rem;
+            margin-bottom: .7rem;
         }
         .lp-field > label {
-            font-size: .82rem;
+            font-size: .8rem;
             font-weight: 600;
             color: #334155;
             margin: 0;
         }
         .lp-field .form-control,
         .lp-field textarea.form-control {
-            height: 42px;
-            padding: .5rem .75rem;
+            height: 38px;
+            padding: .45rem .7rem;
             border-radius: .5rem;
             border: 1px solid #d4d8dd;
             background: #fff;
             color: #1f2937;
-            font-size: .92rem;
+            font-size: .9rem;
             transition: border-color .15s ease, box-shadow .15s ease;
             box-shadow: none !important;
         }
         .lp-field textarea.form-control {
             height: auto;
-            min-height: 84px;
+            min-height: 70px;
             line-height: 1.45;
         }
         .lp-field .form-control:focus,
@@ -49,19 +47,17 @@
             outline: none;
         }
         .lp-field .help {
-            font-size: .72rem;
+            font-size: .7rem;
             color: #94a3b8;
         }
-        .lp-field.req > label::after {
-            content: " *";
-            color: #dc2626;
-        }
+        .lp-field.req > label::after { content: " *"; color: #dc2626; }
 
-        /* Kolom preview flex: box mengikuti tinggi konten kolom */
+        /* Layout 2 kolom via CSS Grid agar field bisa sejajar horizontal */
         .lp-form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem 1.1rem;
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+            gap: .9rem 1rem;
+            align-items: stretch;
         }
         .lp-form-col {
             display: flex;
@@ -69,48 +65,105 @@
             gap: 0;
             min-width: 0;
         }
-        .lp-form-col-main { flex: 1 1 56%; min-width: 280px; }
-        .lp-form-col-side { flex: 1 1 40%; min-width: 260px; }
+        .lp-form-col-main { grid-column: 1; }
+        .lp-form-col-side { grid-column: 2; }
 
-        /* Preview box */
+        @media (max-width: 767.98px) {
+            .lp-form-row { grid-template-columns: 1fr; }
+            .lp-form-col-main,
+            .lp-form-col-side { grid-column: 1; }
+        }
+
+        /* Kolom kanan didistribusikan rata agar tidak ada space kosong
+           jika Gambar Sampul lebih pendek dari kolom kiri. */
+        .lp-form-col-side .lp-field:last-of-type { margin-bottom: 0; }
+        .lp-form-col-side .lp-publish-card { margin-bottom: 0; }
+
+        /* Preview box gambar sampul */
         .lp-preview-wrap {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            margin-bottom: .7rem;
         }
-        .lp-preview-wrap .form-label {
-            font-size: .82rem;
+        .lp-preview-wrap > .form-label {
+            font-size: .8rem;
             font-weight: 600;
             color: #334155;
-            margin: 0 0 .35rem 0;
+            margin: 0 0 .3rem 0;
         }
         .lp-preview-box.lp-preview-cover {
-            flex: 1 1 auto;
-            min-height: 320px;
-            aspect-ratio: auto;
-            padding: .35rem;
+            position: relative;
+            flex: 0 0 auto;
+            height: 250px;
+            min-height: 250px;
+            padding: 0;
         }
         .lp-preview-box.lp-preview-cover img {
-            max-width: 70%;
-            max-height: 75%;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+        .lp-preview-box.lp-preview-cover .lp-preview-empty,
+        .lp-preview-box.lp-preview-cover .lp-preview-hint {
+            position: relative;
+            z-index: 1;
+        }
+        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-empty,
+        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-hint {
+            position: absolute;
+        }
+        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-empty {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -65%);
+        }
+        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-hint {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 30%);
+        }
+        .lp-preview-box.lp-preview-cover .lp-preview-hint {
+            position: absolute;
+            top: auto;
+            bottom: .5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15,23,42,.55);
+            color: #fff;
+            padding: .25rem .55rem;
+            border-radius: .35rem;
+            font-size: .72rem;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 2;
+            opacity: .85;
+            transition: opacity .15s ease, background .15s ease;
+        }
+        .lp-preview-box.lp-preview-cover:hover .lp-preview-hint {
+            opacity: 1;
+            background: rgba(15,23,42,.75);
         }
 
-        /* Side card publish */
+        /* Side card publish + featured: ringkas */
         .lp-publish-card {
-            border: 1px dashed #e2e8f0;
+            border: 1px solid #e2e8f0;
             border-radius: .65rem;
-            padding: .75rem .9rem;
+            padding: .15rem .9rem;
             background: #f8fafc;
             display: flex;
             flex-direction: column;
-            gap: .25rem;
+            gap: 0;
         }
         .lp-switch-row {
             display: flex;
             gap: .65rem;
             align-items: center;
             justify-content: space-between;
-            padding: .35rem 0;
+            padding: .55rem 0;
         }
         .lp-switch-row + .lp-switch-row {
             border-top: 1px dashed #e2e8f0;
@@ -121,12 +174,12 @@
             min-width: 0;
         }
         .lp-switch-row .lp-switch-text strong {
-            font-size: .85rem;
+            font-size: .82rem;
             color: #1f2937;
             line-height: 1.2;
         }
         .lp-switch-row .lp-switch-text small {
-            font-size: .72rem;
+            font-size: .7rem;
             color: #64748b;
         }
         .lp-switch-row .form-check.form-switch {
@@ -134,18 +187,23 @@
             flex: 0 0 auto;
         }
 
-        /* TinyMCE wrapper */
+        /* TinyMCE: tinggi pas agar total form tidak overflow */
         .lp-tinymce-wrap .tox-tinymce {
             border-radius: .5rem !important;
             border-color: #d4d8dd !important;
         }
+        .lp-tinymce-wrap .tox .tox-toolbar {
+            background: #f8fafc !important;
+        }
 
-        /* Footer */
+        /* Footer form */
         .lp-post-foot {
             display: flex;
             flex-direction: column;
-            gap: .35rem;
-            padding: .65rem 1rem;
+            gap: .5rem;
+            padding: .65rem 1.05rem;
+            background: #f8fafc;
+            border-radius: 0 0 .75rem .75rem;
         }
         @media (min-width: 768px) {
             .lp-post-foot {
@@ -155,50 +213,48 @@
             }
         }
         .lp-post-foot .lp-foot-hint {
-            font-size: .82rem;
+            font-size: .8rem;
             color: #475569;
         }
-
-        @media (max-width: 767.98px) {
-            .lp-form-col-main, .lp-form-col-side { flex-basis: 100%; }
+        .lp-post-foot .btn {
+            min-height: 38px;
+            padding: .4rem 1rem;
+            border-radius: .5rem;
+            font-size: .88rem;
         }
+
+        /* Kurangi padding wrapper luar halaman */
+        .lp-post-page { padding: .35rem .5rem; }
+        @media (max-width: 575.98px) {
+            .lp-post-page { padding: .35rem .35rem; }
+        }
+
+        /* Batas tinggi konten kolom kanan: disesuaikan dengan kolom kiri */
+        .lp-preview-empty { font-size: 36px; }
     </style>
 @endsection
 
 @section('content')
-<div class="px-2 py-2">
+<div class="lp-post-page">
     @if (session('success'))
-        <div class="alert alert-success py-2 small mb-3">{{ session('success') }}</div>
+        <div class="alert alert-success py-2 small mb-2">{{ session('success') }}</div>
     @endif
     @if ($errors->any())
-        <div class="alert alert-danger py-2 small mb-3">
+        <div class="alert alert-danger py-2 small mb-2">
             <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
         </div>
     @endif
 
-    @php
-        $isEdit = ($post->exists ?? false);
-        $titleSlot = '<h5 class="lp-page-title mb-1">'.e($title).'</h5>'
-            .'<p class="text-muted small mb-0">'.($isEdit
-                ? 'Perbarui artikel / berita yang sudah ada.'
-                : 'Tulis artikel atau berita baru untuk ditampilkan di halaman publik.').'</p>';
-    @endphp
-    @include('admin-landing._header-halaman', [
-        'subtitle' => 'Landing Page',
-        'back' => route('app.admin-landing.posts'),
-        'titleSlot' => $titleSlot,
-    ])
+    @php $isEdit = ($post->exists ?? false); @endphp
 
     <form action="{{ $action }}" method="POST" enctype="multipart/form-data" class="lp-ajax">
         @csrf
-        @if ($isEdit)
-            @method('PUT')
-        @endif
+        @if ($isEdit) @method('PUT') @endif
 
-        <div class="card my-3 lp-post-form-card">
+        <div class="card my-2 lp-post-form-card">
             <div class="card-body">
                 <div class="lp-form-row">
-                    {{-- KOLOM KIRI (lebih lebar) --}}
+                    {{-- KOLOM KIRI --}}
                     <div class="lp-form-col lp-form-col-main">
                         <div class="lp-field req">
                             <label for="title">Judul</label>
@@ -216,18 +272,18 @@
 
                         <div class="lp-field">
                             <label for="excerpt">Ringkasan</label>
-                            <textarea id="excerpt" name="excerpt" class="form-control" rows="3"
+                            <textarea id="excerpt" name="excerpt" class="form-control" rows="2"
                                       placeholder="Cuplikan singkat yang tampil di daftar artikel (opsional)">{{ old('excerpt', $post->excerpt) }}</textarea>
                         </div>
 
                         <div class="lp-field req lp-tinymce-wrap">
                             <label for="content">Konten</label>
-                            <textarea id="content" name="content" class="form-control lp-tinymce" rows="8"
+                            <textarea id="content" name="content" class="form-control lp-tinymce" rows="6"
                                       placeholder="Tulis isi artikel di sini...">{{ old('content', $post->content) }}</textarea>
                         </div>
                     </div>
 
-                    {{-- KOLOM KANAN (lebih sempit) --}}
+                    {{-- KOLOM KANAN --}}
                     <div class="lp-form-col lp-form-col-side">
                         <div class="lp-preview-wrap">
                             <label class="form-label">Gambar Sampul</label>
@@ -245,14 +301,6 @@
                             @if ($post->image)
                                 <div class="small text-muted mt-1">File saat ini: <code>{{ $post->image }}</code></div>
                             @endif
-                        </div>
-
-                        <div class="lp-field" style="margin-top: .9rem;">
-                            <label for="tags">Tag</label>
-                            <input id="tags" type="text" name="tags" class="form-control"
-                                   value="{{ old('tags', $post->tags) }}"
-                                   placeholder="pisahkan dengan koma">
-                            <div class="help">Pisahkan beberapa tag dengan tanda koma.</div>
                         </div>
 
                         <div class="lp-field">
@@ -293,10 +341,16 @@
                 <span class="lp-foot-hint">
                     Isi semua kolom bertanda <span class="text-danger">*</span>.
                 </span>
-                <button type="submit" class="btn btn-info d-inline-flex align-items-center gap-1">
-                    <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
-                    <span class="align-middle">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Artikel' }}</span>
-                </button>
+                <div class="d-flex flex-wrap gap-2 justify-content-end">
+                    <a href="{{ route('app.admin-landing.posts') }}" class="btn btn-light d-inline-flex align-items-center gap-1">
+                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">arrow_back</span>
+                        <span class="align-middle">Kembali</span>
+                    </a>
+                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1">
+                        <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
+                        <span class="align-middle">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Artikel' }}</span>
+                    </button>
+                </div>
             </div>
         </div>
     </form>
@@ -309,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof tinymce === 'undefined') return;
     tinymce.init({
         selector: 'textarea.lp-tinymce',
-        height: 320,
+        height: 240,
         menubar: false,
         plugins: 'lists link image table code',
         toolbar: 'undo redo | bold italic underline | bullist numlist | link image table | code',

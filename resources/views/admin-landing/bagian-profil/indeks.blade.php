@@ -744,61 +744,271 @@
             border-color: var(--bs-btn-hover-border-color);
             color: var(--bs-btn-hover-color);
         }
+
+        /* ============================================================
+           Layout halaman Bagian Profil — mengikuti pola
+           /app/pengaturan/sop#sopPembayaran:
+             - Tanpa hero, langsung sidebar + content
+             - Sidebar kiri: card menu daftar anchor
+             - Active state via CSS :has(:target), default via :not(:has(:target))
+             - Default section = Tinjauan (#bps-overview)
+           ============================================================ */
+        .bps-shell {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .bps-menu { gap: 4px !important; }
+        .bps-menu a.btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 6px 12px;
+            color: #0f172a;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all .2s ease;
+            position: relative;
+        }
+        .bps-menu a.btn .mi {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 14px;
+            transition: all .2s ease;
+        }
+        .bps-menu a.btn:hover {
+            border-color: #37d17c;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, .06);
+        }
+        .bps-menu a.btn:hover .mi {
+            background: rgba(55, 209, 124, .15);
+            color: #0f9b58;
+        }
+
+        /* active state via :target (SOP pattern: dark gradient + white text + accent dot) */
+        .bps-setting:not(:has(:target)) .bps-menu a[href="#bps-overview"],
+        .bps-wrapper:has(#bps-overview:target) .bps-menu a[href="#bps-overview"],
+        .bps-wrapper:has(#bps-sejarah:target)   .bps-menu a[href="#bps-sejarah"],
+        .bps-wrapper:has(#bps-visi_misi:target) .bps-menu a[href="#bps-visi_misi"],
+        .bps-wrapper:has(#bps-akreditasi:target) .bps-menu a[href="#bps-akreditasi"],
+        .bps-wrapper:has(#bps-fasilitas:target) .bps-menu a[href="#bps-fasilitas"] {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, .25);
+        }
+        .bps-setting:not(:has(:target)) .bps-menu a[href="#bps-overview"] .mi,
+        .bps-wrapper:has(#bps-overview:target) .bps-menu a[href="#bps-overview"] .mi,
+        .bps-wrapper:has(#bps-sejarah:target)   .bps-menu a[href="#bps-sejarah"] .mi,
+        .bps-wrapper:has(#bps-visi_misi:target) .bps-menu a[href="#bps-visi_misi"] .mi,
+        .bps-wrapper:has(#bps-akreditasi:target) .bps-menu a[href="#bps-akreditasi"] .mi,
+        .bps-wrapper:has(#bps-fasilitas:target) .bps-menu a[href="#bps-fasilitas"] .mi {
+            background: rgba(255, 255, 255, .14);
+            color: #fff;
+        }
+        .bps-setting:not(:has(:target)) .bps-menu a[href="#bps-overview"]::after,
+        .bps-wrapper:has(#bps-overview:target) .bps-menu a[href="#bps-overview"]::after,
+        .bps-wrapper:has(#bps-sejarah:target)   .bps-menu a[href="#bps-sejarah"]::after,
+        .bps-wrapper:has(#bps-visi_misi:target) .bps-menu a[href="#bps-visi_misi"]::after,
+        .bps-wrapper:has(#bps-akreditasi:target) .bps-menu a[href="#bps-akreditasi"]::after,
+        .bps-wrapper:has(#bps-fasilitas:target) .bps-menu a[href="#bps-fasilitas"]::after {
+            content: "";
+            position: absolute;
+            right: 14px; top: 50%;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #37d17c;
+            transform: translateY(-50%);
+            box-shadow: 0 0 0 4px rgba(55, 209, 124, .25);
+        }
+
+        /* Konten: 1 tombol 1 konten (SOP pattern) */
+        .bps-content { display: none; animation: bpsFade .3s ease; }
+        .bps-content:target { display: block; }
+        .bps-setting:not(:has(:target)) #bps-overview { display: block; }
+
+        @keyframes bpsFade {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .bps-card,
+        .bps-shell .card.bps-card {
+            border-radius: 0.85rem !important;
+            border: 1px solid rgba(15, 23, 42, .08) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.05) !important;
+            overflow: hidden;
+        }
+        .bps-card .card-header {
+            background: linear-gradient(135deg, #f8fafc, #eef2ff);
+            border-bottom: 1px dashed rgba(15, 23, 42, .08);
+            padding: 14px 18px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .bps-card > .card-body.bps-menu { flex: 0 0 auto; }
+        .bps-card .card-header .header-icon {
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, rgba(55, 209, 124, .15), rgba(15, 118, 110, .15));
+            color: #0f9b58;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 15px;
+        }
+        .bps-card .card-header h5 { margin: 0; font-weight: 700; color: #0f172a; }
+        .bps-card .card-header .sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .bps-card .card-header .target-id {
+            margin-left: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 11px;
+            color: #94a3b8;
+            background: rgba(15, 23, 42, .04);
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 767.98px) {
+            .bps-menu a.btn { padding: 10px 12px; font-size: 13px; }
+            .bps-menu a.btn .mi { width: 30px; height: 30px; font-size: 14px; }
+            .bps-card .card-header { padding: 12px 14px; gap: 10px; }
+            .bps-card .card-header h5 { font-size: 15px; }
+            .bps-card .card-header .sub { font-size: 11px; }
+            .bps-card .card-header .header-icon { width: 30px; height: 30px; font-size: 14px; }
+            .bps-wrapper .bps-menu a.btn::after { display: none !important; }
+        }
+        @media (max-width: 575.98px) {
+            .bps-card .card-body { padding: 14px; }
+        }
     </style>
 @endsection
 
 @section('content')
-<div class="px-2 py-2">
+@php
+    $iconMap = [
+        'overview'     => ['fa' => 'fa-eye',               'css' => 'is-overview'],
+        'sejarah'      => ['fa' => 'fa-clock-rotate-left', 'css' => 'is-sejarah'],
+        'visi_misi'    => ['fa' => 'fa-bullseye',          'css' => 'is-visi_misi'],
+        'akreditasi'   => ['fa' => 'fa-circle-check',      'css' => 'is-akreditasi'],
+    ];
+    $labelMap = [
+        'overview'     => 'Tinjauan',
+        'sejarah'      => 'Sejarah',
+        'visi_misi'    => 'Visi & Misi',
+        'akreditasi'   => 'Akreditasi',
+    ];
+    $helpMap = [
+        'overview'   => 'Ceritakan ringkasan sekolah. Bisa beberapa paragraf. Badge & NPSN tampil sebagai chip kecil di hero card.',
+        'sejarah'    => 'Ceritakan perjalanan & pencapaian sekolah dari waktu ke waktu.',
+        'visi_misi'  => 'Format yang disarankan: <code>&lt;h3&gt;Visi Kami&lt;/h3&gt;</code> lalu paragraf, kemudian <code>&lt;h3&gt;Misi Kami&lt;/h3&gt;</code> dan daftar bernomor.',
+        'akreditasi' => 'Jelaskan status akreditasi. Badge akan tampil sebagai label aksen di card.',
+    ];
+    // Daftar anchor sidebar (untuk card Sections menu)
+    $bpsSidebarItems = [
+        ['id' => 'overview',   'label' => 'Tinjauan',     'icon' => 'eye-fill'],
+        ['id' => 'sejarah',    'label' => 'Sejarah',      'icon' => 'history'],
+        ['id' => 'visi_misi',  'label' => 'Visi & Misi',  'icon' => 'track_changes'],
+        ['id' => 'akreditasi', 'label' => 'Akreditasi',   'icon' => 'verified'],
+        ['id' => 'fasilitas',  'label' => 'Fasilitas',    'icon' => 'apartment'],
+    ];
+@endphp
+
+<div class="container-fluid py-4 bps-setting bps-shell">
     @if (session('success'))
         <div class="alert alert-success py-2 small mb-3">{{ session('success') }}</div>
     @endif
-
-    @php
-        $iconMap = [
-            'overview'     => ['bi' => 'bi-eye-fill',           'css' => 'is-overview'],
-            'sejarah'      => ['bi' => 'bi-clock-history',      'css' => 'is-sejarah'],
-            'visi_misi'    => ['bi' => 'bi-bullseye',           'css' => 'is-visi_misi'],
-            'akreditasi'   => ['bi' => 'bi-patch-check-fill',   'css' => 'is-akreditasi'],
-        ];
-        $labelMap = [
-            'overview'     => 'Tinjauan',
-            'sejarah'      => 'Sejarah',
-            'visi_misi'    => 'Visi & Misi',
-            'akreditasi'   => 'Akreditasi',
-        ];
-        $helpMap = [
-            'overview'   => 'Ceritakan ringkasan sekolah. Bisa beberapa paragraf. Badge & NPSN tampil sebagai chip kecil di hero card.',
-            'sejarah'    => 'Ceritakan perjalanan & pencapaian sekolah dari waktu ke waktu.',
-            'visi_misi'  => 'Format yang disarankan: <code>&lt;h3&gt;Visi Kami&lt;/h3&gt;</code> lalu paragraf, kemudian <code>&lt;h3&gt;Misi Kami&lt;/h3&gt;</code> dan daftar bernomor.',
-            'akreditasi' => 'Jelaskan status akreditasi. Badge akan tampil sebagai label aksen di card.',
-        ];
-    @endphp
-
-    @if ($items->isEmpty())
-        <div class="lp-ps-empty">
-            <span class="material-symbols-rounded">article</span>
-            <div class="mt-2">Belum ada section.</div>
+<div class="row bps-wrapper g-3 align-items-stretch">
+        {{-- ===== Sidebar ===== --}}
+        <div class="col-lg-3 col-md-4 d-flex">
+            <div class="card bps-card shadow-sm w-100">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <div>
+                        <h5>Section Profil</h5>
+                        <div class="sub">Pilih modul untuk diedit</div>
+                    </div>
+                </div>
+                <div class="card-body d-grid gap-1 bps-menu">
+                    <a href="#bps-overview" class="btn text-start">
+                        <span class="mi"><i class="fas fa-eye"></i></span>
+                        <span>Tinjauan</span>
+                    </a>
+                    <a href="#bps-sejarah" class="btn text-start">
+                        <span class="mi"><i class="fas fa-clock-rotate-left"></i></span>
+                        <span>Sejarah</span>
+                    </a>
+                    <a href="#bps-visi_misi" class="btn text-start">
+                        <span class="mi"><i class="fas fa-bullseye"></i></span>
+                        <span>Visi &amp; Misi</span>
+                    </a>
+                    <a href="#bps-akreditasi" class="btn text-start">
+                        <span class="mi"><i class="fas fa-circle-check"></i></span>
+                        <span>Akreditasi</span>
+                    </a>
+                    <a href="#bps-fasilitas" class="btn text-start">
+                        <span class="mi"><i class="fas fa-building"></i></span>
+                        <span>Fasilitas</span>
+                    </a>
+                </div>
+            </div>
         </div>
-    @else
-        <div class="lp-ps-stack">
-            @foreach ($items as $row)
-                @php
-                    $ic = $iconMap[$row->section_key] ?? ['bi' => 'bi-file-text-fill', 'css' => ''];
-                    $label = $labelMap[$row->section_key] ?? $row->section_key;
-                    $help = $helpMap[$row->section_key] ?? null;
-                    $k = $row->section_key;
-                    $showBadge = in_array($k, ['overview', 'akreditasi']);
-                @endphp
 
-                <form action="{{ route('app.admin-landing.profile-sections.update', $row->id) }}"
-                      method="POST" class="lp-ajax lp-ps-card {{ $ic['css'] }} {{ $row->is_active ? '' : 'is-inactive' }}"
-                      data-section-key="{{ $k }}">
-                    @csrf
-                    @method('PUT')
+        {{-- ===== Content ===== --}}
+        <div class="col-lg-9 col-md-8 d-flex flex-column">
+            @if ($items->isEmpty())
+                <div class="bps-content card bps-card shadow-sm" id="bps-overview">
+                    <div class="card-header">
+                        <div class="header-icon"><i class="fas fa-circle-info"></i></div>
+                        <div>
+                            <h5>Section belum tersedia</h5>
+                            <div class="sub">Default Tinjauan akan tampil setelah data tersedia.</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="lp-ps-empty">
+                            <span class="material-symbols-rounded">article</span>
+                            <div class="mt-2">Belum ada section.</div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="lp-ps-stack">
+                    @foreach ($items as $row)
+                        @php
+                            $ic = $iconMap[$row->section_key] ?? ['fa' => 'fa-file-lines', 'css' => ''];
+                            $label = $labelMap[$row->section_key] ?? $row->section_key;
+                            $help = $helpMap[$row->section_key] ?? null;
+                            $k = $row->section_key;
+                            $showBadge = in_array($k, ['overview', 'akreditasi']);
+                        @endphp
+
+                <div class="bps-content card bps-card shadow-sm" id="bps-{{ $k }}">
+                    <div class="card-header">
+                        <div class="header-icon"><i class="fas {{ $ic['fa'] }}"></i></div>
+                        <div>
+                            <h5>{{ $label }}</h5>
+                            <div class="sub">section: {{ $k }}</div>
+                        </div>
+                        <div class="target-id">#bps-{{ $k }}</div>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('app.admin-landing.profile-sections.update', $row->id) }}"
+                              method="POST" class="lp-ajax lp-ps-card {{ $ic['css'] }} {{ $row->is_active ? '' : 'is-inactive' }}"
+                              data-section-key="{{ $k }}">
+                            @csrf
+                            @method('PUT')
 
                     {{-- ====== HEADER ====== --}}
                     <div class="lp-ps-head">
-                        <div class="lp-ps-icon {{ $ic['css'] }}"><i class="bi {{ $ic['bi'] }}"></i></div>
+                        <div class="lp-ps-icon {{ $ic['css'] }}"><i class="fas {{ $ic['fa'] }}"></i></div>
                         <div class="min-w-0">
                             <h6 class="lp-ps-title">{{ $label }}</h6>
                             <div class="lp-ps-key">section: {{ $k }}</div>
@@ -875,11 +1085,23 @@
                         </button>
                     </div>
                 </form>
+                    </div>
+                </div>
             @endforeach
         </div>
     @endif
 
     {{-- ============ FASILITAS (accordion repeater) ============ --}}
+    <div class="bps-content card bps-card shadow-sm" id="bps-fasilitas">
+        <div class="card-header">
+            <div class="header-icon"><i class="bi bi-building"></i></div>
+            <div>
+                <h5>Fasilitas Sekolah</h5>
+                <div class="sub">Daftar fasilitas tampil di section Fasilitas halaman profil</div>
+            </div>
+            <div class="target-id">#bps-fasilitas</div>
+        </div>
+        <div class="card-body">
     <div class="lp-fas-section-card" id="fasilitas-section">
         <div class="lp-fas-section-head">
             <div class="lp-fas-section-icon">
@@ -905,20 +1127,10 @@
                 @endphp
                 <div class="lp-rep-card lp-fas-card is-collapsed {{ $pub ? '' : 'is-inactive' }}" data-id="{{ $rowId }}" data-row-index="{{ $rowIndex }}">
                     <div class="lp-fas-head" data-role="toggle">
-                        <div class="lp-rep-icon"><span class="material-symbols-rounded">apartment</span></div>
-                        <div class="min-w-0">
-                            <h6 class="lp-fas-head-title">{{ $titleVal ?: 'Fasilitas #' . $rowIndex }}</h6>
-                            <div class="lp-fas-head-key">
-                                fasilitas #{{ $rowIndex }}
-                                @if ($rowId) · id {{ $rowId }} @endif
-                                · {{ $iconVal ?: 'bi-building' }}
-                            </div>
+                        <div class="min-w-0 flex-grow-1">
+                            <h6 class="lp-fas-head-title mb-0">{{ $titleVal ?: 'Fasilitas #' . $rowIndex }}</h6>
                         </div>
                         <div class="lp-fas-head-meta">
-                            <span class="lp-fas-pill {{ $descShort ? '' : 'is-empty' }}">
-                                <span class="material-symbols-rounded">subject</span>
-                                {{ $descShort ?: 'Belum ada deskripsi' }}
-                            </span>
                             <span class="lp-fas-pill {{ $pub ? 'is-pub' : 'is-draft' }}">
                                 <span class="material-symbols-rounded">{{ $pub ? 'cloud_done' : 'edit_note' }}</span>
                                 {{ $pub ? 'Aktif' : 'Draft' }}
@@ -1024,16 +1236,10 @@
     <template id="lpFasRowTemplate">
         <div class="lp-rep-card lp-fas-card is-new is-collapsed" data-id="">
             <div class="lp-fas-head" data-role="toggle">
-                <div class="lp-rep-icon"><span class="material-symbols-rounded">add_business</span></div>
-                <div class="min-w-0">
-                    <h6 class="lp-fas-head-title">Fasilitas Baru</h6>
-                    <div class="lp-fas-head-key">fasilitas baru · akan tersimpan sebagai draf</div>
+                <div class="min-w-0 flex-grow-1">
+                    <h6 class="lp-fas-head-title mb-0">Fasilitas Baru</h6>
                 </div>
                 <div class="lp-fas-head-meta">
-                    <span class="lp-fas-pill is-empty">
-                        <span class="material-symbols-rounded">subject</span>
-                        Belum ada deskripsi
-                    </span>
                     <span class="lp-fas-pill is-draft">
                         <span class="material-symbols-rounded">edit_note</span>
                         Draft
@@ -1109,6 +1315,10 @@
             </div>
         </div>
     </template>
+    </div>
+        </div>
+    </div>
+</div>
 </div>
 @endsection
 
@@ -1547,6 +1757,21 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 });
+
+    // ============ Section anchor: hash navigation (SOP pattern) ============
+    (function () {
+        var shell = document.querySelector('.bps-setting');
+        if (!shell) return;
+
+        var validIds = ['bps-overview', 'bps-sejarah', 'bps-visi_misi', 'bps-akreditasi', 'bps-fasilitas'];
+        var defaultHash = '#bps-overview';
+
+        // Auto-correct hash jika tidak valid
+        var h = window.location.hash;
+        if (!h || validIds.indexOf(h.substring(1)) === -1) {
+            history.replaceState(null, '', defaultHash);
+        }
+    })();
 </script>
 <style>
 .lp-ps-toast {

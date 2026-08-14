@@ -2,152 +2,142 @@
 
 @section('style')
     @include('admin-landing._gaya')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
     <style>
-        .lp-post-toolbar .lp-search {
-            position: relative;
-            display: flex;
-            align-items: center;
-            background: #fff;
-            border: 1px solid #d4d8dd;
-            border-radius: .55rem;
-            height: 44px;
-            padding: 0 .65rem;
-            transition: border-color .15s ease, box-shadow .15s ease;
+        #lpPostTable {
+            width: 100% !important;
+            table-layout: auto;
         }
-        .lp-post-toolbar .lp-search:focus-within {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+        .lp-post-table-scroll {
+            overflow-x: auto;
         }
-        .lp-post-toolbar .lp-search .material-symbols-rounded {
-            color: #64748b;
-            font-size: 20px;
-            margin-right: .5rem;
+        /* Pastikan sel-sel konten panjang tidak ter-truncate oleh
+           aturan table-nowrap global dari material-dashboard. */
+        #lpPostTable.table.table-nowrap td,
+        #lpPostTable.table.table-nowrap th {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
         }
-        .lp-post-toolbar .lp-search input {
-            border: 0;
-            outline: 0;
-            background: transparent;
-            flex: 1;
-            height: 100%;
-            font-size: .92rem;
-            color: #1f2937;
-            padding: 0;
-        }
-        .lp-post-toolbar .lp-search input::placeholder { color: #94a3b8; }
-        .lp-post-toolbar .lp-search-clear {
-            border: 0;
-            background: transparent;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: .15rem;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .lp-post-toolbar .lp-search-clear:hover { color: #1f2937; background: #f1f5f9; }
-        .lp-post-toolbar .lp-search-clear .material-symbols-rounded { font-size: 18px; margin: 0; }
-
-        .lp-post-toolbar .form-select {
-            height: 44px;
-            border-radius: .55rem;
-            border-color: #d4d8dd;
-            box-shadow: none !important;
-            font-size: .92rem;
-        }
-        .lp-post-toolbar .form-select:focus {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
-        }
-        .lp-post-toolbar .select2-container .select2-selection {
-            height: 44px !important;
-            border-radius: .55rem !important;
-            border-color: #d4d8dd !important;
-            padding: 0 .65rem !important;
-            display: flex !important;
-            align-items: center !important;
-        }
-        .lp-post-toolbar .select2-container .select2-selection__rendered {
-            line-height: 44px !important;
-            padding-left: 0 !important;
-            font-size: .92rem;
-            color: #1f2937;
-        }
-        .lp-post-toolbar .select2-container .select2-selection__arrow {
-            height: 42px !important;
-        }
-        .lp-post-toolbar .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-        .lp-post-toolbar .select2-container--bootstrap-5:focus-within .select2-selection {
-            border-color: #1d4ed8 !important;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
-        }
-
-        .lp-post-table th,
-        .lp-post-table td { vertical-align: middle; }
-        .lp-post-table thead th {
+        #lpPostTable thead th {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
+            font-weight: 600;
             font-size: .72rem;
             letter-spacing: .04em;
             text-transform: uppercase;
-            color: #64748b;
-            font-weight: 600;
+            padding: .85rem 1rem;
+            white-space: nowrap;
         }
-        .lp-post-title {
-            font-weight: 600;
-            color: #1f2937;
-            line-height: 1.3;
+        #lpPostTable tbody td {
+            padding: .85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
         }
-        .lp-post-title-excerpt {
-            font-size: .78rem;
-            color: #64748b;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            margin-top: .2rem;
+        #lpPostTable tbody tr:last-child td { border-bottom: 0; }
+        #lpPostTable tbody tr { transition: background-color .15s ease; }
+        #lpPostTable tbody tr:hover { background-color: #f8fafc; }
+
+        /* Sel judul: pastikan HTML (star + judul + excerpt + slug) stack vertikal rapi */
+        #lpPostTable .lp-row-title-cell {
+            min-width: 260px;
         }
-        .lp-post-slug {
-            font-size: .7rem;
-            color: #94a3b8;
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            margin-top: .15rem;
+        #lpPostTable .lp-row-title-cell .lp-row-title {
+            font-size: .92rem;
+            line-height: 1.35;
+            word-break: break-word;
         }
-        .lp-post-meta {
-            font-size: .78rem;
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
             color: #475569;
+            font-size: .8125rem;
         }
-        .lp-cat-chip {
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
             display: inline-flex;
             align-items: center;
-            gap: .25rem;
-            padding: .2rem .55rem;
-            background: #eff6ff;
-            color: #1d4ed8;
-            border-radius: 50rem;
-            font-size: .72rem;
-            font-weight: 600;
+            gap: .5rem;
+            font-weight: 500;
         }
-        .lp-action-group {
-            display: inline-flex;
-            gap: .35rem;
-            justify-content: flex-end;
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #d4d8dd !important;
+            border-radius: .5rem !important;
+            padding: .4rem .65rem !important;
+            font-size: .875rem !important;
+            color: #1f2937;
+            background: #fff;
+            box-shadow: none !important;
         }
-        .lp-action-btn {
-            width: 32px;
-            height: 32px;
+        .dataTables_wrapper .dataTables_length select { min-width: 72px; }
+        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #1d4ed8 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
+        }
+        .dataTables_wrapper .dataTables_info { padding-top: 1rem; color: #64748b !important; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: 1rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            box-sizing: border-box;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
-            border-radius: .4rem;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            padding: 0 .65rem !important;
+            margin: 0 2px !important;
+            border-radius: .5rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #fff !important;
+            color: #475569 !important;
+            font-weight: 600;
+            font-size: .8125rem;
+            cursor: pointer;
+            transition: all .15s ease;
         }
-        .lp-action-btn .material-symbols-rounded {
-            font-size: 17px;
-            line-height: 1;
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
+            background: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1d4ed8 !important;
         }
-        .lp-featured-star {
-            color: #f59e0b;
-            font-size: 18px;
-            vertical-align: middle;
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #fff !important;
+            box-shadow: 0 1px 2px rgba(29,78,216,.25);
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            color: #cbd5e1 !important;
+            background: #f8fafc !important;
+            border-color: #f1f5f9 !important;
+            cursor: not-allowed;
+        }
+        .dataTables_empty {
+            padding: 3rem 1rem !important;
+            color: #94a3b8 !important;
+        }
+
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100%;
+                min-width: 0;
+                margin-left: 0 !important;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                min-width: 2rem;
+                height: 2rem;
+                font-size: .75rem;
+                padding: 0 .5rem !important;
+                margin: 0 1px !important;
+            }
         }
     </style>
 @endsection
@@ -159,145 +149,116 @@
     @endif
 
     @php
-        $titleSlot = '<h5 class="lp-page-title mb-1">'.e($title).'</h5>'
-            .'<p class="text-muted small mb-0">Kelola program & berita yang tampil di halaman publik.</p>';
-
         $addBtn = '<a href="'.e(route('app.admin-landing.posts.create')).'" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1">'
             .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>'
-            .'<span class="align-middle">Tambah</span></a>';
+            .'<span class="align-middle">Tambah Program / Berita</span></a>';
     @endphp
-    @include('admin-landing._header-halaman', [
-        'subtitle' => 'Landing Page',
-        'actions' => $addBtn,
-        'titleSlot' => $titleSlot,
-    ])
+    <div class="d-flex justify-content-end mb-3">
+        {!! $addBtn !!}
+    </div>
 
-    <form method="GET" action="{{ route('app.admin-landing.posts') }}" id="lpPostFilter" class="card mb-3 lp-post-toolbar">
-        <div class="card-body p-3">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-6">
-                    <div class="lp-search">
-                        <span class="material-symbols-rounded">search</span>
-                        <input type="text" name="q" id="lpPostSearch" value="{{ e($q) }}"
-                               placeholder="Cari judul, kategori, tag, atau ringkasan..." autocomplete="off">
-                        @if ($q !== '')
-                            <button type="button" class="lp-search-clear" id="lpPostSearchClear" title="Bersihkan pencarian">
-                                <span class="material-symbols-rounded">close</span>
-                            </button>
-                        @endif
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="category" id="lpPostCategory" class="form-select">
-                        <option value="">Semua kategori</option>
-                        @foreach ($categories as $cat)
-                            <option value="{{ e($cat) }}" {{ $category === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="status" id="lpPostStatus" class="form-select">
-                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua status</option>
-                        <option value="published" {{ $status === 'published' ? 'selected' : '' }}>Dipublikasikan</option>
-                        <option value="draft" {{ $status === 'draft' ? 'selected' : '' }}>Draft</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </form>
-
-    <div class="card mb-4">
-        <div class="card-body p-3">
-            @if ($posts->isEmpty())
-                <div class="lp-empty">
-                    <span class="material-symbols-rounded">article</span>
-                    <div class="mt-2">
-                        @if ($q !== '' || $status !== 'all' || $category !== '')
-                            Tidak ada artikel yang cocok dengan filter saat ini.
-                        @else
-                            Belum ada artikel. Tambahkan artikel pertama Anda.
-                        @endif
-                    </div>
-                    <a href="{{ route('app.admin-landing.posts.create') }}" class="btn btn-sm btn-primary mt-3">
-                        <span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>
-                        <span class="align-middle">Tambah Artikel</span>
-                    </a>
-                </div>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle lp-post-table mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width:80px">Gambar</th>
-                                <th>Judul</th>
-                                <th style="width:140px">Kategori</th>
-                                <th style="width:130px">Tanggal</th>
-                                <th style="width:150px">Status</th>
-                                <th style="width:90px" class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($posts as $post)
-                                <tr>
-                                    <td>
-                                        @if ($post->image)
-                                            <img src="{{ Storage::disk('public')->url('landing/' . $post->image) }}"
-                                                 class="lp-thumb" alt="">
-                                        @else
-                                            <span class="lp-thumb-empty material-symbols-rounded">image</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="lp-post-title">
-                                            @if ($post->is_featured)
-                                                <span class="material-symbols-rounded lp-featured-star" title="Ditampilkan di beranda">star</span>
-                                            @endif
-                                            {{ $post->title }}
-                                        </div>
-                                        @if ($post->excerpt)
-                                            <div class="lp-post-title-excerpt">{{ \Illuminate\Support\Str::limit(strip_tags($post->excerpt), 100) }}</div>
-                                        @endif
-                                        <div class="lp-post-slug">/{{ $post->slug }}</div>
-                                    </td>
-                                    <td class="lp-post-meta">
-                                        @if ($post->category)
-                                            <span class="lp-cat-chip">{{ $post->category }}</span>
-                                        @else
-                                            <span class="text-muted">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="lp-post-meta">{{ $post->published_at?->format('d M Y') ?: '—' }}</td>
-                                    <td>
-                                        @if ($post->is_published)
-                                            <span class="lp-status-badge is-published">Dipublikasikan</span>
-                                        @else
-                                            <span class="lp-status-badge is-draft">Draft</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="lp-action-group">
-                                            <a href="{{ route('app.admin-landing.posts.edit', $post->id) }}"
-                                               class="btn btn-sm btn-outline-primary lp-action-btn" title="Edit artikel">
-                                                <span class="material-symbols-rounded">edit</span>
-                                            </a>
-                                            @include('admin-landing._komponen.formulir-hapus', [
-                                                'action' => route('app.admin-landing.posts.destroy', $post->id),
-                                                'confirm' => 'Hapus artikel "' . $post->title . '"?',
-                                                'iconOnly' => true,
-                                                'btnClass' => 'btn btn-sm btn-outline-danger lp-action-btn',
-                                            ])
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-3">{{ $posts->links() }}</div>
+    <div class="card my-3">
+        <div class="card-body px-3 py-3">
+            @if (session('msg'))
+                <div class="alert alert-info py-2 small mb-3">{{ session('msg') }}</div>
             @endif
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small mb-3">
+                    <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                </div>
+            @endif
+            <div class="lp-post-table-scroll">
+                <table id="lpPostTable" class="table table-striped table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:90px;min-width:90px">Gambar</th>
+                            <th style="min-width:280px">Judul</th>
+                            <th style="width:140px;min-width:140px">Kategori</th>
+                            <th style="width:130px;min-width:130px">Tanggal</th>
+                            <th style="width:140px;min-width:140px">Status</th>
+                            <th class="text-center" style="width:100px;min-width:100px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 @endsection
 
+@section('script')
+<script>
+    $(document).ready(function() {
+        $('#lpPostTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: '{{ route('app.admin-landing.posts.data') }}',
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            searching: true,
+            info: true,
+            autoWidth: false,
+            scrollX: true,
+            responsive: false,
+            order: [[3, 'desc']],
+            language: {
+                lengthMenu: 'Tampilkan _MENU_ data',
+                search: 'Cari:',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty: 'Tidak ada artikel.',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                zeroRecords: 'Tidak ada artikel yang cocok.',
+                emptyTable: 'Belum ada artikel.',
+                loadingRecords: 'Memuat…',
+                processing: 'Memproses…',
+                paginate: { first: '«', last: '»', next: '›', previous: '‹' },
+            },
+            columns: [
+                { data: 'image', name: 'image', orderable: false, searchable: false },
+                { data: 'title', name: 'title', className: 'lp-row-title-cell' },
+                { data: 'category', name: 'category', orderable: false, searchable: true },
+                { data: 'published_at', name: 'published_at' },
+                { data: 'is_published', name: 'is_published', orderable: false, searchable: false },
+                { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' },
+            ],
+        });
+
+        // Konfirmasi hapus untuk form yang di-render oleh DataTables (di luar DOM awal)
+        $(document).on('submit', 'form[data-confirm]', function(e) {
+            var $form = $(this);
+            if ($form.data('confirm-bound')) return;
+            $form.data('confirm-bound', true);
+            e.preventDefault();
+            var msg = $form.attr('data-confirm') || 'Yakin ingin menghapus data ini?';
+            Swal.fire({
+                title: 'Hapus data?',
+                text: msg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    $.ajax({
+                        url: $form.attr('action'),
+                        method: 'POST',
+                        data: $form.serialize(),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    }).done(function() {
+                        Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                        $('#lpPostTable').DataTable().ajax.reload(null, false);
+                    }).fail(function() {
+                        Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                    });
+                }
+            });
+        });
+    });
+</script>
 @include('admin-landing._skrip')
+@endsection

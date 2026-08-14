@@ -5,32 +5,48 @@
 @endsection
 
 @section('content')
-<div class="row">
+<div class="container-fluid py-4 lp-pengaturan-shell">
+    {{-- Hero gradient (mirip halaman /app/pengaturan/sop) --}}
+    <div class="lp-pengaturan-hero mb-3">
+        <div class="crumb">Pengaturan</div>
+        <h4><span class="material-symbols-rounded align-middle" style="font-size:22px;">tune</span> Pengaturan Landing Page</h4>
+        <div class="small opacity-75">Atur identitas, hero, kontak, warna, dan sambutan halaman beranda publik Anda.</div>
+    </div>
+
+    <div class="row gx-3 lp-pengaturan-row lp-pengaturan-wrapper">
+
+        {{-- ============ SIDEBAR MENU (col-lg-3) ============ --}}
+        <div class="col-lg-3 lp-pengaturan-aside-col">
+            @include('admin-landing._nav-anchor')
+        </div>
+
+        {{-- ============ PANEL KONTEN (col-lg-9) ============ --}}
+        <div class="col-lg-9 lp-pengaturan-content-col lp-pengaturan-content">
 
     {{-- ============ CARD: HERO BERANDA ============ --}}
-    <div class="col-12">
+    <div id="lp-section-hero" class="lp-content">
         <form id="FormHero" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
-            <input type="hidden" name="section" value="hero-utama">
+            <input type="hidden" name="section" value="hero">
             <div class="card mt-1 mb-3 shadow-sm">
                 <div class="card-body p-3">
                     <h6 class="fw-bold mb-3"><span class="material-symbols-rounded align-middle">image</span> Hero Beranda</h6>
-                    <p class="text-muted small mb-3">Atur judul dan subjudul utama di section Hero halaman Beranda (publik).</p>
+                    <p class="text-muted small mb-3">Atur judul dan subjudul utama di section Hero halaman Beranda (publik). Slide lain (gambar, tombol, dst.) tetap dikelola di menu <b>Slide Hero</b>.</p>
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 @if(old('hero_title', $heroUtama->title ?? null)) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 @if(old('hero_title', $heroTitle ?? null)) is-filled @endif">
                                 <label class="form-label">Judul Hero Beranda</label>
                                 <input type="text" name="hero_title" class="form-control" maxlength="150"
                                        placeholder="Selamat Datang di {{ $setting->school_name ?? 'Sekolah' }}"
-                                       value="{{ old('hero_title', $heroUtama->title ?? null) }}">
+                                       value="{{ old('hero_title', $heroTitle ?? null) }}">
                             </div>
                         </div>
                         <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 @if(old('hero_subtitle', $heroUtama->subtitle ?? null)) is-filled @endif">
+                            <div class="input-group input-group-outline mb-3 @if(old('hero_subtitle', $heroSubtitle ?? null)) is-filled @endif">
                                 <label class="form-label">Subjudul / Deskripsi Hero</label>
                                 <input type="text" name="hero_subtitle" class="form-control" maxlength="255"
-                                       value="{{ old('hero_subtitle', $heroUtama->subtitle ?? null) }}">
+                                       value="{{ old('hero_subtitle', $heroSubtitle ?? null) }}">
                             </div>
                         </div>
                     </div>
@@ -46,7 +62,7 @@
     </div>
 
     {{-- ============ CARD: IDENTITAS SEKOLAH ============ --}}
-    <div class="col-12">
+    <div id="lp-section-identitas" class="lp-content">
         <form id="FormIdentitas" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
@@ -71,7 +87,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Logo</label>
-                            <label for="logoInput" class="lp-preview-box d-block" id="logoPreviewBox">
+                            <label for="logoInput" class="lp-preview-box lp-preview-square-md d-block {{ $setting->logo ? 'has-image' : '' }}" id="logoPreviewBox">
                                 @if ($setting->logo)
                                     <img src="{{ Storage::disk('public')->url('landing/' . $setting->logo) }}" alt="Logo" id="logoPreviewImg">
                                 @else
@@ -86,7 +102,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Favicon</label>
-                            <label for="faviconInput" class="lp-preview-box d-block" id="faviconPreviewBox">
+                            <label for="faviconInput" class="lp-preview-box lp-preview-square-md d-block {{ $setting->favicon ? 'has-image' : '' }}" id="faviconPreviewBox">
                                 @if ($setting->favicon)
                                     <img src="{{ Storage::disk('public')->url('landing/' . $setting->favicon) }}" alt="Favicon" id="faviconPreviewImg">
                                 @else
@@ -112,7 +128,7 @@
     </div>
 
     {{-- ============ CARD: KONTAK ============ --}}
-    <div class="col-12">
+    <div id="lp-section-kontak" class="lp-content">
         <form id="FormKontak" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
@@ -167,7 +183,7 @@
     </div>
 
     {{-- ============ CARD: MEDIA SOSIAL ============ --}}
-    <div class="col-12">
+    <div id="lp-section-medsos" class="lp-content">
         <form id="FormMedsos" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
@@ -222,7 +238,7 @@
             }
         }
     @endphp
-    <div class="col-12">
+    <div id="lp-section-background" class="lp-content">
         <form id="FormBackground" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
@@ -313,26 +329,6 @@
         </form>
     </div>
 
-    @if ($isCustomActive && $customImageUrl)
-        <div class="modal fade" id="heroBackgroundViewModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header py-2">
-                        <h6 class="modal-title fw-bold">
-                            <span class="material-symbols-rounded align-middle">image</span>
-                            Preview Background Custom
-                        </h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-2 text-center" style="background:#0f172a;">
-                        <img id="heroBackgroundViewImg" src="{{ $customImageUrl }}" alt="Custom Background" class="img-fluid" style="max-height:70vh;border-radius:.5rem;">
-                        <div class="text-white-50 small mt-2" id="heroBackgroundViewCaption">{{ $customFileSize ?: 'Custom' }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
-
     {{-- ============ CARD: WARNA TOMBOL & TEXT ============ --}}
     @php
         $buttonPresets = \App\Models\Landing\PengaturanLanding::themeButtonColorDefaults();
@@ -351,7 +347,7 @@
         $oldButtonCustom = old('theme_button_color_custom', $isButtonCustom ? $activeButtonValue : '#2563eb');
     @endphp
 
-    <div class="col-12">
+    <div id="lp-section-warna" class="lp-content">
         <form id="FormWarna" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
@@ -444,7 +440,7 @@
             return ($cur !== null && $cur !== '') ? $cur : $welcomeDefaults[$key];
         };
     @endphp
-    <div class="col-12">
+    <div id="lp-section-sambutan" class="lp-content">
         <form id="FormSambutan" method="POST" action="{{ route('app.admin-landing.pengaturan.store') }}"
               class="text-start lp-card-form" enctype="multipart/form-data">
             @csrf
@@ -464,7 +460,7 @@
                     <div class="row">
                         {{-- Foto --}}
                         <div class="col-md-4">
-                            <label for="welcomePhotoInput" class="lp-preview-box d-block" id="welcomePhotoPreviewBox">
+                            <label for="welcomePhotoInput" class="lp-preview-box lp-preview-square-lg d-block {{ $welcomePhotoUrl ? 'has-image' : '' }}" id="welcomePhotoPreviewBox">
                                 @if ($welcomePhotoUrl)
                                     <img src="{{ $welcomePhotoUrl }}" alt="Foto" id="welcomePhotoPreviewImg">
                                 @else
@@ -492,19 +488,17 @@
                                 <input type="text" name="welcome_head_role" class="form-control" maxlength="200"
                                        value="{{ old('welcome_head_role', $val('head_role')) }}">
                             </div>
+                            <div class="input-group input-group-outline mb-3 is-filled">
+                                <label class="form-label">Paragraf 1</label>
+                                <textarea name="welcome_paragraph_1" rows="4" class="form-control">{{ old('welcome_paragraph_1', $val('paragraph_1')) }}</textarea>
+                            </div>
                         </div>
 
                         {{-- Paragraf --}}
                         <div class="col-md-12">
                             <div class="input-group input-group-outline mb-3 is-filled">
-                                <label class="form-label">Paragraf 1</label>
-                                <textarea name="welcome_paragraph_1" rows="3" class="form-control">{{ old('welcome_paragraph_1', $val('paragraph_1')) }}</textarea>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="input-group input-group-outline mb-3 is-filled">
                                 <label class="form-label">Paragraf 2</label>
-                                <textarea name="welcome_paragraph_2" rows="3" class="form-control">{{ old('welcome_paragraph_2', $val('paragraph_2')) }}</textarea>
+                                <textarea name="welcome_paragraph_2" rows="4" class="form-control">{{ old('welcome_paragraph_2', $val('paragraph_2')) }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -519,7 +513,30 @@
         </form>
     </div>
 
+    </div>
+    </div>
 </div>
+
+@if ($isCustomActive && $customImageUrl)
+    <div class="modal fade" id="heroBackgroundViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold">
+                        <span class="material-symbols-rounded align-middle">image</span>
+                        Preview Background Custom
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-2 text-center" style="background:#0f172a;">
+                    <img id="heroBackgroundViewImg" src="{{ $customImageUrl }}" alt="Custom Background" class="img-fluid" style="max-height:70vh;border-radius:.5rem;">
+                    <div class="text-white-50 small mt-2" id="heroBackgroundViewCaption">{{ $customFileSize ?: 'Custom' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
 @endsection
 
 @section('script')
@@ -580,22 +597,19 @@ $(function () {
                 if (result.success) {
                     Toast.fire({ icon: 'success', title: result.msg || 'Tersimpan' });
 
-                    // Untuk card background, sinkronkan label ukuran file (tanpa popup/modal).
-                    if (result.hero_background_meta && result.hero_background_meta.size_label) {
-                        var $customMeta = $('#heroBackgroundCustomMeta');
-                        if ($customMeta.length) {
-                            $customMeta.text(result.hero_background_meta.size_label);
-                        }
+                    // Sinkronkan DOM per-section tanpa reload halaman.
+                    // Hanya section yang baru disimpan yang di-update;
+                    // section lain dibiarkan apa adanya.
+                    var values = result.values || {};
+                    applySectionUpdate(result.section, values, result);
+
+                    // Update hash URL ke section yang baru disimpan —
+                    // pola halaman SOP, tanpa reload & tanpa scroll-spy.
+                    if (result.section && history && history.replaceState) {
+                        history.replaceState(null, '', '#lp-section-' + result.section);
                     }
 
                     clearPendingCustom();
-
-                    // Reload agar preview foto & nilai DB yang baru langsung tampil di card.
-                    // (Tanpa ini, foto hasil upload tetap di DOM sebagai preview base64
-                    //  dan admin tidak melihat foto baru sampai refresh manual.)
-                    if (result.redirect) {
-                        setTimeout(function () { window.location.href = result.redirect; }, 600);
-                    }
                 } else {
                     Toast.fire({ icon: 'error', title: result.msg || 'Terjadi kesalahan' });
                 }
@@ -633,6 +647,182 @@ $(function () {
             }
         });
     });
+
+    // Sinkronkan DOM setelah simpan sukses, per-section, tanpa reload.
+    // Tujuan: admin langsung lihat foto/file baru terpasang di card, dan
+    // input teks (kalau perlu) ter-update dengan nilai final server.
+    function applySectionUpdate(section, values, result) {
+        if (!values || typeof values !== 'object') return;
+
+        // ---- Helper kecil: set src <img> dengan cache-busting.
+        function setImgSrc(boxId, url) {
+            if (!url) return;
+            var box = document.getElementById(boxId);
+            if (!box) return;
+            var img = box.querySelector('img');
+            if (!img) {
+                box.innerHTML = '<img alt="preview">'
+                    + '<span class="lp-preview-hint">Klik untuk ganti</span>';
+                img = box.querySelector('img');
+            }
+            img.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+            box.classList.add('has-image');
+        }
+
+        // ---- Helper kecil: set/tambah teks "File: <filename>" di bawah preview.
+        function setFilenameCaption(formId, fieldName, filename) {
+            var form = document.getElementById(formId);
+            if (!form || !filename) return;
+            var input = form.querySelector('[name="' + fieldName + '"]');
+            if (!input) return;
+            var existing = input.parentNode.querySelector('.small.text-muted');
+            var html = 'File: <code>' + filename + '</code>';
+            if (existing) {
+                existing.innerHTML = html;
+            } else {
+                var div = document.createElement('div');
+                div.className = 'small text-muted mt-1 text-center';
+                div.innerHTML = html;
+                input.parentNode.appendChild(div);
+            }
+        }
+
+        if (section === 'identitas') {
+            setImgSrc('logoPreviewBox', values.logo_url);
+            setImgSrc('faviconPreviewBox', values.favicon_url);
+            setFilenameCaption('FormIdentitas', 'logo', values.logo_filename);
+            setFilenameCaption('FormIdentitas', 'favicon', values.favicon_filename);
+            var logoInput = document.getElementById('logoInput');
+            if (logoInput) logoInput.value = '';
+            var faviconInput = document.getElementById('faviconInput');
+            if (faviconInput) faviconInput.value = '';
+            $.each(['logoPreviewBox', 'faviconPreviewBox'], function (_, id) {
+                var box = document.getElementById(id);
+                if (!box) return;
+                var hint = box.querySelector('.lp-preview-hint');
+                if (!hint) {
+                    var span = document.createElement('span');
+                    span.className = 'lp-preview-hint';
+                    span.textContent = 'Klik untuk ganti';
+                    box.appendChild(span);
+                } else {
+                    hint.textContent = 'Klik untuk ganti';
+                }
+            });
+        }
+
+        if (section === 'sambutan') {
+            if (values.photo_url) {
+                setImgSrc('welcomePhotoPreviewBox', values.photo_url);
+                var welcomeInput = document.getElementById('welcomePhotoInput');
+                if (welcomeInput) welcomeInput.value = '';
+                var box = document.getElementById('welcomePhotoPreviewBox');
+                if (box) {
+                    var hint = box.querySelector('.lp-preview-hint');
+                    if (hint) hint.textContent = 'Klik untuk ganti';
+                }
+            }
+        }
+
+        if (section === 'background') {
+            syncBackgroundUi(values, result);
+        }
+
+        if (section === 'hero') {
+            var $form = $('#FormHero');
+            if (values.hero_title !== undefined) {
+                var $t = $form.find('[name="hero_title"]');
+                if ($t.length) {
+                    $t.val(values.hero_title ?? '');
+                    $t.closest('.input-group').toggleClass('is-filled', !!values.hero_title);
+                }
+            }
+            if (values.hero_subtitle !== undefined) {
+                var $s = $form.find('[name="hero_subtitle"]');
+                if ($s.length) {
+                    $s.val(values.hero_subtitle ?? '');
+                    $s.closest('.input-group').toggleClass('is-filled', !!values.hero_subtitle);
+                }
+            }
+        }
+
+        // Untuk section 'kontak', 'medsos', 'warna' input sudah berisi nilai
+        // yang dikirim admin dan server menyimpan apa adanya — tidak perlu
+        // assign ulang ke DOM (cukup toast sukses).
+    }
+
+    /**
+     * Sinkronkan UI card Background setelah simpan sukses, tanpa reload.
+     * - Pilih radio button sesuai key aktif (default-N atau custom).
+     * - Tampilkan preview custom sesuai URL server (dengan cache-busting).
+     * - Tampilkan/sembunyikan tombol View + Remove sesuai is_custom & url.
+     * - Update label ukuran file.
+     * - Update label meta "telah dipilih" di slot custom.
+     */
+    function syncBackgroundUi(values, result) {
+        var activeKey = values.hero_background_key || (result && result.hero_background_key) || '';
+        var isCustom = !!values.is_custom || (activeKey && activeKey.indexOf('custom:') === 0);
+        var url = values.hero_background_url || (result && result.hero_background_url) || null;
+        var meta = values.hero_background_meta || (result && result.hero_background_meta) || null;
+
+        // (1) Pilih radio button yang tepat.
+        document.querySelectorAll('.lp-theme-card').forEach(function (card) {
+            card.classList.remove('is-active');
+            var radio = card.querySelector('.lp-theme-radio');
+            if (radio) radio.checked = false;
+        });
+
+        var targetCard = null;
+        if (isCustom) {
+            targetCard = document.querySelector('.lp-theme-card-custom');
+        } else {
+            document.querySelectorAll('.lp-theme-card').forEach(function (card) {
+                if (card.getAttribute('data-bg-key') === activeKey) {
+                    targetCard = card;
+                }
+            });
+        }
+        if (targetCard) {
+            targetCard.classList.add('is-active');
+            var radio = targetCard.querySelector('.lp-theme-radio');
+            if (radio) radio.checked = true;
+        }
+
+        // (2) Update preview custom (kalau is_custom).
+        var customBox = document.getElementById('heroBackgroundCustomBox');
+        if (isCustom && url && customBox) {
+            customBox.innerHTML = '<img src="' + url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now()
+                + '" alt="Custom Background" id="heroBackgroundCustomImg">';
+        } else if (!isCustom && customBox) {
+            customBox.innerHTML = '<span class="material-symbols-rounded lp-theme-empty">add_photo_alternate</span>';
+        }
+
+        // (3) Update label "size_label" di slot custom.
+        var metaEl = document.getElementById('heroBackgroundCustomMeta');
+        if (metaEl) {
+            if (isCustom && meta && meta.size_label) {
+                metaEl.textContent = meta.size_label;
+                metaEl.style.display = '';
+            } else {
+                metaEl.textContent = '';
+            }
+        }
+
+        // (4) Tampilkan / sembunyikan tombol View + Remove.
+        var actions = document.getElementById('heroBackgroundCustomActions');
+        if (actions) {
+            actions.style.display = (isCustom && url) ? '' : 'none';
+            var viewBtn = document.getElementById('heroBackgroundViewBtn');
+            if (viewBtn && url) {
+                viewBtn.setAttribute('data-image-url', url);
+                viewBtn.setAttribute('data-image-name', (meta && meta.size_label) || 'Custom');
+            }
+        }
+
+        // (5) Tampilkan status "tersimpan".
+        var statusEl = document.getElementById('heroBackgroundStatus');
+        if (statusEl) statusEl.hidden = !isCustom;
+    }
 
     // Live preview untuk logo & favicon (di dalam FormIdentitas)
     function bindPreview(inputId, boxId) {
@@ -770,7 +960,7 @@ $(function () {
                     success: function (result) {
                         Toast.fire({ icon: result.success ? 'success' : 'error', title: result.msg || (result.success ? 'Berhasil' : 'Gagal') });
                         if (result.success) {
-                            setTimeout(function () { window.location.reload(); }, 600);
+                            syncBackgroundUi({ hero_background_key: 'default-1', is_custom: false }, { hero_background_url: null, hero_background_meta: null });
                         }
                     },
                     error: function () {
@@ -892,13 +1082,49 @@ $(function () {
         }
     }
     setupColorPicker('theme_button_color');
+
+    // -----------------------------------------------------------------
+    // Anchor navigation — pola halaman SOP:
+    //   - Klik anchor -> browser handle hash (instant jump ke #target)
+    //   - Active state dikontrol CSS :has(:target) — no JS scroll-spy
+    // -----------------------------------------------------------------
+    // (Tidak ada handler klik karena <a href="#xxx"> sudah native.)
+
+    // Defensive: kalau ancestor stacking-context membunuh sticky
+    // .lp-pengaturan-aside, kita paksa via inline style.
+    (function () {
+        var aside = document.querySelector('.lp-pengaturan-aside');
+        if (!aside) return;
+        function applySticky() {
+            if (window.innerWidth < 992) {
+                aside.style.position = '';
+                aside.style.top = '';
+                aside.style.alignSelf = '';
+                aside.style.zIndex = '';
+                return;
+            }
+            aside.style.position = 'sticky';
+            aside.style.top = '1rem';
+            aside.style.alignSelf = 'stretch';
+            aside.style.zIndex = '5';
+        }
+        applySticky();
+        var rafRS = null;
+        window.addEventListener('resize', function () {
+            if (rafRS) return;
+            rafRS = requestAnimationFrame(function () {
+                rafRS = null;
+                applySticky();
+            });
+        });
+    })();
 });
 </script>
 
 <style>
     .lp-preview-box {
         width: 100%;
-        height: 160px;
+        aspect-ratio: 1 / 1;
         border: 2px dashed #cbd5e1;
         border-radius: .75rem;
         background: #f8fafc;
@@ -913,6 +1139,7 @@ $(function () {
         padding: .5rem;
         transition: border-color .15s ease, background .15s ease, transform .15s ease;
         text-align: center;
+        position: relative;
     }
     .lp-preview-box:hover {
         border-color: #37d17c;
@@ -920,10 +1147,44 @@ $(function () {
         transform: translateY(-1px);
     }
     .lp-preview-box img {
-        max-width: 70%;
-        max-height: 70%;
-        object-fit: contain;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         pointer-events: none;
+    }
+    .lp-preview-box.lp-preview-square-md {
+        min-height: 220px;
+        max-height: 300px;
+    }
+    .lp-preview-box.lp-preview-square-lg {
+        min-height: 260px;
+        max-height: 360px;
+    }
+    .lp-preview-box.has-image .lp-preview-empty,
+    .lp-preview-box.has-image .lp-preview-hint {
+        display: none;
+    }
+    .lp-preview-box.has-image::after {
+        content: 'Klik untuk ganti foto';
+        position: absolute;
+        left: 50%;
+        bottom: .75rem;
+        transform: translateX(-50%);
+        background: rgba(15,23,42,.78);
+        color: #fff;
+        font-size: .75rem;
+        font-weight: 500;
+        padding: .25rem .65rem;
+        border-radius: 999px;
+        opacity: 0;
+        transition: opacity .15s ease;
+        pointer-events: none;
+        z-index: 2;
+    }
+    .lp-preview-box.has-image:hover::after {
+        opacity: 1;
     }
     .lp-preview-empty {
         font-size: 42px;
@@ -938,6 +1199,11 @@ $(function () {
         color: #64748b;
         font-weight: 500;
         pointer-events: none;
+        background: rgba(255,255,255,.85);
+        padding: .15rem .55rem;
+        border-radius: 999px;
+        position: relative;
+        z-index: 1;
     }
     .lp-preview-box:hover .lp-preview-hint {
         color: #1f9d57;

@@ -2,139 +2,142 @@
 
 @section('style')
     @include('admin-landing._gaya')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
     <style>
-        .lp-gal-toolbar .lp-search {
-            position: relative;
-            display: flex;
-            align-items: center;
-            background: #fff;
-            border: 1px solid #d4d8dd;
-            border-radius: .55rem;
-            height: 44px;
-            padding: 0 .65rem;
-            transition: border-color .15s ease, box-shadow .15s ease;
+        #lpGalleryTable {
+            width: 100% !important;
+            table-layout: auto;
         }
-        .lp-gal-toolbar .lp-search:focus-within {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+        .lp-gallery-table-scroll {
+            overflow-x: auto;
         }
-        .lp-gal-toolbar .lp-search .material-symbols-rounded {
-            color: #64748b;
-            font-size: 20px;
-            margin-right: .5rem;
+        /* Pastikan sel-sel konten panjang tidak ter-truncate oleh
+           aturan table-nowrap global dari material-dashboard. */
+        #lpGalleryTable.table.table-nowrap td,
+        #lpGalleryTable.table.table-nowrap th {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
         }
-        .lp-gal-toolbar .lp-search input {
-            border: 0;
-            outline: 0;
-            background: transparent;
-            flex: 1;
-            height: 100%;
-            font-size: .92rem;
-            color: #1f2937;
-            padding: 0;
-        }
-        .lp-gal-toolbar .lp-search input::placeholder { color: #94a3b8; }
-        .lp-gal-toolbar .lp-search-clear {
-            border: 0;
-            background: transparent;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: .15rem;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .lp-gal-toolbar .lp-search-clear:hover { color: #1f2937; background: #f1f5f9; }
-        .lp-gal-toolbar .lp-search-clear .material-symbols-rounded { font-size: 18px; margin: 0; }
-
-        .lp-gal-toolbar .form-select {
-            height: 44px;
-            border-radius: .55rem;
-            border-color: #d4d8dd;
-            box-shadow: none !important;
-            font-size: .92rem;
-        }
-        .lp-gal-toolbar .form-select:focus {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
-        }
-        .lp-gal-toolbar .select2-container .select2-selection {
-            height: 44px !important;
-            border-radius: .55rem !important;
-            border-color: #d4d8dd !important;
-            padding: 0 .65rem !important;
-            display: flex !important;
-            align-items: center !important;
-        }
-        .lp-gal-toolbar .select2-container .select2-selection__rendered {
-            line-height: 44px !important;
-            padding-left: 0 !important;
-            font-size: .92rem;
-            color: #1f2937;
-        }
-        .lp-gal-toolbar .select2-container .select2-selection__arrow {
-            height: 42px !important;
-        }
-        .lp-gal-toolbar .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-        .lp-gal-toolbar .select2-container--bootstrap-5:focus-within .select2-selection {
-            border-color: #1d4ed8 !important;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
-        }
-
-        .lp-gallery-thumb {
-            width: 72px;
-            height: 54px;
-            border-radius: .5rem;
-            object-fit: cover;
-            background: #f1f5f9;
-            display: block;
-            border: 1px solid #e2e8f0;
-        }
-        .lp-gallery-thumb-empty {
-            width: 72px;
-            height: 54px;
-            border-radius: .5rem;
-            background: #f1f5f9;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            border: 1px solid #e2e8f0;
-        }
-        .lp-gallery-thumb-empty .material-symbols-rounded { font-size: 22px; }
-
-        .lp-gallery-title {
+        #lpGalleryTable thead th {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
             font-weight: 600;
-            color: #1f2937;
-            line-height: 1.25;
+            font-size: .72rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: .85rem 1rem;
+            white-space: nowrap;
         }
-        .lp-gallery-title .text-muted {
-            font-weight: 400;
-            font-size: .78rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        #lpGalleryTable tbody td {
+            padding: .85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+        #lpGalleryTable tbody tr:last-child td { border-bottom: 0; }
+        #lpGalleryTable tbody tr { transition: background-color .15s ease; }
+        #lpGalleryTable tbody tr:hover { background-color: #f8fafc; }
+
+        #lpGalleryTable .lp-row-title-cell {
+            min-width: 240px;
+        }
+        #lpGalleryTable .lp-row-title-cell .lp-gallery-title {
+            font-size: .92rem;
+            line-height: 1.35;
+            word-break: break-word;
         }
 
-        .lp-table-actions {
-            display: inline-flex;
-            gap: .35rem;
-            justify-content: flex-end;
+        /* Copy style DataTables wrapper dari posts untuk konsistensi */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #475569;
+            font-size: .8125rem;
         }
-        .lp-table-actions .btn-icon {
-            width: 32px;
-            height: 32px;
-            padding: 0;
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            font-weight: 500;
+        }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #d4d8dd !important;
+            border-radius: .5rem !important;
+            padding: .4rem .65rem !important;
+            font-size: .875rem !important;
+            color: #1f2937;
+            background: #fff;
+            box-shadow: none !important;
+        }
+        .dataTables_wrapper .dataTables_length select { min-width: 72px; }
+        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #1d4ed8 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
+        }
+        .dataTables_wrapper .dataTables_info { padding-top: 1rem; color: #64748b !important; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: 1rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            box-sizing: border-box;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: .4rem;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            padding: 0 .65rem !important;
+            margin: 0 2px !important;
+            border-radius: .5rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #fff !important;
+            color: #475569 !important;
+            font-weight: 600;
+            font-size: .8125rem;
+            cursor: pointer;
+            transition: all .15s ease;
         }
-        .lp-table-actions .btn-icon .material-symbols-rounded {
-            font-size: 17px;
-            line-height: 1;
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
+            background: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1d4ed8 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #fff !important;
+            box-shadow: 0 1px 2px rgba(29,78,216,.25);
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            color: #cbd5e1 !important;
+            background: #f8fafc !important;
+            border-color: #f1f5f9 !important;
+            cursor: not-allowed;
+        }
+        .dataTables_empty {
+            padding: 3rem 1rem !important;
+            color: #94a3b8 !important;
+        }
+
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100%;
+                min-width: 0;
+                margin-left: 0 !important;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                min-width: 2rem;
+                height: 2rem;
+                font-size: .75rem;
+                padding: 0 .5rem !important;
+                margin: 0 1px !important;
+            }
         }
     </style>
 @endsection
@@ -146,131 +149,113 @@
     @endif
 
     @php
-        $titleSlot = '<h5 class="lp-page-title mb-1">'.e($title).'</h5>'
-            .'<p class="text-muted small mb-0">Kumpulan foto kegiatan yang tampil di halaman publik.</p>';
-
-        $addBtn = '<a href="'.e(route('app.admin-landing.galleries.create')).'" class="btn btn-sm btn-primary">'
-            .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span> '
+        $addBtn = '<a href="'.e(route('app.admin-landing.galleries.create')).'" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1">'
+            .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>'
             .'<span class="align-middle">Tambah Foto</span></a>';
     @endphp
-    @include('admin-landing._header-halaman', [
-        'subtitle' => 'Landing Page',
-        'actions' => $addBtn,
-        'titleSlot' => $titleSlot,
-    ])
+    <div class="d-flex justify-content-end mb-3">
+        {!! $addBtn !!}
+    </div>
 
-    <form method="GET" action="{{ route('app.admin-landing.galleries') }}" id="lpGalleryFilter" class="card mb-3 lp-gal-toolbar">
-        <div class="card-body p-3">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-9">
-                    <div class="lp-search">
-                        <span class="material-symbols-rounded">search</span>
-                        <input type="text" name="q" id="lpGallerySearch" value="{{ e($q) }}"
-                               placeholder="Cari judul, album, atau deskripsi..." autocomplete="off">
-                        @if ($q !== '')
-                            <button type="button" class="lp-search-clear" id="lpGallerySearchClear" title="Bersihkan pencarian">
-                                <span class="material-symbols-rounded">close</span>
-                            </button>
-                        @endif
-                    </div>
+    <div class="card my-3">
+        <div class="card-body px-3 py-3">
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small mb-3">
+                    <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                 </div>
-                <div class="col-md-3">
-                    <select name="status" id="lpGalleryStatus" class="form-select">
-                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua status</option>
-                        <option value="published" {{ $status === 'published' ? 'selected' : '' }}>Dipublikasikan</option>
-                        <option value="draft" {{ $status === 'draft' ? 'selected' : '' }}>Draft</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </form>
-
-    <div class="card mb-4">
-        <div class="card-body p-3">
-            @if ($galleries->isEmpty())
-                <div class="lp-empty">
-                    <span class="material-symbols-rounded">photo_library</span>
-                    <div class="mt-2">
-                        @if ($q !== '' || $status !== 'all')
-                            Tidak ada foto yang cocok dengan filter saat ini.
-                        @else
-                            Belum ada foto. Tambahkan foto pertama Anda.
-                        @endif
-                    </div>
-                    <a href="{{ route('app.admin-landing.galleries.create') }}" class="btn btn-sm btn-primary mt-3">
-                        <span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>
-                        <span class="align-middle">Tambah Foto</span>
-                    </a>
-                </div>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr class="small text-muted">
-                                <th style="width: 92px;">Foto</th>
-                                <th>Judul</th>
-                                <th style="width: 18%;">Album</th>
-                                <th style="width: 14%;">Status</th>
-                                <th style="width: 12%;" class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($galleries as $g)
-                                <tr>
-                                    <td>
-                                        @if ($g->image)
-                                            <img src="{{ Storage::disk('public')->url('landing/' . $g->image) }}"
-                                                 alt="" class="lp-gallery-thumb">
-                                        @else
-                                            <span class="lp-gallery-thumb-empty">
-                                                <span class="material-symbols-rounded">image</span>
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="lp-gallery-title">{{ $g->title }}</div>
-                                        @if ($g->description)
-                                            <div class="text-muted small mt-1">{{ \Illuminate\Support\Str::limit(strip_tags($g->description), 90) }}</div>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($g->album)
-                                            <span class="badge text-bg-light border">{{ $g->album }}</span>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($g->is_published)
-                                            <span class="lp-status-badge is-published">Dipublikasikan</span>
-                                        @else
-                                            <span class="lp-status-badge is-draft">Draft</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="lp-table-actions">
-                                            <a href="{{ route('app.admin-landing.galleries.edit', $g->id) }}"
-                                               class="btn btn-sm btn-outline-primary btn-icon" title="Edit foto">
-                                                <span class="material-symbols-rounded">edit</span>
-                                            </a>
-                                            @include('admin-landing._komponen.formulir-hapus', [
-                                                'action' => route('app.admin-landing.galleries.destroy', $g->id),
-                                                'confirm' => 'Hapus foto "' . $g->title . '"?',
-                                                'iconOnly' => true,
-                                                'btnClass' => 'btn btn-sm btn-outline-danger btn-icon',
-                                            ])
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-3">{{ $galleries->links() }}</div>
             @endif
+            <div class="lp-gallery-table-scroll">
+                <table id="lpGalleryTable" class="table table-striped table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:88px;min-width:88px">Foto</th>
+                            <th style="min-width:240px">Judul</th>
+                            <th style="width:160px;min-width:160px">Album</th>
+                            <th style="width:110px;min-width:110px">Urutan</th>
+                            <th style="width:140px;min-width:140px">Status</th>
+                            <th class="text-center" style="width:100px;min-width:100px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 @endsection
 
+@section('script')
+<script>
+    $(document).ready(function() {
+        $('#lpGalleryTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: '{{ route('app.admin-landing.galleries.data') }}',
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            searching: true,
+            info: true,
+            autoWidth: false,
+            scrollX: true,
+            responsive: false,
+            order: [[3, 'asc']],
+            language: {
+                lengthMenu: 'Tampilkan _MENU_ data',
+                search: 'Cari:',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty: 'Tidak ada foto.',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                zeroRecords: 'Tidak ada foto yang cocok.',
+                emptyTable: 'Belum ada foto.',
+                loadingRecords: 'Memuat…',
+                processing: 'Memproses…',
+                paginate: { first: '«', last: '»', next: '›', previous: '‹' },
+            },
+            columns: [
+                { data: 'image', name: 'image', orderable: false, searchable: false },
+                { data: 'title_col', name: 'title', orderable: true, searchable: true, className: 'lp-row-title-cell' },
+                { data: 'album_col', name: 'album', orderable: false, searchable: true },
+                { data: 'sort_col', name: 'sort_order', orderable: true, searchable: false },
+                { data: 'status_col', name: 'is_published', orderable: true, searchable: true },
+                { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' },
+            ],
+        });
+
+        // Konfirmasi hapus untuk form yang di-render oleh DataTables (di luar DOM awal)
+        $(document).on('submit', 'form[data-confirm]', function(e) {
+            var $form = $(this);
+            if ($form.data('confirm-bound')) return;
+            $form.data('confirm-bound', true);
+            e.preventDefault();
+            var msg = $form.attr('data-confirm') || 'Yakin ingin menghapus data ini?';
+            Swal.fire({
+                title: 'Hapus data?',
+                text: msg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    $.ajax({
+                        url: $form.attr('action'),
+                        method: 'POST',
+                        data: $form.serialize(),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    }).done(function() {
+                        Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                        $('#lpGalleryTable').DataTable().ajax.reload(null, false);
+                    }).fail(function() {
+                        Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                    });
+                }
+            });
+        });
+    });
+</script>
 @include('admin-landing._skrip')
+@endsection
