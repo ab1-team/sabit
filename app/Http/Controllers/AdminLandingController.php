@@ -51,6 +51,24 @@ trait LandingAdminResponse
         return back()->with('success', $msg);
     }
 
+    /**
+     * Kembalikan response error validasi (422) untuk AJAX, atau
+     * redirect back dengan error bag untuk form biasa. Dipakai oleh
+     * method store/update agar pesan error konsisten dan muncul
+     * baik di toast (AJAX) maupun di blok error form (non-AJAX).
+     */
+    protected function saveValidationError(Request $request, \Illuminate\Contracts\Support\MessageProvider $errors)
+    {
+        if ($this->wantsJsonResponse($request)) {
+            return response()->json([
+                'success' => false,
+                'msg' => 'Data belum lengkap.',
+                'errors' => $errors->getMessageBag()->toArray(),
+            ], 422);
+        }
+        return back()->withErrors($errors)->withInput();
+    }
+
     protected function deleteSuccess(Request $request, string $msg, ?string $redirectRoute = null)
     {
         if ($this->wantsJsonResponse($request)) {
@@ -1164,16 +1182,45 @@ class AdminLandingController extends Controller
     {
         $query = VideoLanding::query();
 
+        $stats = [
+            'total'     => (int) VideoLanding::count(),
+            'youtube'   => (int) VideoLanding::where('source', 'youtube')->count(),
+            'local'     => (int) VideoLanding::where('source', 'local')->count(),
+            'published' => (int) VideoLanding::where('is_published', true)->count(),
+        ];
+
         return DataTables::eloquent($query)
+            ->with(['extra' => ['stats' => $stats]])
             ->addColumn('preview_col', function ($v) {
-                $thumb = $v->display_thumb;
+                $thumb   = $v->display_thumb;
                 $isLocal = $v->isLocal();
+                $ytId    = $v->isYoutube() ? ($v->youtube_id ?? '') : '';
+                $local   = $isLocal && $v->file_path
+                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->file_path)
+                    : '';
+                $poster  = $v->poster
+                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->poster)
+                    : '';
+
+                $attrs = ' data-yt-id="'.e($ytId).'"'
+                    .' data-local-src="'.e($local).'"'
+                    .' data-poster="'.e($poster).'"'
+                    .' data-title="'.e($v->title).'"'
+                    .' data-description="'.e(strip_tags((string) $v->description)).'"';
+
                 if ($thumb) {
-                    return '<div class="lp-video-thumb"><img src="'.e($thumb).'" alt="" loading="lazy"></div>'
-                        .'<span class="material-symbols-rounded lp-video-play">play_circle</span>';
+                    $html  = '<button type="button" class="lp-video-thumb-btn lp-video-trigger"'.$attrs.' aria-label="Putar '.e($v->title).'">';
+                    $html .= '<div class="lp-video-thumb"><img src="'.e($thumb).'" alt="'.e($v->title).'" loading="lazy"></div>';
+                    $html .= '<span class="material-symbols-rounded lp-video-play">play_circle</span>';
+                    $html .= '</button>';
+                    return $html;
                 }
                 if ($isLocal) {
-                    return '<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">movie</span></div>';
+                    return '<button type="button" class="lp-video-thumb-btn lp-video-thumb-empty-wrap lp-video-trigger"'.$attrs
+                        .' aria-label="Putar '.e($v->title).'">'
+                        .'<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">movie</span></div>'
+                        .'<span class="material-symbols-rounded lp-video-play">play_circle</span>'
+                        .'</button>';
                 }
                 return '<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">videocam_off</span></div>';
             })
@@ -1245,7 +1292,80 @@ class AdminLandingController extends Controller
 
     public function videoStore(Request $request)
     {
+        // Log masuk method untuk membantu debug request yang gagal.
+        \Illuminate\Support\Facades\Log::info('[videoStore] masuk', [
+            'method' => $request->method(),
+            'is_ajax' => $request->ajax(),
+            'expects_json' => $request->expectsJson(),
+            'host' => $request->getHost(),
+            'url' => $request->fullUrl(),
+            'has_title' => $request->has('title'),
+            'has_source' => $request->has('source'),
+            'has_youtube_url' => $request->has('youtube_url'),
+            'has_video_file' => $request->hasFile('video_file'),
+            'has_video_poster' => $request->hasFile('video_poster'),
+            'all_keys' => array_keys($request->all()),
+            'files' => array_keys($request->allFiles()),
+        ]);
+
+        try {
+            return $this->handleVideoStore($request);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            // Validasi gagal — biarkan Laravel tangani untuk return 422 JSON otomatis.
+            throw $ve;
+        } catch (\Throwable $e) {
+            // Tangani error tak terduga. Untuk AJAX selalu return JSON agar
+            // handler JS tidak melihat HTML error page.
+            \Illuminate\Support\Facades\Log::error('[videoStore] exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            if ($this->wantsJsonResponse($request)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => $e->getMessage() ?: 'Terjadi kesalahan saat menyimpan video.',
+                    'error' => class_basename($e),
+                    'debug' => config('app.debug') ? [
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                    ] : null,
+                ], 500);
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Logika inti store video — dipisah dari wrapper videoStore() agar
+     * try-catch dapat membungkus semuanya tanpa mengganggu alur
+     * `return` di tengah method.
+     */
+    private function handleVideoStore(Request $request)
+    {
         $source = $request->input('source', VideoLanding::SOURCE_YOUTUBE);
+
+        // Diagnosa: catat kondisi file upload SEBELUM validasi supaya kalau
+        // server error kita bisa lihat apakah file sampai ke PHP, ukuran,
+        // MIME, dan kode error upload. Penting untuk file .mov iPhone
+        // yang sering gagal di Windows karena MIME tidak standar.
+        if ($source === VideoLanding::SOURCE_LOCAL) {
+            $f = $request->file('video_file');
+            \Illuminate\Support\Facades\Log::info('[videoStore] file diagnostics', [
+                'has_file' => $request->hasFile('video_file'),
+                'is_valid' => $f ? $f->isValid() : null,
+                'upload_error' => $f ? $f->getError() : null,
+                'error_message' => $f ? $f->getErrorMessage() : null,
+                'size_bytes' => $f ? $f->getSize() : null,
+                'client_mime' => $f ? $f->getClientMimeType() : null,
+                'server_mime' => $f ? $f->getMimeType() : null,
+                'client_ext' => $f ? $f->getClientOriginalExtension() : null,
+                'client_name' => $f ? $f->getClientOriginalName() : null,
+                'tmp_path_ok' => $f ? (is_file($f->getPathname()) ? 'yes' : 'no') : null,
+                'tmp_readable' => $f ? (is_readable($f->getPathname()) ? 'yes' : 'no') : null,
+                'poster_has' => $request->hasFile('video_poster'),
+            ]);
+        }
 
         $rules = [
             'title' => ['required', 'string', 'max:200'],
@@ -1304,17 +1424,41 @@ class AdminLandingController extends Controller
         if ($source === VideoLanding::SOURCE_YOUTUBE) {
             $embed = self::normalizeYoutubeEmbed($data['youtube_url']);
             if (! $embed) {
-                return $this->saveSuccess($request, 'URL YouTube tidak dikenali.', null) ?: back()->withErrors(['youtube_url' => 'URL YouTube tidak dikenali.'])->withInput();
+                return back()->withErrors(['youtube_url' => 'URL YouTube tidak dikenali.'])->withInput();
             }
             $data['youtube_url'] = $embed;
         } else {
-            $path = $request->file('video_file')->store($this->uploadDir() . '/videos', 'public');
+            // Store file video ke disk 'public'. Catat ukuran & path yang
+            // dihasilkan supaya diagnosa mudah kalau file corrupt / disk penuh.
+            $file = $request->file('video_file');
+            \Illuminate\Support\Facades\Log::info('[videoStore] storing video file', [
+                'size' => $file->getSize(),
+                'mime' => $file->getMimeType(),
+                'ext'  => $file->getClientOriginalExtension(),
+            ]);
+            try {
+                $path = $file->store($this->uploadDir() . '/videos', 'public');
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('[videoStore] gagal store file video: ' . $e->getMessage(), [
+                    'size' => $file->getSize(),
+                    'mime' => $file->getMimeType(),
+                    'upload_error' => $file->getError(),
+                    'error_message' => $file->getErrorMessage(),
+                ]);
+                throw new \RuntimeException(
+                    'Gagal menyimpan file video. Periksa ukuran (maks 50MB), format, dan ruang disk server. (' . $e->getMessage() . ')',
+                    500,
+                    $e
+                );
+            }
+            \Illuminate\Support\Facades\Log::info('[videoStore] video stored', ['path' => $path]);
             $data['file_path'] = $path;
             if ($request->hasFile('video_poster')) {
                 $data['poster'] = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
-            } else {
-                $data['poster'] = null;
             }
+            // Jangan set 'poster' = null di create — biarkan tidak di-set agar
+            // Eloquent fill() tidak overwrite kolom ke null bila nanti
+            // aturan diubah. youtube_url di-null-kan karena source=local.
             $data['youtube_url'] = null;
         }
 
@@ -1335,6 +1479,13 @@ class AdminLandingController extends Controller
             throw $e;
         }
 
+        \Illuminate\Support\Facades\Log::info('Video berhasil disimpan', [
+            'id' => $video->id ?? null,
+            'title' => $video->title ?? null,
+            'source' => $video->source ?? null,
+            'is_ajax' => $this->wantsJsonResponse($request),
+        ]);
+
         return $this->saveSuccess($request, 'Video berhasil ditambahkan.', 'app.admin-landing.videos');
     }
 
@@ -1351,8 +1502,64 @@ class AdminLandingController extends Controller
 
     public function videoUpdate(Request $request, $video)
     {
+        \Illuminate\Support\Facades\Log::info('[videoUpdate] masuk', [
+            'id' => $video,
+            'method' => $request->method(),
+            'is_ajax' => $request->ajax(),
+            'expects_json' => $request->expectsJson(),
+            'host' => $request->getHost(),
+            'url' => $request->fullUrl(),
+            'all_keys' => array_keys($request->all()),
+            'files' => array_keys($request->allFiles()),
+        ]);
+        try {
+            return $this->handleVideoUpdate($request, $video);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            throw $ve;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[videoUpdate] exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            if ($this->wantsJsonResponse($request)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => $e->getMessage() ?: 'Terjadi kesalahan saat memperbarui video.',
+                    'error' => class_basename($e),
+                    'debug' => config('app.debug') ? [
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                    ] : null,
+                ], 500);
+            }
+            throw $e;
+        }
+    }
+
+    private function handleVideoUpdate(Request $request, $video)
+    {
         $model = VideoLanding::findOrFail($video);
+        \Illuminate\Support\Facades\Log::info('[videoUpdate] model loaded', ['id' => $model->id, 'source' => $model->source]);
         $source = $request->input('source', $model->source ?: VideoLanding::SOURCE_YOUTUBE);
+
+        // Diagnosa file upload jika source baru = local.
+        if ($source === VideoLanding::SOURCE_LOCAL) {
+            $f = $request->file('video_file');
+            \Illuminate\Support\Facades\Log::info('[videoUpdate] file diagnostics', [
+                'has_file' => $request->hasFile('video_file'),
+                'is_valid' => $f ? $f->isValid() : null,
+                'upload_error' => $f ? $f->getError() : null,
+                'error_message' => $f ? $f->getErrorMessage() : null,
+                'size_bytes' => $f ? $f->getSize() : null,
+                'client_mime' => $f ? $f->getClientMimeType() : null,
+                'server_mime' => $f ? $f->getMimeType() : null,
+                'client_ext' => $f ? $f->getClientOriginalExtension() : null,
+                'client_name' => $f ? $f->getClientOriginalName() : null,
+                'poster_has' => $request->hasFile('video_poster'),
+                'source_changed' => $model->source !== $source,
+            ]);
+        }
 
         $rules = [
             'title' => ['required', 'string', 'max:200'],
@@ -1363,7 +1570,11 @@ class AdminLandingController extends Controller
         if ($source === VideoLanding::SOURCE_YOUTUBE) {
             $rules['youtube_url'] = ['required', 'string', 'max:500'];
         } else {
-            $rules['video_file'] = ['nullable', 'file', 'max:51200', function ($attr, $value, $fail) {
+            // Saat UPDATE: jika source tetap local → file boleh null (pakai
+            // yang lama). Jika source BERUBAH youtube→local → file WAJIB
+            // diupload supaya tidak ada baris dengan source=local tanpa file.
+            $fileRequired = ($model->source !== VideoLanding::SOURCE_LOCAL);
+            $rules['video_file'] = [$fileRequired ? 'required' : 'nullable', 'file', 'max:51200', function ($attr, $value, $fail) {
                 if (! $value instanceof \Illuminate\Http\UploadedFile || ! $value->isValid()) return;
                 $ext = strtolower($value->getClientOriginalExtension());
                 $okExt = in_array($ext, ['mp4','m4v','mov','webm','mkv','qt'], true);
@@ -1398,6 +1609,7 @@ class AdminLandingController extends Controller
             'video_poster.mimes' => 'Poster harus berformat jpg, jpeg, png, atau webp.',
             'video_poster.max' => 'Ukuran poster maksimal 5MB.',
         ]);
+        \Illuminate\Support\Facades\Log::info('[videoUpdate] validated', ['keys' => array_keys($data), 'source' => $source]);
 
         $data['source'] = $source;
         $data['is_published'] = $request->boolean('is_published');
@@ -1408,34 +1620,57 @@ class AdminLandingController extends Controller
                 return back()->withErrors(['youtube_url' => 'URL YouTube tidak dikenali.'])->withInput();
             }
             $data['youtube_url'] = $embed;
-            if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
-                Storage::disk('public')->delete($model->file_path);
-            }
-            if ($model->poster && Storage::disk('public')->exists($model->poster)) {
-                Storage::disk('public')->delete($model->poster);
-            }
-            $data['file_path'] = null;
-            $data['poster'] = null;
-        } else {
-            $newFilePath = null;
-            if ($request->hasFile('video_file')) {
+            // Jika source BERUBAH dari local ke youtube, bersihkan file lokal lama.
+            if ($model->source !== VideoLanding::SOURCE_YOUTUBE) {
                 if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
                     Storage::disk('public')->delete($model->file_path);
                 }
-                $newFilePath = $request->file('video_file')->store($this->uploadDir() . '/videos', 'public');
+                if ($model->poster && Storage::disk('public')->exists($model->poster)) {
+                    Storage::disk('public')->delete($model->poster);
+                }
+                $data['file_path'] = null;
+                $data['poster'] = null;
+            }
+        } else {
+            $newFilePath = null;
+            $newPoster = null;
+            if ($request->hasFile('video_file')) {
+                // Upload file baru → hapus file lama (kalau ada) supaya tidak jadi yatim.
+                if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
+                    Storage::disk('public')->delete($model->file_path);
+                }
+                $file = $request->file('video_file');
+                \Illuminate\Support\Facades\Log::info('[videoUpdate] storing video file', [
+                    'size' => $file->getSize(),
+                    'mime' => $file->getMimeType(),
+                    'ext'  => $file->getClientOriginalExtension(),
+                ]);
+                $newFilePath = $file->store($this->uploadDir() . '/videos', 'public');
+                \Illuminate\Support\Facades\Log::info('[videoUpdate] video stored', ['path' => $newFilePath]);
                 $data['file_path'] = $newFilePath;
             }
             if ($request->hasFile('video_poster')) {
                 if ($model->poster && Storage::disk('public')->exists($model->poster)) {
                     Storage::disk('public')->delete($model->poster);
                 }
-                $data['poster'] = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
+                $newPoster = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
+                $data['poster'] = $newPoster;
             }
-            $data['youtube_url'] = null;
+            // Jika source BERUBAH dari youtube ke local, bersihkan youtube_url lama.
+            // Kalau tidak upload file DAN source tetap local, biarkan file_path/poster
+            // lama apa adanya (jangan di-null-kan).
+            if ($model->source !== $source) {
+                $data['youtube_url'] = null;
+            } else {
+                // Source sama (local) dan tidak ada upload baru → unset key supaya fill()
+                // tidak overwrite ke null. file_path & poster tetap nilai lama.
+                unset($data['youtube_url']);
+            }
         }
 
         try {
             $model->fill($data)->save();
+            \Illuminate\Support\Facades\Log::info('Video berhasil diperbarui', ['id' => $model->id, 'title' => $model->title, 'source' => $model->source]);
         } catch (\Throwable $e) {
             // Kalau upload baru berhasil tapi save() gagal, hapus file baru
             // agar tidak jadi yatim saat DB roll back (atau model tidak konsisten).

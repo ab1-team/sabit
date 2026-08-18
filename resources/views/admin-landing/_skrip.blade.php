@@ -162,19 +162,59 @@
                     body: formData,
                 }).then(function (resp) {
                     var ct = resp.headers.get('content-type') || '';
-                    if (!ct.includes('application/json')) {
-                        // fallback: redirect biasa
-                        window.location.href = form.action;
-                        return null;
+                    if (ct.includes('application/json')) {
+                        return resp.json().then(function (data) { return { status: resp.status, data: data, raw: null }; });
                     }
-                    return resp.json().then(function (data) { return { status: resp.status, data: data }; });
+                    // Bukan JSON: baca teks untuk diagnosis & tampilkan pesan yang jelas.
+                    return resp.text().then(function (txt) {
+                        console.warn('[lp-ajax] Non-JSON response:', resp.status, ct, txt ? txt.substring(0, 500) : '(empty)');
+                        return { status: resp.status, data: null, raw: txt };
+                    });
                 }).then(function (out) {
                     if (!out) return;
+                    if (out.raw !== undefined && out.raw !== null) {
+                        // Server mengirim HTML/text — biasanya halaman error Laravel
+                        // atau halaman login (session expired). Tampilkan notifikasi
+                        // dan reload supaya user kembali ke form dengan pesan yang jelas.
+                        notify({
+                            icon: 'error',
+                            title: 'Respon server tidak valid',
+                            text: 'Status ' + out.status + '. Cek log Laravel (storage/logs/laravel.log) untuk detail.',
+                            toast: true,
+                            position: 'top-end',
+                            timer: 5000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                        });
+                        return;
+                    }
+                    if (!out) return;
                     if (out.status === 422 && out.data && out.data.errors) {
-                        // Tampilkan error validasi sebagai toast ringkas (pojok kanan atas).
+                        // Tampilkan error validasi sebagai toast ringkas (pojok kanan atas)
+                        // DAN populate semua error ke blok .lp-ajax-errors di form (kalau ada).
                         var errs = out.data.errors;
                         var firstField = Object.keys(errs)[0];
                         var firstMsg = firstField ? errs[firstField][0] : 'Data tidak valid';
+
+                        // Render semua error ke blok .lp-ajax-errors (reusable).
+                        var box = form.querySelector('.lp-ajax-errors');
+                        if (box) {
+                            var list = box.querySelector('.lp-ajax-errors-list');
+                            if (list) {
+                                list.innerHTML = '';
+                                Object.keys(errs).forEach(function (field) {
+                                    (errs[field] || []).forEach(function (msg) {
+                                        var li = document.createElement('li');
+                                        li.textContent = msg;
+                                        list.appendChild(li);
+                                    });
+                                });
+                            }
+                            box.style.display = '';
+                            // Auto scroll ke blok error supaya user langsung lihat.
+                            try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+                        }
+
                         notify({
                             icon: 'error',
                             title: 'Data belum lengkap',
@@ -200,22 +240,39 @@
                             if (out.data.redirect) {
                                 window.location.href = out.data.redirect;
                             } else {
-                                // tetap di halaman: refresh state tombol
-                                if (btn) {
-                                    btn.disabled = false;
-                                    btn.innerHTML = btn.dataset.originalHtml || 'Simpan';
-                                    btn.dataset.busy = '0';
-                                }
+                                // Tidak ada redirect URL → reload halaman saat ini
+                                // supaya user lihat data baru + DataTables refresh.
+                                window.location.reload();
                             }
                         });
                     } else {
+                        // Sukses=false, atau status error 4xx/5xx.
+                        // Untuk status 500, sertakan info debug kalau ada.
+                        var errTitle = 'Gagal';
+                        var errText = (out.data && out.data.msg) || 'Terjadi kesalahan';
+                        if (out.status >= 500) {
+                            errTitle = 'Kesalahan server (' + out.status + ')';
+                            if (out.data && out.data.debug && out.data.debug.file) {
+                                errText += ' — ' + out.data.debug.file + ':' + out.data.debug.line;
+                                console.error('[lp-ajax] server error:', out.data);
+                            }
+                        } else if (out.status === 419) {
+                            errTitle = 'Sesi berakhir';
+                            errText = 'CSRF token tidak valid. Refresh halaman dan coba lagi.';
+                        } else if (out.status === 403) {
+                            errTitle = 'Tidak diizinkan';
+                            errText = 'Anda tidak punya akses untuk aksi ini.';
+                        } else if (out.status === 404) {
+                            errTitle = 'Tidak ditemukan';
+                            errText = 'Halaman / aksi ini tidak ada.';
+                        }
                         notify({
                             icon: 'error',
-                            title: 'Gagal',
-                            text: (out.data && out.data.msg) || 'Terjadi kesalahan',
+                            title: errTitle,
+                            text: errText,
                             toast: true,
                             position: 'top-end',
-                            timer: 3000,
+                            timer: out.status >= 500 ? 6000 : 4000,
                             timerProgressBar: true,
                             showConfirmButton: false,
                         });

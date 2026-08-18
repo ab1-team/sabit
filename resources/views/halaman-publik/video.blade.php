@@ -38,7 +38,12 @@
                                 @if ($video->display_thumb)
                                     <img src="{{ $video->display_thumb }}" alt="{{ $video->title }}" loading="lazy" class="lp-video-thumb-img">
                                 @endif
-                                <span class="material-symbols-rounded lp-video-play-icon">play_circle</span>
+                                <span class="lp-video-play-icon" aria-hidden="true">
+                                    <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="32" cy="32" r="30" fill="rgba(15,23,42,.6)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+                                        <polygon points="26,20 26,44 46,32" fill="#fff"/>
+                                    </svg>
+                                </span>
                                 @if ($video->isLocal())
                                     <span class="lp-video-source-badge">
                                         <span class="material-symbols-rounded" style="font-size:13px;">movie</span>
@@ -97,7 +102,7 @@
     .lp-video-trigger:focus-visible { outline: 3px solid var(--lp-primary, #2563eb); outline-offset: 2px; }
 
     .lp-video-frame {
-        position: relative;
+        position: relative !important;
         overflow: hidden;
         background: #0f172a;
         border-radius: .65rem;
@@ -121,30 +126,30 @@
         align-items: center;
         justify-content: center;
         z-index: 1;
-        color: #fff;
-        font-size: 64px !important;
-        text-shadow: 0 4px 12px rgba(0,0,0,.45);
         transition: transform .25s ease;
         pointer-events: none;
         margin: 0;
     }
+    .lp-video-play-icon svg { display: block; }
     .lp-video-trigger:hover .lp-video-play-icon { transform: scale(1.1); }
     .lp-video-source-badge {
-        position: absolute;
-        top: .5rem;
-        left: .5rem;
+        position: absolute !important;
+        top: .5rem !important;
+        left: .5rem !important;
         z-index: 2;
         display: inline-flex;
         align-items: center;
         gap: .25rem;
-        padding: .15rem .5rem;
+        padding: .2rem .55rem;
         border-radius: 999px;
-        background: rgba(15,23,42,.7);
+        background: transparent;
         color: #fff;
         font-size: .68rem;
         font-weight: 600;
         letter-spacing: .04em;
         text-transform: uppercase;
+        line-height: 1.2;
+        text-shadow: 0 2px 6px rgba(0,0,0,.8);
     }
 
     .lp-video-modal-content {

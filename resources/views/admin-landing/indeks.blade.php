@@ -77,7 +77,7 @@
                     ['route' => 'app.admin-landing.profile-sections', 'icon' => 'account_balance', 'title' => 'Profil', 'sub' => 'Section profil, struktur, fasilitas', 'color' => '#0ea5e9'],
                     ['route' => 'app.admin-landing.posts', 'icon' => 'article', 'title' => 'Berita', 'sub' => 'Artikel & program', 'color' => '#f59e0b'],
                     ['route' => 'app.admin-landing.galleries', 'icon' => 'photo_library', 'title' => 'Galeri', 'sub' => 'Album foto', 'color' => '#8b5cf6'],
-                    ['route' => 'app.admin-landing.videos', 'icon' => 'play_circle', 'title' => 'Video', 'sub' => 'Video YouTube', 'color' => '#ef4444'],
+                    ['route' => 'app.admin-landing.videos', 'icon' => 'play_circle', 'title' => 'Video', 'sub' => 'YouTube & upload lokal', 'color' => '#ef4444'],
                     ['route' => 'app.admin-landing.announcements', 'icon' => 'campaign', 'title' => 'Pengumuman', 'sub' => 'Info sekolah', 'color' => '#ef4444'],
                     ['route' => 'app.admin-landing.contact-messages', 'icon' => 'contact_mail', 'title' => 'Kontak', 'sub' => 'Pesan masuk', 'color' => '#10b981'],
                 ];

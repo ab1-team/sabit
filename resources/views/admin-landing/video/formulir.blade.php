@@ -239,11 +239,15 @@
     @if (session('success'))
         <div class="alert alert-success py-2 small mb-2">{{ session('success') }}</div>
     @endif
-    @if ($errors->any())
+    @if (isset($errors) && $errors->any())
         <div class="alert alert-danger py-2 small mb-2">
             <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
         </div>
     @endif
+    <div class="alert alert-danger py-2 small mb-2 lp-ajax-errors" style="display:none;" role="alert">
+        <strong class="lp-ajax-errors-title d-block mb-1">Data belum lengkap:</strong>
+        <ul class="mb-0 ps-3 lp-ajax-errors-list"></ul>
+    </div>
 
     @php
         $isEdit = ($video->exists ?? false);
@@ -295,8 +299,8 @@
                         <div class="lp-field" id="localFileField" style="display:none;">
                             <label for="video_file">File Video</label>
                             <input id="video_file" type="file" name="video_file" class="form-control"
-                                   accept="video/mp4,video/webm,video/quicktime,video/x-matroska">
-                            <small class="help">Format: MP4, WebM, MOV, atau MKV. Maks 50MB. {{ $isEdit && $video->file_path ? 'Kosongkan jika tidak ingin mengganti.' : '' }}</small>
+                                   accept="video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-m4v,.mp4,.m4v,.mov,.webm,.mkv">
+                            <small class="help">Format: MP4, M4V, MOV (iPhone), WebM, atau MKV. Maks 50MB. {{ $isEdit && $video->file_path ? 'Kosongkan jika tidak ingin mengganti.' : '' }}</small>
                             @if ($isEdit && $video->file_path)
                                 <div class="small text-muted mt-1" id="currentFileLabel">
                                     File saat ini: <span class="font-monospace">{{ $video->file_path }}</span>
@@ -480,6 +484,91 @@
             refreshLocalPreview();
         }
     }
+
+    // Batas & ekstensi yang diizinkan — disinkronkan dengan validator di
+    // controller (lihat AdminLandingController::handleVideoStore/Update).
+    var VIDEO_MAX_BYTES = 50 * 1024 * 1024;   // 50MB
+    var POSTER_MAX_BYTES = 5 * 1024 * 1024;   // 5MB
+    var VIDEO_ALLOWED_EXT = ['mp4','m4v','mov','webm','mkv','qt'];
+    var VIDEO_ALLOWED_MIME = [
+        'video/mp4','video/webm','video/quicktime','video/x-matroska',
+        'video/x-m4v','application/octet-stream','application/mp4',
+    ];
+
+    function getExt(name) {
+        if (!name) return '';
+        var i = name.lastIndexOf('.');
+        return i >= 0 ? name.substring(i + 1).toLowerCase() : '';
+    }
+
+    function validateFileForUpload(file, allowedExt, allowedMime, maxBytes, label) {
+        if (!file) return 'File ' + label + ' tidak ditemukan.';
+        if (file.size <= 0) return 'File ' + label + ' kosong (0 byte).';
+        if (file.size > maxBytes) {
+            var mb = Math.round(file.size / 1024 / 1024);
+            var maxMb = Math.round(maxBytes / 1024 / 1024);
+            return 'Ukuran ' + label + ' ' + mb + 'MB melebihi batas ' + maxMb + 'MB.';
+        }
+        var ext = getExt(file.name);
+        var mime = (file.type || '').toLowerCase();
+        var okExt = allowedExt.indexOf(ext) >= 0;
+        var okMime = allowedMime.indexOf(mime) >= 0
+            || (mime && mime.indexOf('video/') === 0)
+            || (mime && mime.indexOf('image/') === 0);
+        if (!okExt && !okMime) {
+            return 'Format ' + label + ' tidak didukung. Ekstensi: ' + (ext || '(none)') + ', MIME: ' + (mime || '(none)') + '.';
+        }
+        return null;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validasi client-side SEBELUM submit, agar user dapat pesan jelas
+        // tanpa harus round-trip ke server. Ini khusus untuk file besar
+        // yang sering gagal di Windows (.mov iPhone, .mkv).
+        var lpForm = document.querySelector('form.lp-ajax');
+        if (lpForm) {
+            lpForm.addEventListener('submit', function (e) {
+                var checked = document.querySelector('input[name="source"]:checked');
+                var source = checked ? checked.value : 'youtube';
+                if (source !== 'local') return;
+                var f = $('video_file');
+                if (!f || !f.files || !f.files[0]) return; // biarkan validator server yang handle required
+                var err = validateFileForUpload(f.files[0], VIDEO_ALLOWED_EXT, VIDEO_ALLOWED_MIME, VIDEO_MAX_BYTES, 'video');
+                if (err) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    if (typeof Swal !== 'undefined' && Swal && Swal.fire) {
+                        Swal.fire({ icon: 'error', title: 'File video tidak valid', text: err });
+                    } else {
+                        alert(err);
+                    }
+                    return false;
+                }
+                var p = $('video_poster');
+                if (p && p.files && p.files[0]) {
+                    var posterExt = getExt(p.files[0].name);
+                    var posterMime = (p.files[0].type || '').toLowerCase();
+                    var posterOk = ['jpg','jpeg','png','webp'].indexOf(posterExt) >= 0 || posterMime.indexOf('image/') === 0;
+                    if (!posterOk) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        if (typeof Swal !== 'undefined' && Swal && Swal.fire) {
+                            Swal.fire({ icon: 'error', title: 'Poster tidak valid', text: 'Poster harus JPG/PNG/WebP.' });
+                        } else { alert('Poster harus JPG/PNG/WebP.'); }
+                        return false;
+                    }
+                    if (p.files[0].size > POSTER_MAX_BYTES) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        if (typeof Swal !== 'undefined' && Swal && Swal.fire) {
+                            Swal.fire({ icon: 'error', title: 'Poster terlalu besar', text: 'Maks 5MB.' });
+                        } else { alert('Poster terlalu besar. Maks 5MB.'); }
+                        return false;
+                    }
+                }
+            }, true); // capture phase: jalan SEBELUM handler .lp-ajax
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('input[name="source"]').forEach(function(r) {
