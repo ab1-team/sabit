@@ -11,6 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html, body { font-family: 'Inter', system-ui, sans-serif; }
@@ -19,9 +21,42 @@
         .invoice-input::placeholder { color: #94a3b8; }
         .invoice-input:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
         .modal-scroll { max-height: calc(100vh - 2rem); overflow-y: auto; }
+        .table-wrap { overflow-x: auto; }
+        #tenants { width: 100% !important; }
+        #tenants thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border-bottom: 1px solid #e2e8f0; color: #475569; font-weight: 600; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; padding: .75rem 1rem; white-space: nowrap; }
+        #tenants tbody td { padding: .875rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        #tenants tbody tr:last-child td { border-bottom: 0; }
+        #tenants tbody tr { transition: background-color .15s ease; }
+        #tenants tbody tr:hover { background-color: #f8fafc; }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter { margin-bottom: .75rem; }
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label { color: #475569; font-size: .8125rem; font-weight: 500; display: inline-flex; align-items: center; gap: .5rem; }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input { border: 1px solid #cbd5e1 !important; border-radius: .5rem !important; padding: .375rem .625rem !important; font-size: .875rem !important; color: #1e293b; background: #fff; }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus { border-color: #6366f1 !important; outline: none !important; box-shadow: 0 0 0 3px rgba(99, 102, 241, .15) !important; }
+        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
+        .dataTables_wrapper .dataTables_info { color: #64748b !important; font-size: .8125rem !important; padding-top: .75rem; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: .75rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-width: 2.25rem; height: 2.25rem; padding: 0 .65rem !important; margin: 0 2px !important; border-radius: .5rem !important; border: 1px solid #e2e8f0 !important; background: #fff !important; color: #475569 !important; font-weight: 600; font-size: .8125rem; cursor: pointer; transition: all .15s ease; }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input { max-width: 100%; }
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_filter input { width: 100%; min-width: 0; margin-left: 0; }
+            .dataTables_wrapper .dataTables_paginate .paginate_button { min-width: 2rem; height: 2rem; font-size: .75rem; padding: 0 .5rem !important; margin: 0 1px !important; }
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) { background: #eef2ff !important; border-color: #c7d2fe !important; color: #4f46e5 !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; box-shadow: 0 1px 2px rgba(79, 70, 229, .25); }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled { color: #cbd5e1 !important; background: #f8fafc !important; border-color: #f1f5f9 !important; cursor: not-allowed; }
+        .dataTables_wrapper .dataTables_processing { background: rgba(255, 255, 255, .85) !important; border: 1px solid #e2e8f0 !important; border-radius: .75rem !important; color: #475569 !important; font-weight: 600 !important; box-shadow: 0 10px 25px rgba(15, 23, 42, .08); }
+        .dataTables_empty { padding: 2.5rem 1rem !important; color: #94a3b8 !important; font-size: .875rem; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('tenant.partials.bilah-atas')
 
@@ -38,148 +73,27 @@
             </button>
         </header>
 
-        <form method="GET" action="{{ route('tenant.tenant.index') }}" class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div class="relative w-full sm:max-w-md">
-                <input type="text" name="q" value="{{ $q }}" placeholder="Cari tenant (id/nama)…" class="block w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-100">
-                <svg class="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-            </div>
-            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Cari</button>
-        </form>
-
         <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="hidden md:block overflow-x-auto">
-                <table class="min-w-[860px] w-full text-sm">
-                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+            <div class="table-wrap px-5 py-4">
+                <table id="tenants" class="table align-items-center mb-0 w-full text-sm text-slate-700">
+                    <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                         <tr>
-                            <th class="px-5 py-3 font-semibold">ID</th>
-                            <th class="px-5 py-3 font-semibold">Nama Sekolah</th>
-                            <th class="px-5 py-3 font-semibold">Domain Landing</th>
-                            <th class="px-5 py-3 font-semibold">Domain Administrator</th>
-                            <th class="px-5 py-3 text-right font-semibold">Aksi</th>
+                            <th class="px-3 py-3 text-left font-semibold">No</th>
+                            <th class="px-3 py-3 text-left font-semibold">ID</th>
+                            <th class="px-3 py-3 text-left font-semibold">Nama Sekolah</th>
+                            <th class="px-3 py-3 text-left font-semibold">Domain Landing</th>
+                            <th class="px-3 py-3 text-left font-semibold">Domain Administrator</th>
+                            <th class="px-3 py-3 text-center font-semibold">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse ($tenants as $t)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 font-mono text-slate-700">{{ $t->id }}</td>
-                                <td class="px-5 py-3 font-semibold text-slate-800">{{ $t->nama_sekolah ?? '—' }}</td>
-                                <td class="px-5 py-3">
-                                    @php $landing = optional($t->landingDomain())->domain; @endphp
-                                    @if ($landing)
-                                        <a href="http://{{ $landing }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100">
-                                            <span class="font-mono">{{ $landing }}</span>
-                                            <svg class="h-3 w-3 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                        </a>
-                                    @else
-                                        <span class="text-xs text-slate-400">—</span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-3">
-                                    @php $admin = optional($t->adminDomain())->domain; @endphp
-                                    @if ($admin)
-                                        <a href="http://{{ $admin }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100">
-                                            <span class="font-mono">{{ $admin }}</span>
-                                            <svg class="h-3 w-3 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                        </a>
-                                    @else
-                                        <span class="text-xs text-slate-400">—</span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-3 text-right">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="open-detail-modal inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200" title="Detail"
-                                            data-id="{{ $t->id }}"
-                                            data-nama="{{ $t->nama_sekolah ?? '—' }}"
-                                            data-domain-landing="{{ optional($t->landingDomain())->domain ?? '—' }}"
-                                            data-domain-admin="{{ optional($t->adminDomain())->domain ?? '—' }}"
-                                            data-email="{{ $t->email ?? '—' }}"
-                                            data-db="tenant{{ $t->id }}"
-                                            data-created="{{ optional($t->created_at)->format('d/m/Y H:i') ?? '—' }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        </button>
-                                        <a href="{{ route('tenant.tenant.profil.index', $t) }}" class="inline-flex items-center rounded-lg bg-indigo-100 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-200" title="Kelola (profil, user, tahun akademik, COA, dll.)">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        </a>
-                                        <button type="button" class="open-edit-modal inline-flex items-center rounded-lg bg-amber-100 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-200" title="Ubah"
-                                            data-edit-url="{{ route('tenant.tenant.update', $t) }}"
-                                            data-id="{{ $t->id }}"
-                                            data-nama="{{ $t->nama_sekolah ?? '' }}"
-                                            data-domain-landing="{{ optional($t->landingDomain())->domain ?? '' }}"
-                                            data-domain-admin="{{ optional($t->adminDomain())->domain ?? '' }}"
-                                            data-email="{{ $t->email ?? '' }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
-                                        </button>
-                                        <button type="button" class="delete-tenant inline-flex items-center rounded-lg bg-rose-100 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-200" title="Hapus" data-action="{{ route('tenant.tenant.destroy', $t) }}" data-name="{{ $t->id }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 0.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 0 00-7.5 0"/></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada tenant.</td></tr>
-                        @endforelse
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-            </div>
-
-            <ul class="divide-y divide-slate-100 md:hidden">
-                @forelse ($tenants as $t)
-                    <li class="px-4 py-4">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-slate-900">{{ $t->nama_sekolah ?? '—' }}</p>
-                                <p class="mt-0.5 font-mono text-xs text-slate-500">{{ $t->id }}</p>
-                                <div class="mt-1 flex flex-col gap-1">
-                                    @foreach ($t->domains as $d)
-                                        <span class="inline-flex items-center gap-1.5 rounded-md {{ $d->type === \App\Models\Domain::TYPE_ADMIN ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700' }} px-2 py-0.5 text-[11px] font-medium">
-                                            <span class="text-[9px] uppercase tracking-wider opacity-70">{{ $d->type }}</span>
-                                            <span class="font-mono">{{ $d->domain }}</span>
-                                        </span>
-                                    @endforeach
-                                </div>
-                            </div>
-                            <div class="flex flex-shrink-0 items-center gap-1">
-                                <button type="button" class="open-detail-modal inline-flex items-center rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200" title="Detail"
-                                    data-id="{{ $t->id }}"
-                                    data-nama="{{ $t->nama_sekolah ?? '—' }}"
-                                    data-domain-landing="{{ optional($t->landingDomain())->domain ?? '—' }}"
-                                    data-domain-admin="{{ optional($t->adminDomain())->domain ?? '—' }}"
-                                    data-email="{{ $t->email ?? '—' }}"
-                                    data-db="tenant{{ $t->id }}"
-                                    data-created="{{ optional($t->created_at)->format('d/m/Y H:i') ?? '—' }}">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                </button>
-                                <a href="{{ route('tenant.tenant.profil.index', $t) }}" class="inline-flex items-center rounded-md bg-indigo-100 p-1.5 text-indigo-700 hover:bg-indigo-200" title="Kelola">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                </a>
-                                <button type="button" class="open-edit-modal inline-flex items-center rounded-md bg-amber-100 p-1.5 text-amber-700 hover:bg-amber-200" title="Ubah"
-                                    data-edit-url="{{ route('tenant.tenant.update', $t) }}"
-                                    data-id="{{ $t->id }}"
-                                    data-nama="{{ $t->nama_sekolah ?? '' }}"
-                                    data-domain-landing="{{ optional($t->landingDomain())->domain ?? '' }}"
-                                    data-domain-admin="{{ optional($t->adminDomain())->domain ?? '' }}"
-                                    data-email="{{ $t->email ?? '' }}">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
-                                </button>
-                                <button type="button" class="delete-tenant inline-flex items-center rounded-md bg-rose-100 p-1.5 text-rose-700 hover:bg-rose-200" title="Hapus" data-action="{{ route('tenant.tenant.destroy', $t) }}" data-name="{{ $t->id }}">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 0.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 0 00-7.5 0"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                @empty
-                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada tenant.</li>
-                @endforelse
-            </ul>
-
-            <div class="overflow-x-auto border-t border-slate-100 px-3 py-4 sm:px-5">
-                {{ $tenants->links() }}
             </div>
         </section>
     </main>
 
-    <div id="tenant-modal" class="{{ $initialModalOpen ? 'flex' : 'hidden' }} fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="modal-scroll w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
+    <div id="tenant-modal" class="{{ $initialModalOpen ? 'flex' : 'hidden' }} fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-scroll w-full max-w-3xl max-h-[95vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
             <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
                 <div>
                     <h3 id="modal-title" class="text-lg font-bold text-slate-900">Tambah Sekolah</h3>
@@ -215,8 +129,8 @@
         </div>
     </div>
 
-    <div id="detail-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
-        <div class="modal-scroll w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+    <div id="detail-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+        <div class="modal-scroll w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
             <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
                 <div>
                     <h3 id="detail-modal-title" class="text-lg font-bold text-slate-900">Detail Sekolah</h3>
@@ -283,6 +197,10 @@
         @method('DELETE')
     </form>
 
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
         const detailModal = document.getElementById('detail-modal');
 
@@ -314,8 +232,9 @@
             setDetailModalState(true);
         }
 
-        document.querySelectorAll('.open-detail-modal').forEach(function (btn) {
-            btn.addEventListener('click', function () { openDetailModal(this); });
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest && e.target.closest('.open-detail-modal');
+            if (btn) openDetailModal(btn);
         });
 
         document.getElementById('close-detail-modal').addEventListener('click', function () { setDetailModalState(false); });
@@ -331,28 +250,28 @@
 
         const deleteForm = document.getElementById('delete-tenant-form');
 
-        document.querySelectorAll('.delete-tenant').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const action = this.dataset.action;
-                const name = this.dataset.name;
-                Swal.fire({
-                    title: 'Hapus tenant ini?',
-                    text: 'Tenant ' + name + ', database tenant' + name + ', dan folder storage akan dihapus. Tindakan ini tidak dapat dibatalkan.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ya, hapus',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 focus:outline-none focus:ring-4 focus:ring-rose-200 mx-1',
-                        cancelButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 mx-1',
-                    },
-                }).then(function (result) {
-                    if (!result.isConfirmed) return;
-                    deleteForm.action = action;
-                    deleteForm.submit();
-                });
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest && e.target.closest('.delete-tenant');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const name = btn.dataset.name;
+            Swal.fire({
+                title: 'Hapus tenant ini?',
+                text: 'Tenant ' + name + ', database tenant' + name + ', dan folder storage akan dihapus. Tindakan ini tidak dapat dibatalkan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 focus:outline-none focus:ring-4 focus:ring-rose-200 mx-1',
+                    cancelButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 mx-1',
+                },
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                deleteForm.action = action;
+                deleteForm.submit();
             });
         });
 
@@ -415,10 +334,9 @@
 
         document.getElementById('open-create-modal').addEventListener('click', openCreateModal);
 
-        document.querySelectorAll('.open-edit-modal').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                openEditModal(this);
-            });
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest && e.target.closest('.open-edit-modal');
+            if (btn) openEditModal(btn);
         });
 
         document.getElementById('close-tenant-modal').addEventListener('click', function () { setModalState(false); });
@@ -432,9 +350,7 @@
             }
         });
 
-        // --- Handler domain ---
         tenantForm.addEventListener('submit', function (e) {
-            // Client-side: cegah submit bila kedua domain identik
             const l = (landingInput.value || '').trim().toLowerCase();
             const a = (adminInput.value || '').trim().toLowerCase();
             if (l && a && l === a) {
@@ -455,10 +371,44 @@
             btn.classList.add('opacity-60', 'cursor-not-allowed');
             submitLabel.textContent = 'Menyimpan…';
         });
+
+        const table = $('#tenants').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: true,
+            responsive: true,
+            scrollX: true,
+            scrollCollapse: true,
+            autoWidth: false,
+            pageLength: 15,
+            lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
+            ajax: @json(route('tenant.tenant.data')),
+            language: {
+                emptyTable: 'Belum ada tenant.',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 data',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                lengthMenu: 'Tampilkan _MENU_ data',
+                loadingRecords: 'Memuat…',
+                processing: 'Memproses…',
+                search: 'Cari:',
+                zeroRecords: 'Tidak ada tenant yang cocok.',
+                paginate: { first: '«', last: '»', next: '›', previous: '‹' },
+            },
+            order: [[2, 'asc']],
+            columns: [
+                { data: 'DT_RowIndex', orderable: false, searchable: false, width: '4%' },
+                { data: 'id', name: 'tenants.id', className: 'ps-3 font-mono text-slate-700' },
+                { data: 'nama_sekolah', name: 'tenants.nama_sekolah', className: 'ps-3 font-semibold text-slate-800' },
+                { data: 'domain_landing_html', name: 'domain_landing', orderable: false, searchable: false, className: 'ps-3' },
+                { data: 'domain_admin_html', name: 'domain_admin', orderable: false, searchable: false, className: 'ps-3' },
+                { data: 'action', orderable: false, searchable: false, className: 'text-center whitespace-nowrap' },
+            ],
+        });
     </script>
 
     @if (session('success'))
-        <script>Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>
+        <script>Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true }).then(function () { if (window.jQuery && $('#tenants').length && $.fn.DataTable) { $('#tenants').DataTable().ajax.reload(null, false); } });</script>
     @endif
     @if (session('error'))
         <script>Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: @json(session('error')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>

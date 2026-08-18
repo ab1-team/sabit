@@ -16,7 +16,7 @@ return [
 
     'nav' => [
         'dashboard' => 'Dashboard',
-        'tenant'    => 'Schools',
+        'tenant'    => 'Tenants',
         'hak_akses'  => 'Access',
         'migrasi'   => 'Migration',
         'invoice'   => 'Invoices',

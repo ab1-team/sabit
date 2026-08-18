@@ -21,6 +21,24 @@
         .invoice-input::placeholder { color: #94a3b8; }
         .invoice-input:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
         .modal-scroll { max-height: calc(100vh - 2rem); overflow-y: auto; }
+
+        /* DataTables tweaks */
+        table.dataTable thead th { font-weight: 600; }
+        table.dataTable tbody td { border-bottom: 1px solid #f1f5f9; }
+        table.dataTable tbody tr:last-child td { border-bottom: 0; }
+        .dataTables_wrapper .dataTables_filter input { border-radius: .75rem; border: 1px solid #cbd5e1; padding: .45rem .75rem; font-size: .875rem; }
+        .dataTables_wrapper .dataTables_filter input:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, .12); }
+        .dataTables_wrapper .dataTables_length select { border-radius: .75rem; border: 1px solid #cbd5e1; padding: .3rem 2rem .3rem .75rem; font-size: .875rem; background-color: #fff; }
+        .dataTables_wrapper .dataTables_info { padding-top: 1rem; font-size: .8125rem; color: #475569; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: 1rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { padding: .35rem .7rem; margin: 0 .12rem; border-radius: .5rem; border: 1px solid #e2e8f0; background: #fff; color: #334155; font-size: .8125rem; font-weight: 600; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #6366f1 !important; color: #fff !important; border-color: #6366f1 !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #f1f5f9 !important; color: #6366f1 !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled { color: #cbd5e1 !important; cursor: not-allowed; }
+        table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control { padding-left: 2rem; }
+        @media (max-width: 767.98px) {
+            .dataTables_wrapper .dataTables_filter { text-align: left; }
+        }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -43,68 +61,19 @@
         @include('tenant.partials.tenant_subnav', ['tenant' => $tenant, 'active' => 'jabatan'])
 
         <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="hidden md:block overflow-x-auto">
-                <table class="min-w-[480px] w-full text-sm">
+            <div class="p-4 sm:p-5 overflow-x-auto">
+                <table id="jabatan-table" class="w-full text-sm" style="width:100%">
                     <thead class="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
                         <tr>
-                            <th class="px-5 py-3 font-semibold">Nama Jabatan</th>
-                            <th class="px-5 py-3 font-semibold">Kode</th>
-                            <th class="px-5 py-3 font-semibold">Dipakai User</th>
-                            <th class="px-5 py-3 text-center font-semibold">Aksi</th>
+                            <th class="px-3 py-3 font-semibold">No</th>
+                            <th class="px-3 py-3 font-semibold">Nama Jabatan</th>
+                            <th class="px-3 py-3 font-semibold">Kode</th>
+                            <th class="px-3 py-3 font-semibold">Dipakai User</th>
+                            <th class="px-3 py-3 text-center font-semibold">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse ($items as $j)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 font-semibold text-slate-800">{{ $j->nama_jabatan }}</td>
-                                <td class="px-5 py-3 font-mono text-xs text-slate-700">{{ $j->kode_jabatan ?? '—' }}</td>
-                                <td class="px-5 py-3"><span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">{{ $j->users_count }} user</span></td>
-                                <td class="px-5 py-3 text-center">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="open-edit-modal inline-flex items-center rounded-lg bg-indigo-100 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-200"
-                                            data-update-url="{{ route('tenant.tenant.jabatan.update', [$tenant, $j]) }}"
-                                            data-nama="{{ $j->nama_jabatan }}"
-                                            data-kode="{{ $j->kode_jabatan }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <button type="button" class="delete-jabatan inline-flex items-center rounded-lg bg-rose-100 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-200" data-action="{{ route('tenant.tenant.jabatan.destroy', [$tenant, $j]) }}" data-name="{{ $j->nama_jabatan }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.48 0 00-7.5 0"/></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="4" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada jabatan.</td></tr>
-                        @endforelse
-                    </tbody>
                 </table>
             </div>
-
-            <ul class="divide-y divide-slate-100 md:hidden">
-                @forelse ($items as $j)
-                    <li class="px-4 py-3.5">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0">
-                                <p class="text-sm font-semibold text-slate-900">{{ $j->nama_jabatan }}</p>
-                                <p class="mt-0.5 font-mono text-xs text-slate-600">{{ $j->kode_jabatan ?? '—' }} · {{ $j->users_count }} user</p>
-                            </div>
-                            <div class="flex flex-shrink-0 items-center gap-1">
-                                <button type="button" class="open-edit-modal inline-flex items-center rounded-lg bg-indigo-100 p-1.5 text-indigo-700 hover:bg-indigo-200"
-                                    data-update-url="{{ route('tenant.tenant.jabatan.update', [$tenant, $j]) }}"
-                                    data-nama="{{ $j->nama_jabatan }}"
-                                    data-kode="{{ $j->kode_jabatan }}">
-                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                </button>
-                                <button type="button" class="delete-jabatan inline-flex items-center rounded-lg bg-rose-100 p-1.5 text-rose-700 hover:bg-rose-200" data-action="{{ route('tenant.tenant.jabatan.destroy', [$tenant, $j]) }}" data-name="{{ $j->nama_jabatan }}">
-                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.48 0 00-7.5 0"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                @empty
-                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada jabatan.</li>
-                @endforelse
-            </ul>
         </section>
     </main>
 
@@ -133,9 +102,8 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     @include('tenant.tenant._formulir_jabatan', ['jabatanItem' => $jabatanItem])
                 </div>
-                <div class="mt-6 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-                    <button type="button" id="cancel-jabatan-modal" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">Batal</button>
-                    <button type="submit" id="submit-jabatan" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+                <div class="mt-6 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+                    <button type="submit" id="submit-jabatan" class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         <span id="submit-label">Tambah Jabatan</span>
                     </button>
@@ -150,6 +118,11 @@
     </form>
 
     @include('tenant.partials._fancy_inputs_scripts')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
     <script>
         const jabatanModal = document.getElementById('jabatan-modal');
         const jabatanForm = document.getElementById('jabatan-form');
@@ -191,11 +164,32 @@
         }
 
         document.getElementById('add-jabatan').addEventListener('click', openCreateModal);
-        document.querySelectorAll('.open-edit-modal').forEach(function (btn) {
-            btn.addEventListener('click', function () { openEditModal(this); });
+        document.addEventListener('click', function (e) {
+            var editBtn = e.target.closest('.open-edit-modal');
+            if (editBtn) { openEditModal(editBtn); return; }
+            var delBtn = e.target.closest('.delete-jabatan');
+            if (delBtn) {
+                Swal.fire({
+                    title: 'Hapus jabatan ini?',
+                    text: 'Jabatan ' + delBtn.dataset.name + ' akan dihapus. Tindakan ini tidak dapat dibatalkan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    buttonsStyling: false,
+                    customClass: {
+                        confirmButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 focus:outline-none focus:ring-4 focus:ring-rose-200 mx-1',
+                        cancelButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 mx-1',
+                    },
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    deleteForm.action = delBtn.dataset.action;
+                    deleteForm.submit();
+                });
+            }
         });
         document.getElementById('close-jabatan-modal').addEventListener('click', function () { setModalState(false); });
-        document.getElementById('cancel-jabatan-modal').addEventListener('click', function () { setModalState(false); });
         jabatanModal.addEventListener('click', function (event) {
             if (event.target === jabatanModal) setModalState(false);
         });
@@ -212,28 +206,43 @@
             submitLabel.textContent = 'Menyimpan…';
         });
 
-        document.querySelectorAll('.delete-jabatan').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const action = this.dataset.action;
-                const name = this.dataset.name;
-                Swal.fire({
-                    title: 'Hapus jabatan ini?',
-                    text: 'Jabatan ' + name + ' akan dihapus. Tindakan ini tidak dapat dibatalkan.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ya, hapus',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 focus:outline-none focus:ring-4 focus:ring-rose-200 mx-1',
-                        cancelButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 mx-1',
-                    },
-                }).then(function (result) {
-                    if (!result.isConfirmed) return;
-                    deleteForm.action = action;
-                    deleteForm.submit();
-                });
+        // DataTables
+        $(function () {
+            $('#jabatan-table').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
+                searching: true,
+                pageLength: 15,
+                lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
+                ajax: {
+                    url: @json(route('tenant.tenant.jabatan.data', $tenant)),
+                    error: function (xhr) {
+                        console.error('DataTables jabatan error:', xhr.status, xhr.responseText);
+                    }
+                },
+                columns: [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'px-3 py-3 text-slate-500' },
+                    { data: 'nama_jabatan', name: 'nama_jabatan', className: 'px-3 py-3 font-semibold text-slate-800' },
+                    { data: 'kode_jabatan_text', name: 'kode_jabatan', orderable: true, searchable: true, className: 'px-3 py-3 font-mono text-xs text-slate-700' },
+                    { data: 'users_count_badge', name: 'users_count', orderable: true, searchable: false, className: 'px-3 py-3' },
+                    { data: 'action', name: 'action', orderable: false, searchable: false, className: 'px-3 py-3 text-center' },
+                ],
+                language: {
+                    emptyTable: 'Belum ada jabatan.',
+                    info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                    infoEmpty: 'Menampilkan 0 dari 0 data',
+                    infoFiltered: '(filter dari _MAX_ total)',
+                    lengthMenu: 'Tampilkan _MENU_',
+                    loadingRecords: 'Memuat…',
+                    processing: 'Memproses…',
+                    search: 'Cari:',
+                    zeroRecords: 'Tidak ada hasil.',
+                    paginate: { first: '«', last: '»', next: '›', previous: '‹' }
+                }
             });
         });
     </script>

@@ -16,7 +16,16 @@
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow { top: 8px; right: 8px; }
         .select2-container--bootstrap-5.select2-container--focus .select2-selection,
         .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
-        .select2-container--bootstrap-5 .select2-dropdown { border-color: #e2e8f0; border-radius: .5rem; overflow: hidden; }
+        .select2-container--bootstrap-5 .select2-dropdown { border-color: #e2e8f0; border-radius: .5rem; overflow: hidden; z-index: 60; }
+        .select2-container--bootstrap-5 .select2-results__options { max-height: 45vh; }
+
+        #drop-zone { -webkit-tap-highlight-color: transparent; }
+        @media (max-width: 480px) {
+            #drop-zone { padding-left: 1rem; padding-right: 1rem; }
+        }
+
+        .swal-wide { width: auto !important; max-width: min(92vw, 640px) !important; }
+        .swal-wide ul { padding-left: 1.25rem; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -25,11 +34,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('tenant.partials.bilah-atas')
 
-    <main class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <header class="mb-6">
-            <p class="text-sm font-semibold text-indigo-600">Tenant Console</p>
-            <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Migrasi Siswa Baru</h2>
-            <p class="mt-1 text-sm text-slate-500">Upload file Excel (.xlsx) untuk import data siswa baru secara bulk.</p>
+    <main class="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
+        <header class="mb-5 sm:mb-6">
+            <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600 sm:text-sm">Tenant Console</p>
+            <h2 class="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">Migrasi Siswa Baru</h2>
+            <p class="mt-1 text-xs text-slate-500 sm:text-sm">Upload file Excel (.xlsx) untuk import data siswa baru secara bulk.</p>
         </header>
 
         @include('tenant.partials.tenant-filter')
@@ -44,9 +53,9 @@
                 </a>
             </div>
         @else
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
+                <div class="min-w-0">
                     <label for="filter-tahun" class="mb-1 block text-xs font-semibold text-slate-600">Tahun Akademik <span class="text-rose-500">*</span></label>
                     <select id="filter-tahun" class="select2 w-full" data-placeholder="— Pilih Tahun Akademik —">
                         <option value="">— Pilih Tahun Akademik —</option>
@@ -55,7 +64,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label for="filter-status" class="mb-1 block text-xs font-semibold text-slate-600">Status Siswa</label>
                     <select id="filter-status" class="select2 w-full" data-placeholder="Pilih status siswa">
                         <option value="aktif">Aktif</option>
@@ -65,27 +74,31 @@
                 </div>
             </div>
 
-            <div class="mt-5 flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <div>
+            <div class="mt-5 flex flex-col gap-3 rounded-lg bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div class="min-w-0 flex-1">
                     <p class="text-xs font-semibold text-slate-700">Belum punya formatnya?</p>
-                    <p class="text-[11px] text-slate-500">Download template Excel yang sudah berisi header + 1 baris contoh.</p>
+                    <p class="mt-0.5 text-[11px] text-slate-500">Download template Excel yang sudah berisi header + 1 baris contoh.</p>
                 </div>
-                <a href="{{ route('tenant.migrasi.siswa.template') }}" class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">
+                <a href="{{ route('tenant.migrasi.siswa.template') }}" class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 sm:w-auto">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                     Download Template
                 </a>
             </div>
 
-            <div id="drop-zone" class="mt-5 cursor-pointer rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-indigo-400 hover:bg-indigo-50 transition">
+            <div id="drop-zone" class="mt-5 cursor-pointer rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center hover:border-indigo-400 hover:bg-indigo-50 transition sm:px-6 sm:py-10">
                 <p class="text-sm font-semibold text-slate-700">Klik atau seret file Excel ke sini</p>
                 <p class="mt-1 text-xs text-slate-400">Format: .xlsx, .xls, .csv (maks 10 MB)</p>
-                <p id="file-name" class="mt-3 hidden text-xs font-semibold text-indigo-600"></p>
+                <p id="file-name" class="mt-3 hidden break-all px-2 text-xs font-semibold text-indigo-600"></p>
                 <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
             </div>
 
-            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button id="btn-reset" type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Atur Ulang</button>
-                <button id="btn-import" type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50">
+            <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button id="btn-reset" type="button" class="order-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 sm:order-1 sm:w-auto sm:py-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Atur Ulang
+                </button>
+                <button id="btn-import" type="button" class="order-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 sm:order-2 sm:w-auto sm:py-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     <span>Import Sekarang</span>
                 </button>
             </div>
@@ -158,7 +171,7 @@
                         icon: data.summary && data.summary.failed > 0 ? 'warning' : 'success',
                         title: data.summary && data.summary.failed > 0 ? 'Selesai dengan catatan' : 'Berhasil',
                         html: html,
-                        width: 600,
+                        customClass: { popup: 'swal-wide' },
                     });
                     if (!data.summary || data.summary.failed === 0) {
                         resetForm();

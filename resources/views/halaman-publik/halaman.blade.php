@@ -22,7 +22,9 @@
     .lp-content { font-size: 1.02rem; line-height: 1.8; color: #334155; }
     .lp-content p { margin-bottom: 1.1rem; }
     .lp-content h2, .lp-content h3 { margin-top: 2rem; margin-bottom: 1rem; font-weight: 700; }
-    .lp-content img { max-width: 100%; border-radius: var(--lp-radius-sm); margin: 1rem 0; }
+    .lp-content img { max-width: 100%; height: auto; border-radius: var(--lp-radius-sm); margin: 1rem 0; }
+    .lp-content table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .lp-content iframe, .lp-content video { max-width: 100%; }
     .lp-content blockquote {
         border-left: 4px solid var(--lp-primary);
         padding: 0.75rem 1.25rem;
@@ -32,7 +34,12 @@
         font-style: italic;
     }
     @media (max-width: 767.98px) {
-        .lp-page-article { padding: 1.5rem; border-radius: var(--lp-radius-lg); }
+        .lp-page-article { padding: 1.25rem; border-radius: var(--lp-radius-lg); }
+        .lp-page-article h1 { font-size: 1.45rem; }
+        .lp-content { font-size: 0.95rem; }
+    }
+    @media (max-width: 575.98px) {
+        .lp-page-article { padding: 1rem; }
     }
 </style>
 @endsection

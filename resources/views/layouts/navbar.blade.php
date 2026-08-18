@@ -7,14 +7,10 @@
 <div class="container-fluid py-1 px-3">
     <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4 d-flex flex-wrap" id="navbar">
         <ul class="navbar-nav d-flex align-items-center justify-content-end ms-auto order-0 order-md-2">
-            <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-                <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
-                    <div class="sidenav-toggler-inner">
-                        <i class="sidenav-toggler-line"></i>
-                        <i class="sidenav-toggler-line"></i>
-                        <i class="sidenav-toggler-line"></i>
-                    </div>
-                </a>
+            <li class="nav-item px-2 d-flex align-items-center">
+                <button type="button" class="lp-sidenav-burger" id="lpSidenavBurger" aria-label="Buka menu" aria-expanded="false">
+                    <span class="material-symbols-rounded">menu</span>
+                </button>
             </li>
 
             @if(session('msg') && $jatuhTempo && now()->day == (int) $jatuhTempo)

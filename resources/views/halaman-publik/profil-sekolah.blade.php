@@ -8,7 +8,7 @@
     .lp-profile {
         background: linear-gradient(180deg, #f6f8fb 0%, #ffffff 60%);
         min-height: 100vh;
-        padding: 7.5rem 0 4rem;
+        padding-bottom: 4rem;
     }
 
     .lp-profile-grid {
@@ -18,8 +18,13 @@
         align-items: start;
     }
     @media (max-width: 991.98px) {
-        .lp-profile-grid { grid-template-columns: 1fr; }
-        .lp-side { position: static; }
+        .lp-profile { padding-bottom: 3rem; }
+        .lp-profile-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+        .lp-side,
+        .lp-side-head,
+        .lp-side-nav,
+        .lp-side-cta { display: none; }
+        .lp-hero-card { padding: 1.35rem 1.25rem; }
     }
 
     /* ---------- Sidebar ---------- */
@@ -201,7 +206,12 @@
         gap: 1.25rem;
     }
     @media (max-width: 767.98px) {
+        .lp-profile { padding-bottom: 2.5rem; }
         .lp-vm-grid { grid-template-columns: 1fr; }
+        .lp-vm-card { padding: 1.2rem 1.15rem; }
+        .lp-section-title-row { margin: 1.75rem 0 0.85rem; }
+        .lp-section-title-row h2 { font-size: 1.15rem; }
+        .lp-hero-card h1 { font-size: 1.35rem; }
     }
     .lp-vm-card {
         background: #ffffff;

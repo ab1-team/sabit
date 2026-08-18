@@ -15,8 +15,8 @@ return [
     ],
 
     'nav' => [
-        'dashboard' => 'Dasbor',
-        'tenant'    => 'Sekolah',
+        'dashboard' => 'Beranda',
+        'tenant'    => 'Tenant',
         'hak_akses'  => 'Hak Akses',
         'migrasi'   => 'Migrasi',
         'invoice'   => 'Invoice',
@@ -24,7 +24,7 @@ return [
     ],
 
     'dashboard' => [
-        'title'           => 'Dasbor',
+        'title'           => 'Beranda',
         'subtitle'        => 'Ringkasan operasional dari seluruh sekolah tenant.',
         'filter_all'      => 'Semua Sekolah',
         'filter_label'    => 'Filter Sekolah',

@@ -27,6 +27,16 @@
         border-color: transparent;
         box-shadow: 0 8px 20px rgba(var(--lp-primary-rgb), 0.3);
     }
+    @media (max-width: 767.98px) {
+        .lp-album-pill { padding: 0.4rem 0.85rem; font-size: 0.82rem; }
+    }
+    @media (hover: none) {
+        .lp-gallery-item::after { opacity: 1; }
+        .lp-gallery-item .lp-gallery-overlay {
+            transform: none;
+            opacity: 1;
+        }
+    }
 </style>
 @endsection
 

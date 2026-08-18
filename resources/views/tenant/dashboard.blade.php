@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         html, body { font-family: 'Inter', system-ui, sans-serif; }
         body { -webkit-tap-highlight-color: transparent; background: #f3f5f9; }
@@ -25,15 +26,29 @@
         /* Cards / Glass */
         .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
         .card-pad { padding: 14px 16px; }
-        .gradient-card { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #fff; border: none; }
-        .gradient-emerald { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff; border: none; }
-        .gradient-amber { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: #fff; border: none; }
-        .gradient-sky { background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); color: #fff; border: none; }
-        .gradient-rose { background: linear-gradient(135deg, #be123c 0%, #f43f5e 100%); color: #fff; border: none; }
-        .gradient-slate { background: linear-gradient(135deg, #1f2937 0%, #334155 100%); color: #fff; border: none; }
+        .gradient-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(102, 126, 234, .55); }
+        .gradient-emerald { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(17, 153, 142, .55); }
+        .gradient-amber { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(247, 151, 30, .55); }
+        .gradient-sky { background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(33, 147, 176, .55); }
+        .gradient-rose { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(238, 9, 121, .55); }
+        .gradient-slate { background: linear-gradient(135deg, #232526 0%, #414345 100%); color: #fff; border: none; }
+        .gradient-violet { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(142, 45, 226, .55); }
+        .gradient-ocean { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(41, 128, 185, .55); }
+        .gradient-sunset { background: linear-gradient(135deg, #ff512f 0%, #dd2476 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(255, 81, 47, .55); }
+        .gradient-mint { background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(0, 176, 155, .55); }
+        .gradient-aurora { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); color: #fff; border: none; box-shadow: 0 10px 25px -10px rgba(0, 114, 255, .55); }
 
-        .stat-icon { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .gradient-card .stat-icon { background: rgba(255,255,255,0.18); }
+        .stat-icon { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .gradient-card .stat-icon,
+        .gradient-emerald .stat-icon,
+        .gradient-amber .stat-icon,
+        .gradient-sky .stat-icon,
+        .gradient-rose .stat-icon,
+        .gradient-violet .stat-icon,
+        .gradient-ocean .stat-icon,
+        .gradient-sunset .stat-icon,
+        .gradient-mint .stat-icon,
+        .gradient-aurora .stat-icon { background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
         .scroll-thin::-webkit-scrollbar { width: 4px; height: 4px; }
         .scroll-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
@@ -73,9 +88,9 @@
                 $chartTenant = $chartTenant ?? ['labels' => [], 'values' => [], 'total' => 0];
 
                 $primaryCards = [
-                    ['label' => __('tenant.dashboard.stats.total_schools'),  'value' => $stats['tenant_total'] ?? 0, 'sub' => number_format($stats['tenant_active'] ?? 0) . ' ' . __('tenant.dashboard.stats.active_schools'), 'grad' => 'gradient-card', 'icon' => 'school'],
+                    ['label' => __('tenant.dashboard.stats.total_schools'),  'value' => $stats['tenant_total'] ?? 0, 'sub' => number_format($stats['tenant_active'] ?? 0) . ' ' . __('tenant.dashboard.stats.active_schools'), 'grad' => 'gradient-violet', 'icon' => 'school'],
                     ['label' => __('tenant.dashboard.stats.invoice_total'),  'value' => $stats['invoice_total'] ?? 0, 'sub' => number_format($stats['invoice_paid'] ?? 0) . ' ' . __('tenant.dashboard.stats.invoice_paid'), 'grad' => 'gradient-emerald', 'icon' => 'invoice'],
-                    ['label' => __('tenant.dashboard.stats.invoice_open'),   'value' => $stats['invoice_open'] ?? 0, 'sub' => 'Rp ' . number_format($stats['nominal_open'] ?? 0, 0, ',', '.'), 'grad' => 'gradient-amber', 'icon' => 'open'],
+                    ['label' => __('tenant.dashboard.stats.invoice_open'),   'value' => $stats['invoice_open'] ?? 0, 'sub' => 'Rp ' . number_format($stats['nominal_open'] ?? 0, 0, ',', '.'), 'grad' => 'gradient-sunset', 'icon' => 'open'],
                 ];
             @endphp
 
@@ -98,9 +113,9 @@
             </header>
 
             {{-- Primary stats --}}
-            <section class="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
+            <section class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($primaryCards as $c)
-                    <article class="{{ $c['grad'] }} card card-pad flex items-center gap-3">
+                    <article class="{{ $c['grad'] }} card card-pad flex flex-row items-center gap-3">
                         <div class="stat-icon">
                             @if ($c['icon'] === 'school')
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -112,19 +127,19 @@
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             @endif
                         </div>
-                        <div class="min-w-0">
-                            <p class="text-[10px] font-semibold uppercase tracking-wider opacity-80">{{ $c['label'] }}</p>
-                            <p class="truncate text-xl font-bold leading-tight">{{ $c['value'] }}</p>
-                            <p class="truncate text-[11px] opacity-80">{{ $c['sub'] }}</p>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-[10px] font-semibold uppercase tracking-wider opacity-90">{{ $c['label'] }}</p>
+                            <p class="truncate text-xl font-bold leading-tight drop-shadow-sm sm:text-2xl">{{ $c['value'] }}</p>
+                            <p class="truncate text-[11px] leading-tight opacity-90">{{ $c['sub'] }}</p>
                         </div>
                     </article>
                 @endforeach
             </section>
 
             {{-- Tables row --}}
-            <section class="mt-2.5 grid grid-cols-1 gap-2.5 xl:grid-cols-3">
+            <section class="mt-2.5 grid grid-cols-1 gap-2.5 xl:grid-cols-3 items-stretch">
                 {{-- Recent Invoices --}}
-                <article class="card xl:col-span-2 flex flex-col overflow-hidden">
+                <article class="card xl:col-span-2 flex flex-col overflow-hidden min-h-[340px]">
                     <header class="flex flex-shrink-0 items-center justify-between border-b border-slate-100 px-4 py-2.5">
                         <div>
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{{ __('tenant.dashboard.tables.recent_invoices') }}</p>
@@ -132,7 +147,7 @@
                         </div>
                         <a href="{{ route('tenant.invoice.index') }}" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700">{{ __('tenant.dashboard.tables.view_all') }} →</a>
                     </header>
-                    <div class="scroll-thin max-h-72 overflow-y-auto overflow-x-auto">
+                    <div class="scroll-thin flex-1 overflow-y-auto overflow-x-auto">
                         <table class="table-clean min-w-[520px] w-full">
                             <thead class="sticky top-0 z-10">
                                 <tr>
@@ -176,7 +191,7 @@
                 </article>
 
                 {{-- Recent Schools --}}
-                <article class="card flex flex-col overflow-hidden">
+                <article class="card flex flex-col overflow-hidden min-h-[340px]">
                     <header class="flex flex-shrink-0 items-center justify-between border-b border-slate-100 px-4 py-2.5">
                         <div>
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{{ __('tenant.dashboard.tables.recent_schools') }}</p>
@@ -184,7 +199,7 @@
                         </div>
                         <a href="{{ route('tenant.tenant.index') }}" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700">{{ __('tenant.dashboard.tables.view_all') }} →</a>
                     </header>
-                    <div class="scroll-thin max-h-72 overflow-y-auto">
+                    <div class="scroll-thin flex-1 overflow-y-auto">
                         <ul class="divide-y divide-slate-100">
                             @forelse ($recentSchools as $s)
                                 <li class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50">

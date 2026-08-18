@@ -30,9 +30,9 @@
                 <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Profil Sekolah</h2>
                 <p class="mt-1 text-sm text-slate-500">Identitas & kontak lembaga.</p>
             </div>
-            <a href="{{ route('tenant.tenant.index') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:w-auto">
+            <a href="{{ route('tenant.tenant.index') }}" title="Kembali ke data tenant" aria-label="Kembali ke data tenant" class="inline-flex h-10 w-10 items-center justify-center self-end rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:h-auto sm:w-auto sm:gap-2 sm:self-auto sm:px-4 sm:py-2.5 sm:text-sm sm:font-semibold">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                Kembali ke data tenant
+                <span class="sr-only sm:not-sr-only sm:inline">Kembali ke data tenant</span>
             </a>
         </header>
 
@@ -44,8 +44,7 @@
             @include('tenant.tenant._formulir_profil', ['profilItem' => $profil])
 
             <div class="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-                <a href="{{ route('tenant.tenant.index') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">Batal</a>
-                <button type="submit" id="submit-profil" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+                <button type="submit" id="submit-profil" class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     <span id="submit-label">Simpan</span>
                 </button>

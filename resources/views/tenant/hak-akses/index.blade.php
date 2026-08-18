@@ -23,7 +23,13 @@
     <style>
         html, body { font-family: 'Inter', system-ui, sans-serif; }
         body { -webkit-tap-highlight-color: transparent; background: #f8fafc; }
-        .menu-scroll { max-height: 38vh; overflow-y: auto; }
+        .menu-scroll { max-height: 32vh; overflow-y: auto; }
+        @media (min-width: 640px) {
+            .menu-scroll { max-height: 38vh; }
+        }
+        @media (min-width: 1024px) {
+            .menu-scroll { max-height: 50vh; }
+        }
         .menu-scroll::-webkit-scrollbar { width: 8px; }
         .menu-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .menu-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -31,8 +37,13 @@
         details > summary { list-style: none; cursor: pointer; }
         details > summary::-webkit-details-marker { display: none; }
         details > summary::marker { display: none; }
-        details[open] .chev { transform: rotate(90deg); }
-        .chev { transition: transform .18s ease; }
+        details[open] .chev-desktop { transform: rotate(90deg); }
+        .chev-desktop { transition: transform .18s ease; }
+
+        /* Chevron mobile (muncul di summary, hilang jika details[open]) */
+        details .chev-mobile { display: inline-block; transition: transform .18s ease; }
+        details[open] .chev-mobile { transform: rotate(90deg); }
+
         .menu-row:hover { background: #f8fafc; }
         .group-card { box-shadow: 0 1px 0 rgba(15, 23, 42, .04), 0 2px 4px rgba(15, 23, 42, .02); }
         .toolbar-btn { transition: all .15s ease; }
@@ -47,6 +58,9 @@
         .invoice-input { width: 100%; min-height: 36px; border: 1px solid #cbd5e1; border-radius: .5rem; background: #fff; padding: .4rem .75rem; font-size: .8125rem; color: #1e293b; transition: border-color .15s ease, box-shadow .15s ease; }
         .invoice-input::placeholder { color: #94a3b8; }
         .invoice-input:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
+
+        /* Lock body scroll saat modal */
+        body.modal-open { overflow: hidden; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -68,12 +82,12 @@
                     <span class="text-slate-400">Pemilik</span>
                     <span class="text-slate-900">{{ collect($perTenant)->filter(fn ($p) => collect($p['users'])->contains(fn ($u) => $u['username'] === 'admin'))->count() }}</span>
                 </div>
-                <button id="expand-all" type="button" title="Buka semua" aria-label="Buka semua" class="toolbar-btn inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-indigo-200 hover:text-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 sm:px-3">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                <button id="expand-all" type="button" title="Buka semua" aria-label="Buka semua" class="toolbar-btn inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-indigo-200 hover:text-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                     <span class="hidden sm:inline">Buka semua</span>
                 </button>
-                <button id="collapse-all" type="button" title="Tutup semua" aria-label="Tutup semua" class="toolbar-btn inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-indigo-200 hover:text-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 sm:px-3">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.75M15 9V4.75M9 15v4.25M15 15v4.25M4.75 9H9m6 0h4.25M4.75 15H9m6 0h4.25"/></svg>
+                <button id="collapse-all" type="button" title="Tutup semua" aria-label="Tutup semua" class="toolbar-btn inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-indigo-200 hover:text-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.75M15 9V4.75M9 15v4.25M15 15v4.25M4.75 9H9m6 0h4.25M4.75 15H9m6 0h4.25"/></svg>
                     <span class="hidden sm:inline">Tutup semua</span>
                 </button>
             </div>
@@ -89,30 +103,30 @@
                 $domain = optional($t->domains->first())->domain ?? '—';
             @endphp
             <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm tenant-block" data-tenant-id="{{ $t->id }}">
-                <header class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <header class="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div class="flex min-w-0 items-center gap-3">
                         <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm shadow-indigo-500/20">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         </div>
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h3 class="truncate text-base font-bold text-slate-900">{{ $tenantName }}</h3>
                                 <span class="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
                                     <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 015.656 0l1.415 1.415a4 4 0 010 5.656l-3 3a4 4 0 01-5.656 0M10.172 13.828a4 4 0 01-5.656 0l-1.415-1.415a4 4 0 010-5.656l3-3a4 4 0 015.656 0"/></svg>
-                                    {{ $domain }}
+                                    <span class="truncate max-w-[180px]">{{ $domain }}</span>
                                 </span>
                             </div>
                             <p class="mt-0.5 font-mono text-xs text-slate-500">tenant{{ $t->id }} · {{ count($users) }} user · {{ $menuCount }} menu</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" class="add-user-btn inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+                        <button type="button" class="add-user-btn inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-xs font-semibold text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto sm:py-2">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                            Tambah User
+                            <span>Tambah User</span>
                         </button>
-                        <a href="http://{{ $domain }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                        <a href="http://{{ $domain }}" target="_blank" class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold" title="Buka {{ $domain }}" aria-label="Buka {{ $domain }}">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 015.656 0l1.415 1.415a4 4 0 010 5.656l-3 3a4 4 0 01-5.656 0M10.172 13.828a4 4 0 01-5.656 0l-1.415-1.415a4 4 0 010-5.656l3-3a4 4 0 015.656 0"/></svg>
-                            Buka
+                            <span class="hidden sm:inline">Buka</span>
                         </a>
                     </div>
                 </header>
@@ -135,14 +149,19 @@
                             <details>
                                 <summary class="flex items-start gap-3 px-4 py-3 transition hover:bg-slate-50 md:grid md:grid-cols-12 md:items-center md:gap-3 md:px-5 md:py-3.5">
                                     <div class="hidden md:flex md:col-span-1 md:justify-center">
-                                        <svg class="chev h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                        <svg class="chev-desktop h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                                     </div>
                                     <div class="flex flex-1 items-center gap-3 min-w-0 md:col-span-4">
                                         <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white text-xs shadow-sm">{{ $initial }}</div>
-                                        <div class="min-w-0">
+                                        <div class="min-w-0 flex-1">
                                             <p class="truncate text-sm font-semibold text-slate-800">{{ $u['nama'] }}</p>
                                             <p class="truncate text-xs text-slate-500">{{ $u['username'] }}</p>
                                         </div>
+                                        <span class="ml-auto inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 md:hidden">
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                            <span class="user-count">{{ count($selected) }}</span>
+                                        </span>
+                                        <svg class="chev-mobile h-4 w-4 flex-shrink-0 text-slate-400 md:hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                                     </div>
                                     <div class="hidden md:flex md:col-span-1 md:items-center md:justify-center">
                                         <span class="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
@@ -151,20 +170,20 @@
                                         </span>
                                     </div>
                                     <div class="flex flex-wrap items-center justify-end gap-1 md:col-span-6 md:flex-nowrap">
-                                        <button type="button" class="edit-user-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-600" title="Ubah" aria-label="Ubah">
+                                        <button type="button" class="edit-user-btn inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-amber-50 hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-200 md:h-auto md:w-auto md:p-1.5" title="Ubah" aria-label="Ubah">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
-                                        <button type="button" class="reset-pwd-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600" title="Reset Kata Sandi" aria-label="Reset Kata Sandi">
+                                        <button type="button" class="reset-pwd-btn inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-200 md:h-auto md:w-auto md:p-1.5" title="Reset Kata Sandi" aria-label="Reset Kata Sandi">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586l4.293-4.293A6 6 0 1119 9z"/></svg>
                                         </button>
-                                        <button type="button" class="delete-user-btn inline-flex items-center rounded-md p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Hapus" aria-label="Hapus">
+                                        <button type="button" class="delete-user-btn inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200 md:h-auto md:w-auto md:p-1.5" title="Hapus" aria-label="Hapus">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1z"/></svg>
                                         </button>
-                                        <button type="button" class="select-all-btn inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 sm:px-2" title="Pilih semua menu" aria-label="Pilih semua menu">
+                                        <button type="button" class="select-all-btn hidden h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 md:inline-flex" title="Pilih semua menu" aria-label="Pilih semua menu">
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                             <span class="hidden sm:inline">Semua</span>
                                         </button>
-                                        <button type="button" class="clear-all-btn inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 sm:px-2" title="Kosongkan pilihan" aria-label="Kosongkan pilihan">
+                                        <button type="button" class="clear-all-btn hidden h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 md:inline-flex" title="Kosongkan pilihan" aria-label="Kosongkan pilihan">
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                                             <span class="hidden sm:inline">Atur Ulang</span>
                                         </button>
@@ -215,14 +234,14 @@
                                         </div>
                                     </div>
 
-                                    <div class="mt-4 flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
-                                        <button type="button" class="clear-all-btn inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 transition">
-                                            Atur Ulang
-                                        </button>
-                                        <button type="button" class="save-btn inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:opacity-50 transition">
+                                    <div class="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
+                                        <button type="button" class="save-btn order-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:opacity-50 transition sm:order-2 sm:w-auto">
                                             <svg class="h-3.5 w-3.5 save-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                             <svg class="h-3.5 w-3.5 spin-icon hidden animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
                                             <span class="save-label">Simpan Perubahan</span>
+                                        </button>
+                                        <button type="button" class="clear-all-btn order-2 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 transition sm:order-1 sm:w-auto">
+                                            Atur Ulang
                                         </button>
                                     </div>
                                 </div>
@@ -267,17 +286,17 @@
 
     <div id="add-user-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="add-user-title">
         <div class="w-full max-w-5xl max-h-[95vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3 sm:px-6">
-                <div>
+            <div class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3 sm:items-center sm:px-6">
+                <div class="min-w-0 flex-1">
                     <h3 id="add-user-title" class="text-base font-bold text-slate-900">Tambah Pengguna Operator</h3>
-                    <p class="mt-0.5 text-xs text-slate-500">Buat akun baru lengkap dengan hak akses menu untuk lokasi <span id="add-user-tenant-label" class="font-semibold text-slate-700"></span>.</p>
+                    <p class="mt-0.5 truncate text-xs text-slate-500">Buat akun untuk <span id="add-user-tenant-label" class="font-semibold text-slate-700"></span>.</p>
                 </div>
-                <button type="button" id="close-add-user-modal" aria-label="Tutup" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
+                <button type="button" id="close-add-user-modal" aria-label="Tutup" class="flex-shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-100">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <form id="add-user-form" class="px-5 py-4 sm:px-6">
+            <form id="add-user-form" class="px-4 py-4 sm:px-6">
                 <input type="hidden" id="add-tenant-id" name="tenant_id">
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
                     <div class="space-y-2 lg:col-span-2">
@@ -304,14 +323,14 @@
                     </div>
 
                     <div class="lg:col-span-3 lg:border-l lg:border-slate-100 lg:pl-4">
-                        <div class="mb-1.5 flex items-center justify-between">
-                            <div>
+                        <div class="mb-1.5 flex items-center justify-between gap-2">
+                            <div class="min-w-0">
                                 <p class="text-[11px] font-semibold text-slate-700">Hak Akses Menu</p>
                                 <p class="text-[10px] text-slate-500">Centang menu yang boleh diakses.</p>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <button type="button" id="add-select-all" class="rounded-md px-2 py-0.5 text-[10px] font-semibold text-indigo-600 hover:bg-indigo-50">Semua</button>
-                                <button type="button" id="add-clear-all" class="rounded-md px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-50">Atur Ulang</button>
+                            <div class="flex flex-shrink-0 items-center gap-1">
+                                <button type="button" id="add-select-all" class="rounded-md px-2 py-1 text-[10px] font-semibold text-indigo-600 hover:bg-indigo-50">Semua</button>
+                                <button type="button" id="add-clear-all" class="rounded-md px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50">Atur Ulang</button>
                             </div>
                         </div>
                         <div class="menu-grid menu-scroll rounded-xl border border-slate-200 p-2.5">
@@ -322,21 +341,21 @@
 
                 <div id="add-user-error" class="mt-2 hidden rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"></div>
 
-                <div class="mt-3 flex flex-col-reverse gap-2 border-t border-slate-100 pt-2.5 sm:flex-row sm:justify-end">
-                    <button type="button" id="cancel-add-user-modal" class="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">Batal</button>
-                    <button type="submit" id="submit-add-user" class="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:opacity-50">
+                <div class="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
+                    <button type="submit" id="submit-add-user" class="order-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:opacity-50 sm:order-2 sm:w-auto">
                         <svg class="h-3.5 w-3.5 submit-icon" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         <svg class="h-3.5 w-3.5 spin-icon hidden animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
                         <span class="submit-label">Simpan User</span>
                     </button>
+                    <button type="button" id="cancel-add-user-modal" class="order-2 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:order-1 sm:w-auto">Batal</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="edit-user-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-        <div class="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <form id="edit-user-form" class="space-y-4 p-6">
+    <div id="edit-user-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true">
+        <div class="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <form id="edit-user-form" class="space-y-4 p-5 sm:p-6">
                 <input type="hidden" id="edit-tenant-id">
                 <input type="hidden" id="edit-user-id">
                 <div>
@@ -358,17 +377,17 @@
                     </div>
                 </div>
                 <div id="edit-user-error" class="hidden rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"></div>
-                <div class="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('edit-user-modal')" class="inline-flex items-center rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">Simpan</button>
+                <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+                    <button type="submit" class="order-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:order-2 sm:w-auto">Simpan</button>
+                    <button type="button" onclick="closeModal('edit-user-modal')" class="order-2 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-slate-100 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-200 sm:order-1 sm:w-auto">Batal</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="reset-pwd-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-        <div class="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <form id="reset-pwd-form" class="space-y-4 p-6">
+    <div id="reset-pwd-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true">
+        <div class="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <form id="reset-pwd-form" class="space-y-4 p-5 sm:p-6">
                 <input type="hidden" id="reset-tenant-id">
                 <input type="hidden" id="reset-user-id">
                 <div>
@@ -380,9 +399,9 @@
                     <input id="reset-password" type="password" required minlength="6" class="invoice-input" placeholder="Minimal 6 karakter">
                 </div>
                 <div id="reset-pwd-error" class="hidden rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"></div>
-                <div class="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('reset-pwd-modal')" class="inline-flex items-center rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">Reset</button>
+                <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+                    <button type="submit" class="order-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:order-2 sm:w-auto">Reset</button>
+                    <button type="button" onclick="closeModal('reset-pwd-modal')" class="order-2 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-slate-100 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-200 sm:order-1 sm:w-auto">Batal</button>
                 </div>
             </form>
         </div>
@@ -398,12 +417,14 @@
             m.classList.add('hidden');
             m.classList.remove('flex');
             document.body.classList.remove('overflow-hidden');
+            document.body.classList.remove('modal-open');
         }
         function openModal(id) {
             const m = document.getElementById(id);
             m.classList.remove('hidden');
             m.classList.add('flex');
             document.body.classList.add('overflow-hidden');
+            document.body.classList.add('modal-open');
         }
 
         function updateCount(row) {

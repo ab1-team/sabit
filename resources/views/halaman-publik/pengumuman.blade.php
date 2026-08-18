@@ -36,6 +36,14 @@
         border: 3px solid var(--lp-primary);
         box-shadow: 0 0 0 4px rgba(var(--lp-primary-rgb), 0.15);
     }
+    .lp-ann-item .text-muted { overflow-wrap: anywhere; }
+    .lp-ann-item img { max-width: 100%; height: auto; }
+    @media (max-width: 767.98px) {
+        .lp-ann-list { padding-left: 20px; }
+        .lp-ann-item { padding: 1.1rem 1.15rem; }
+        .lp-ann-item::before { left: -16px; top: 1.5rem; width: 10px; height: 10px; }
+        .lp-ann-item h5 { font-size: 1rem; }
+    }
 </style>
 @endsection
 

@@ -29,7 +29,7 @@
                 <span class="material-symbols-rounded">bookmarks</span>
             </div>
             <div>
-                <h5>Bagian Pengaturan</h5>
+                <h5>Pengaturan</h5>
                 <div class="sub">Pilih modul pengaturan</div>
             </div>
         </div>

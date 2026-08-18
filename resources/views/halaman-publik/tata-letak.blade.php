@@ -43,6 +43,7 @@
             --lp-radius-md: 16px;
             --lp-radius-lg: 20px;
             --lp-radius-xl: 24px;
+            --lp-navbar-max: 1200px;
             --lp-card-pad-y: 1.5rem;
             --lp-card-pad-x: 1.5rem;
             --lp-card-pad: 1.5rem;
@@ -59,9 +60,19 @@
             color: var(--lp-text);
             background: #ffffff;
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
+            overflow-x: clip;
+            overflow-wrap: break-word;
         }
+        img, video, svg { max-width: 100%; }
+        img { height: auto; }
+        iframe { max-width: 100%; }
         a { text-decoration: none; }
+        table { max-width: 100%; }
+
+        /* Halaman dalam: konten tidak tertutup navbar tetap */
+        body.lp-inner > section:first-of-type {
+            padding-top: 7.5rem;
+        }
 
         /* ============= Scroll progress bar ============= */
         .lp-scroll-progress {
@@ -116,45 +127,127 @@
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1030;
-            display: flex;
-            justify-content: center;
-            padding: 0 16px;
+            width: 100%;
+            z-index: 1100;
+            padding: 16px 16px 0;
             pointer-events: none;
             transition: top 0.3s var(--lp-ease);
         }
-        .lp-navbar {
-            pointer-events: auto;
-            background: transparent;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-            border: 1px solid transparent;
-            border-radius: 999px;
-            padding: 1rem 1.5rem;
-            box-shadow: none;
+        .lp-navbar-inner {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.25rem;
+            max-width: calc(var(--lp-navbar-max) + 32px);
+            margin: 0 auto;
+            position: relative;
             width: 100%;
-            max-width: 1200px;
-            transition: all 0.4s var(--lp-ease);
-            margin-top: 16px;
+            pointer-events: none;
         }
-        .lp-navbar.is-page {
+        .lp-navbar-inner > .lp-navbar,
+        .lp-navbar-inner > .lp-cta-desktop,
+        .lp-navbar-wrap > .lp-nav-menu > .lp-nav-menu-body { pointer-events: auto; }
+        /* Pill background utama menutupi seluruh isi (brand + menu + CTA)
+           agar tampak sebagai 1 kartu utuh. Pseudo di inner, bukan di wrap.
+           Di halaman beranda (body.lp-home), navbar dibuat transparan agar
+           menyatu dengan hero tanpa terlihat membungkus konten. */
+        .lp-navbar-inner::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
             background: rgba(255, 255, 255, 0.88);
             backdrop-filter: saturate(180%) blur(18px);
             -webkit-backdrop-filter: saturate(180%) blur(18px);
             border: 1px solid rgba(255, 255, 255, 0.7);
             box-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
-            padding: 0.4rem 0.4rem 0.4rem 1.25rem;
+            pointer-events: none;
+            z-index: -1;
+            transition: opacity 0.3s var(--lp-ease);
         }
-        .lp-navbar.is-page .lp-brand { color: var(--lp-primary); }
-        .lp-navbar.is-page .lp-nav-link { color: #475569; }
-        .lp-navbar.is-page .lp-nav-link:hover {
+        /* Halaman beranda: sembunyikan pill, hanya teks saja */
+        body.lp-home .lp-navbar-inner::before {
+            opacity: 0;
+        }
+        /* Tapi saat scrolled, tetap munculkan pill di beranda (sticky bar) */
+        body.lp-home .lp-navbar-inner.is-scrolled::before {
+            opacity: 1;
+        }
+        /* Beranda: di mode scrolled, teks brand & link tetap terbaca di atas hero gradient */
+        body.lp-home .lp-navbar-inner:not(.is-scrolled) .lp-brand,
+        body.lp-home .lp-navbar-inner:not(.is-scrolled) .lp-nav-link {
+            color: #ffffff;
+        }
+        body.lp-home .lp-navbar-inner:not(.is-scrolled) .lp-nav-link.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+        }
+        @media (max-width: 991.98px) {
+            .lp-navbar-inner::before {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                background: rgba(255, 255, 255, 0.96);
+            }
+            /* Halaman beranda + mobile: navbar juga transparan di top,
+               pill muncul saat scrolled atau drawer dibuka */
+            body.lp-home .lp-navbar-inner::before {
+                opacity: 0;
+            }
+            body.lp-home .lp-navbar-inner.is-scrolled::before,
+            body.lp-home .lp-navbar-inner.is-drawer-open::before {
+                opacity: 1;
+            }
+            /* Brand & link color putih di top, darken saat scrolled/drawer */
+            body.lp-home .lp-navbar-inner:not(.is-scrolled):not(.is-drawer-open) .lp-brand,
+            body.lp-home .lp-navbar-inner:not(.is-scrolled):not(.is-drawer-open) .lp-nav-link {
+                color: #ffffff;
+            }
+            body.lp-home .lp-navbar-inner:not(.is-scrolled):not(.is-drawer-open) .lp-nav-link.active {
+                color: #ffffff;
+                background: rgba(255, 255, 255, 0.18);
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+            }
+            /* Tombol toggle (hamburger) ikut putih di top, gelap saat scrolled/drawer */
+            body.lp-home .lp-navbar-inner:not(.is-scrolled):not(.is-drawer-open) .lp-nav-toggler {
+                color: #ffffff;
+            }
+        }
+        /* Saat drawer open: sembunyikan pill agar drawer yang mengambil alih. */
+        .lp-navbar-inner.is-drawer-open::before,
+        .lp-navbar-inner.is-drawer-open > .lp-navbar,
+        .lp-navbar-inner.is-drawer-open > .lp-cta-desktop,
+        .lp-navbar-wrap.is-drawer-open > .lp-nav-menu > .lp-nav-menu-body {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s var(--lp-ease), visibility 0s linear 0.2s;
+        }
+        .lp-navbar {
+            pointer-events: auto;
+            background: transparent;
+            border: 0;
+            border-radius: 999px;
+            padding: 0.4rem 0.6rem 0.4rem 1.25rem;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: auto;
+            flex: 0 0 auto;
+            transition: all 0.4s var(--lp-ease);
+            position: relative;
+        }
+        .lp-navbar.is-page .lp-brand,
+        .lp-navbar-wrap:has(.lp-navbar.is-page) .lp-brand { color: var(--lp-primary); }
+        .lp-navbar.is-page .lp-nav-link,
+        .lp-navbar-wrap:has(.lp-navbar.is-page) .lp-nav-link { color: #475569; }
+        .lp-navbar.is-page .lp-nav-link:hover,
+        .lp-navbar-wrap:has(.lp-navbar.is-page) .lp-nav-link:hover {
             color: var(--lp-primary);
             background: rgba(var(--lp-primary-rgb), 0.06);
         }
-        .lp-navbar.is-page .lp-nav-link.active {
+        .lp-navbar.is-page .lp-nav-link.active,
+        .lp-navbar-wrap:has(.lp-navbar.is-page) .lp-nav-link.active {
             color: #fff;
             background: var(--lp-primary);
             box-shadow: 0 6px 18px rgba(var(--lp-primary-rgb), 0.35);
@@ -164,12 +257,6 @@
         }
         .lp-navbar.is-scrolled {
             padding: 0.4rem 0.4rem 0.4rem 1.25rem;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: saturate(180%) blur(18px);
-            -webkit-backdrop-filter: saturate(180%) blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12);
-            margin-top: 16px;
         }
         .lp-brand {
             font-weight: 800;
@@ -179,11 +266,19 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            min-width: 0;
+            flex: 0 0 auto;
+            white-space: nowrap;
             transition: transform 0.25s var(--lp-ease), color 0.3s var(--lp-ease);
         }
-        .lp-navbar.is-scrolled .lp-brand { color: var(--lp-primary); }
+        .lp-navbar.is-scrolled .lp-brand,
+        .lp-navbar-wrap.is-scrolled .lp-brand { color: var(--lp-primary); }
         .lp-brand:hover { transform: scale(1.03); }
-        .lp-brand img { height: 28px; }
+        .lp-brand img { height: 28px; width: auto; flex-shrink: 0; }
+        .lp-brand span {
+            white-space: nowrap;
+            max-width: none;
+        }
         .lp-nav-menu {
             display: flex;
             align-items: center;
@@ -209,14 +304,17 @@
             background: rgba(255, 255, 255, 0.2);
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
         }
-        .lp-navbar.is-scrolled .lp-nav-link {
+        .lp-navbar.is-scrolled .lp-nav-link,
+        .lp-navbar-wrap.is-scrolled .lp-nav-link {
             color: #475569;
         }
-        .lp-navbar.is-scrolled .lp-nav-link:hover {
+        .lp-navbar.is-scrolled .lp-nav-link:hover,
+        .lp-navbar-wrap.is-scrolled .lp-nav-link:hover {
             color: var(--lp-primary);
             background: rgba(var(--lp-primary-rgb), 0.06);
         }
-        .lp-navbar.is-scrolled .lp-nav-link.active {
+        .lp-navbar.is-scrolled .lp-nav-link.active,
+        .lp-navbar-wrap.is-scrolled .lp-nav-link.active {
             color: #fff;
             background: var(--lp-primary);
             box-shadow: 0 6px 18px rgba(var(--lp-primary-rgb), 0.35);
@@ -295,74 +393,370 @@
             display: none;
             background: transparent;
             border: 0;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             align-items: center;
             justify-content: center;
-            color: var(--lp-primary);
-            font-size: 1.25rem;
-            transition: background 0.2s ease;
+            color: #fff;
+            font-size: 1.4rem;
+            transition: background 0.2s ease, color 0.2s ease;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            z-index: 2;
+            position: relative;
         }
+        .lp-navbar.is-scrolled .lp-nav-toggler,
+        .lp-navbar.is-page .lp-nav-toggler { color: var(--lp-primary); }
         .lp-nav-toggler:hover { background: rgba(var(--lp-primary-rgb), 0.08); }
-        .lp-nav-toggler:focus { box-shadow: none; }
+        .lp-nav-toggler:focus { box-shadow: none; outline: none; }
+        .lp-nav-toggler:focus-visible {
+            outline: 2px solid var(--lp-primary);
+            outline-offset: 2px;
+        }
+
+        /* ============= Mobile drawer (slide dari kanan) ============= */
+        .lp-nav-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s var(--lp-ease);
+            z-index: 1070;
+            pointer-events: none;
+        }
+        .lp-nav-backdrop.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        body.lp-nav-open {
+            overflow: hidden;
+            overscroll-behavior: contain;
+        }
+
+        /* Drawer mobile: default hidden, hanya muncul di mobile via media query */
+        .lp-nav-menu {
+            display: none;
+            visibility: hidden;
+        }
 
         @media (max-width: 991.98px) {
-            .lp-nav-toggler { display: inline-flex; }
+            .lp-nav-toggler { display: inline-flex; flex-shrink: 0; margin-left: auto; }
+            .lp-navbar { flex: 1 1 auto; width: 100%; }
+            .lp-navbar .lp-brand { flex: 0 0 auto; min-width: 0; }
+            .lp-nav-desktop-menu { display: none !important; }
+            .lp-navbar-inner > .lp-cta-desktop { display: none !important; }
+
             .lp-nav-menu {
-                position: fixed;
-                top: 80px;
-                left: 16px;
-                right: 16px;
+                position: fixed !important;
+                top: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                left: auto !important;
+                width: min(320px, 86vw);
+                max-width: 360px;
+                min-height: 100vh;
+                min-height: 100dvh;
                 flex-direction: column;
                 align-items: stretch;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-radius: 22px;
-                gap: 0.25rem;
-                box-shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
-                max-height: 0;
-                overflow: hidden;
+                justify-content: flex-start;
+                background: #ffffff;
+                box-shadow: -20px 0 60px -10px rgba(15, 23, 42, 0.25);
+                gap: 0;
+                padding: 0;
+                margin: 0;
+                transform: translateX(110%);
+                -webkit-transform: translateX(110%);
+                transition: transform 0.35s var(--lp-ease), visibility 0s linear 0.35s, opacity 0.2s var(--lp-ease);
+                -webkit-transition: transform 0.35s var(--lp-ease), visibility 0s linear 0.35s, opacity 0.2s var(--lp-ease);
+                z-index: 1200;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                display: flex !important;
+                pointer-events: none;
+                visibility: hidden;
                 opacity: 0;
-                transition: max-height 0.35s var(--lp-ease), opacity 0.25s ease, padding 0.35s var(--lp-ease);
-                padding: 0 1rem;
+                will-change: transform;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
             }
             .lp-nav-menu.is-open {
-                max-height: 80vh;
-                opacity: 1;
-                padding: 1rem;
-                overflow-y: auto;
+                transform: translateX(0) !important;
+                -webkit-transform: translateX(0) !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                transition: transform 0.35s var(--lp-ease), visibility 0s linear 0s, opacity 0.2s var(--lp-ease);
+                -webkit-transition: transform 0.35s var(--lp-ease), visibility 0s linear 0s, opacity 0.2s var(--lp-ease);
             }
-            .lp-nav-link { padding: 0.75rem 1rem; }
+            .lp-nav-menu.is-open *,
+            .lp-nav-menu.is-open a,
+            .lp-nav-menu.is-open button {
+                pointer-events: auto !important;
+                visibility: visible !important;
+            }
+            .lp-nav-menu.is-open .lp-nav-menu-body,
+            .lp-nav-menu.is-open .lp-nav-menu-header,
+            .lp-nav-menu.is-open .lp-nav-menu-footer {
+                display: flex !important;
+                flex-direction: column;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            .lp-nav-menu.is-open .lp-nav-menu-header { flex-direction: row; }
+            .lp-nav-menu.is-open .lp-nav-menu-footer { flex-direction: column; }
+
+            /* Header drawer (brand + tombol tutup) */
+            .lp-nav-menu-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                padding: 1rem 1.25rem;
+                border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+                position: sticky;
+                top: 0;
+                background: #ffffff;
+                z-index: 2;
+            }
+            .lp-nav-menu-header .lp-brand {
+                color: var(--lp-primary);
+                font-size: 1rem;
+                max-width: 70%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .lp-nav-close {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 0;
+                background: rgba(var(--lp-primary-rgb), 0.08);
+                color: var(--lp-primary);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                flex-shrink: 0;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                transition: background 0.2s ease;
+            }
+            .lp-nav-close:hover { background: rgba(var(--lp-primary-rgb), 0.15); }
+
+            .lp-nav-menu-body {
+                display: flex !important;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.75rem 1rem 1rem;
+                flex: 1 1 auto;
+                width: 100%;
+                min-height: 200px;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            .lp-nav-menu-footer {
+                display: block !important;
+                padding: 1rem;
+                border-top: 1px solid rgba(15, 23, 42, 0.06);
+                background: #f8fafc;
+            }
+            .lp-nav-menu-footer .lp-cta-mobile {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                width: 100%;
+                background: linear-gradient(135deg, var(--lp-primary), var(--lp-accent-2));
+                color: #fff;
+                font-weight: 700;
+                padding: 0.85rem 1.25rem;
+                border-radius: 999px;
+                border: 0;
+                text-align: center;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .lp-nav-menu-footer .lp-cta-mobile:hover {
+                color: #fff;
+                transform: translateY(-2px);
+                box-shadow: 0 10px 24px rgba(var(--lp-primary-rgb), 0.4);
+            }
+
+            .lp-nav-item {
+                display: block !important;
+                width: 100%;
+                border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+            }
+            .lp-nav-item:last-child { border-bottom: 0; }
+
+            .lp-nav-link {
+                display: flex !important;
+                padding: 0.95rem 0.75rem;
+                color: var(--lp-text);
+                font-weight: 600;
+                font-size: 0.98rem;
+                border-radius: 0;
+                width: 100%;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .lp-nav-link:hover {
+                color: var(--lp-primary);
+                background: rgba(var(--lp-primary-rgb), 0.04);
+            }
+            .lp-nav-link.active {
+                color: var(--lp-primary);
+                background: rgba(var(--lp-primary-rgb), 0.08);
+            }
+            .lp-nav-link .bi-chevron-down {
+                color: var(--lp-muted);
+            }
+
             .lp-dropdown {
                 position: static;
                 transform: none;
                 box-shadow: none;
-                background: rgba(var(--lp-primary-rgb), 0.05);
-                border-radius: 14px;
-                margin-top: 0.25rem;
+                background: rgba(var(--lp-primary-rgb), 0.04);
+                border-radius: 0;
+                margin: 0;
                 opacity: 1;
                 visibility: visible;
                 max-height: 0;
                 overflow: hidden;
-                padding: 0 0.5rem;
-                transition: max-height 0.3s var(--lp-ease), padding 0.3s var(--lp-ease);
+                padding: 0;
+                min-width: 0;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                border: 0;
+                transition: max-height 0.3s var(--lp-ease);
             }
             .lp-nav-item.dropdown.is-open .lp-dropdown {
-                max-height: 400px;
-                padding: 0.5rem;
+                max-height: 600px;
+                padding: 0.25rem 0 0.5rem;
             }
             .lp-nav-item.dropdown:hover .lp-dropdown { transform: none; }
-            .lp-cta { display: none; }
+            .lp-dropdown a {
+                padding: 0.7rem 0.75rem 0.7rem 1.75rem;
+                border-radius: 0;
+                color: #475569;
+                font-size: 0.92rem;
+                font-weight: 500;
+            }
+            .lp-dropdown a:hover {
+                background: rgba(var(--lp-primary-rgb), 0.06);
+                color: var(--lp-primary);
+                transform: none;
+            }
+            .lp-dropdown a.active {
+                background: rgba(var(--lp-primary-rgb), 0.08);
+                color: var(--lp-primary);
+                font-weight: 600;
+            }
+            .lp-navbar .lp-cta,
+            .lp-cta-desktop { display: none !important; }
+        }
+
+        /* Reset struktur drawer di desktop: drawer mobile tersembunyi by default
+           (sudah di-set di rule global di atas). Di desktop, menu inline
+           di-render via .lp-nav-desktop-menu yang berada di dalam .lp-navbar. */
+        @media (min-width: 992px) {
+            .lp-nav-toggler { display: none; }
+
+            .lp-navbar-inner {
+                padding-left: max(28px, env(safe-area-inset-left, 28px));
+                padding-right: max(28px, env(safe-area-inset-right, 28px));
+                gap: 0;
+            }
+
+            /* Drawer mobile tetap hidden di desktop (extra safety) */
+            .lp-nav-menu {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* Menu inline di navbar: flex row 1 baris, transparan, menyatu pill. */
+            .lp-nav-desktop-menu {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                flex: 0 0 auto;
+                min-width: 0;
+                order: 1;
+                flex-wrap: nowrap;
+                justify-content: flex-end;
+                margin-left: auto;
+                pointer-events: auto;
+                background: transparent;
+                border: 0;
+                border-radius: 999px;
+                padding: 0.4rem 0.5rem;
+                transition: all 0.4s var(--lp-ease);
+            }
+            .lp-navbar {
+                order: 0;
+                flex: 1 1 auto;
+                width: 100%;
+                min-width: 0;
+                max-width: none;
+            }
+            .lp-navbar > .lp-brand { flex: 0 0 auto; margin-right: 1rem; }
+            .lp-navbar-inner > .lp-cta-desktop { order: 2; flex: 0 0 auto; margin-left: 0.5rem; }
+
+            .lp-nav-desktop-menu .lp-nav-item {
+                display: inline-flex;
+                align-items: center;
+                border-bottom: 0;
+                position: relative;
+                width: auto;
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+            .lp-nav-desktop-menu .lp-nav-link {
+                flex-shrink: 1;
+                min-width: 0;
+                padding: 0.45rem 0.75rem;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+            .lp-nav-desktop-menu .lp-nav-link span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 100%;
+            }
+            .lp-nav-desktop-menu .lp-nav-item.dropdown { position: relative; }
+            .lp-navbar .lp-brand {
+                flex: 0 1 auto;
+                min-width: 0;
+                max-width: 100%;
+                padding-left: 0.5rem;
+            }
+            .lp-navbar .lp-brand span {
+                white-space: nowrap;
+                max-width: none;
+                min-width: 0;
+            }
+            .lp-cta-desktop { display: inline-flex; flex-shrink: 0; }
         }
 
         /* ============= Hero ============= */
         .lp-hero {
             position: relative;
-            min-height: 640px;
+            min-height: 100svh;
+            min-height: 100dvh;
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             color: #fff;
             overflow: hidden;
             isolation: isolate;
@@ -395,13 +789,17 @@
             inset: 0;
             background-image:
                 radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.06) 0%, transparent 40%);
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.06) 0%, transparent 40%),
+                linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.25) 100%);
         }
         .lp-hero-content {
             position: relative;
             z-index: 1;
-            padding: 9rem 0 6rem;
+            padding: clamp(5rem, 12vh, 7rem) 0 clamp(2rem, 6vh, 4rem);
             text-align: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         .lp-pill {
             display: inline-flex;
@@ -749,13 +1147,34 @@
         }
         .lp-program-card h5 { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.4rem; }
         .lp-program-card p { color: var(--lp-muted); font-size: 0.9rem; margin: 0; line-height: 1.6; }
+        .lp-program-card h5 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.64em;
+        }
+        .lp-program-card .lp-body .lp-link-soft {
+            font-size: 0.85rem;
+            text-decoration: none;
+            color: var(--lp-primary);
+            font-weight: 600;
+        }
+        .lp-program-card .lp-body .lp-link-soft:hover {
+            gap: 0.5rem;
+        }
+        .lp-program-card .lp-post-meta {
+            color: var(--lp-muted);
+            font-size: 0.8rem;
+            margin: 0;
+        }
 
         /* ============= Events ============= */
         .lp-event-card {
-            padding: var(--lp-card-pad);
+            padding: var(--lp-card-pad-lg);
             display: flex;
             gap: 1.25rem;
-            align-items: center;
+            align-items: flex-start;
             border-radius: var(--lp-radius-lg);
         }
         .lp-event-date {
@@ -783,12 +1202,37 @@
             display: block;
             opacity: 0.9;
         }
-        .lp-event-title { font-weight: 700; font-size: 1.02rem; margin-bottom: 0.25rem; color: var(--lp-text); }
-        .lp-event-meta { color: var(--lp-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+        .lp-event-body { flex: 1; min-width: 0; }
+        .lp-event-title {
+            font-weight: 700;
+            font-size: 1.02rem;
+            margin-bottom: 0.5rem;
+            color: var(--lp-text);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.35;
+        }
+        .lp-event-meta {
+            color: var(--lp-muted);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.35rem;
+            min-width: 0;
+        }
+        .lp-event-meta span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
 
         /* ============= Announcement ============= */
         .lp-ann-card {
-            padding: var(--lp-card-pad);
+            padding: var(--lp-card-pad-lg);
             position: relative;
             border-left: 4px solid var(--lp-accent) !important;
             border-radius: var(--lp-radius-lg);
@@ -802,7 +1246,32 @@
             margin-bottom: 0.5rem;
             font-weight: 500;
         }
-        .lp-ann-card h5 { font-weight: 700; font-size: 1.05rem; margin: 0; line-height: 1.4; }
+        .lp-ann-card .lp-ann-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            line-height: 1.4;
+            margin: 0 0 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .lp-ann-card .lp-ann-excerpt {
+            color: var(--lp-muted);
+            font-size: 0.88rem;
+            line-height: 1.55;
+            margin: 0 0 0.75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .lp-ann-card .lp-link-soft {
+            font-size: 0.85rem;
+            text-decoration: none;
+            color: var(--lp-primary);
+            font-weight: 600;
+        }
 
         /* ============= Gallery ============= */
         .lp-gallery-item {
@@ -872,6 +1341,12 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
         }
         footer.lp-footer h5, footer.lp-footer h6 { color: #fff; font-weight: 700; margin-bottom: 1rem; }
+        footer.lp-footer .lp-brand {
+            flex: none;
+            flex-wrap: wrap;
+            white-space: normal;
+        }
+        footer.lp-footer .lp-brand span { max-width: none; white-space: normal; }
         footer.lp-footer a { color: #cbd5e1; transition: color 0.2s ease; }
         footer.lp-footer a:hover { color: #fff; }
         .lp-social {
@@ -1138,6 +1613,13 @@
             gap: .35rem;
         }
         .lp-cta-meta .bi { color: var(--lp-accent); }
+        .lp-cta-registration {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.65;
+            opacity: 0.92;
+            max-width: 560px;
+        }
 
         /* Responsive: tengah-tengah di tablet/mobile */
         @media (max-width: 991.98px) {
@@ -1165,85 +1647,286 @@
         }
         .lp-badge .bi { color: var(--lp-accent); }
 
-        /* ============= Responsive ============= */
+        /* ============= Responsive (standar breakpoint) =============
+           xs:  ≤575.98px  (HP kecil)
+           sm:  576–767.98 (HP besar / phablet)
+           md:  768–991.98 (tablet portrait)
+           lg:  992–1199.98 (tablet landscape / laptop kecil)
+           xl:  1200–1399.98 (laptop)
+           xxl: ≥1400px    (desktop besar)
+        ============================================================== */
+
+        /* ===== XL : laptop 1200–1399 ===== */
+        @media (max-width: 1399.98px) {
+            :root { --lp-navbar-max: 1140px; }
+            .lp-section-title { font-size: clamp(1.55rem, 2.6vw, 1.95rem); }
+        }
+
+        /* ===== LG : tablet landscape / laptop kecil 992–1199 ===== */
+        @media (max-width: 1199.98px) {
+            :root { --lp-navbar-max: 960px; }
+            .lp-nav-link { padding: 0.4rem 0.65rem; font-size: 0.8rem; }
+            .lp-cta { padding: 0.5rem 1rem; font-size: 0.85rem; }
+            .lp-brand { font-size: 0.92rem; }
+            .lp-brand span { max-width: none; }
+            .lp-navbar { max-width: none; }
+            .lp-nav-desktop-menu { gap: 0.15rem; padding: 0.4rem 0.25rem; }
+            .lp-nav-desktop-menu .lp-nav-link { padding: 0.4rem 0.55rem; font-size: 0.78rem; }
+            section.lp-section { padding: 3.5rem 0; }
+            .lp-hero-content { padding: clamp(5rem, 12vh, 8rem) 0 clamp(2rem, 6vh, 5rem); }
+            .lp-stat-card { padding: 1.35rem; }
+            .lp-stat-value { font-size: 1.65rem; }
+            .lp-cta-strip { padding: 3rem 2rem; }
+            .lp-event-card { padding: 1.25rem; }
+        }
+
+        /* ===== MD : tablet portrait 768–991 ===== */
+        @media (max-width: 991.98px) {
+            section.lp-section { padding: 3rem 0; }
+            section.lp-section + section.lp-section { padding-top: 3rem; }
+            body.lp-inner > section:first-of-type { padding-top: 6.75rem; }
+            .lp-hero-content { padding: clamp(4.5rem, 10vh, 7rem) 0 clamp(2rem, 6vh, 4rem); }
+            .lp-hero h1 { font-size: clamp(1.95rem, 5vw, 2.75rem); }
+            .lp-hero p.lead { font-size: 1rem; max-width: 580px; }
+            .lp-stat-card { padding: 1.25rem; gap: 0.9rem; }
+            .lp-stat-icon { width: 50px; height: 50px; font-size: 1.3rem; }
+            .lp-stat-value { font-size: 1.55rem; }
+            .lp-welcome-img { aspect-ratio: 4 / 3; max-width: 380px; margin: 0 auto; }
+            .lp-section-head { margin-bottom: 2rem; }
+            .lp-cta-strip { padding: 2.5rem 1.75rem; border-radius: 24px; text-align: center; }
+            .lp-cta-strip h3 { font-size: 1.6rem; }
+            .lp-cta-strip p,
+            .lp-cta-registration { margin-left: auto; margin-right: auto; }
+            .lp-program-card .lp-body { padding: 1.35rem 1.35rem 1.6rem; }
+            .lp-event-card { padding: 1.1rem; gap: 1.1rem; }
+            .lp-event-date { width: 64px; }
+            .lp-footer { padding: 3.25rem 0 1.25rem; }
+        }
+
+        /* ===== SM : HP besar 576–767 ===== */
         @media (max-width: 767.98px) {
-            section.lp-section { padding: 2.75rem 0; }
-            section.lp-section + section.lp-section { padding-top: 2.75rem; }
-            .lp-hero { min-height: 540px; }
-            .lp-hero-content { padding: 7rem 0 4rem; }
-            .lp-stat-card { padding: 1.25rem; }
-            .lp-welcome-img { aspect-ratio: 1; }
+            .container { padding-left: 1rem; padding-right: 1rem; }
+            section.lp-section { padding: 2.5rem 0; }
+            section.lp-section + section.lp-section { padding-top: 2.5rem; }
+            html { scroll-padding-top: 88px; }
+            body.lp-inner > section:first-of-type { padding-top: 6.25rem; }
+            .lp-hero-content { padding: clamp(4rem, 9vh, 6.5rem) 0 clamp(1.75rem, 5vh, 3.5rem); }
+            .lp-hero h1 { font-size: clamp(1.85rem, 6.5vw, 2.4rem); }
+            .lp-hero p.lead { font-size: 0.98rem; margin-bottom: 1.75rem; }
+            .lp-hero-actions { gap: 0.6rem; }
+            .lp-btn-light, .lp-btn-outline-light {
+                padding: 0.7rem 1.35rem;
+                font-size: 0.9rem;
+            }
+            .lp-stat-card { padding: 1.1rem; gap: 0.85rem; }
+            .lp-stat-icon { width: 46px; height: 46px; font-size: 1.2rem; border-radius: 12px; }
+            .lp-stat-value { font-size: 1.4rem; }
+            .lp-stat-label { font-size: 0.8rem; }
+            .lp-welcome-img { aspect-ratio: 4 / 3; max-width: 360px; margin: 0 auto; }
+            .lp-welcome-quote { left: 16px; right: 16px; bottom: 16px; padding: 0.85rem 1rem; }
             .lp-cta-strip { padding: 2.25rem 1.5rem; border-radius: 22px; }
+            .lp-cta-strip h3 { font-size: 1.4rem; }
+            .lp-cta-strip p { font-size: 0.98rem; }
+            .lp-cta-actions { max-width: 100%; }
+            .lp-card, .lp-card-sm, .lp-stat-card, .lp-feature-card, .lp-ann-card { padding: 1.15rem; }
+            .lp-card-lg { padding: 1.35rem; }
+            .lp-jenjang-card { padding: 1.5rem 1.15rem; }
+            .lp-welcome-quote span { font-size: 0.82rem; }
+            .lp-cta-points { grid-template-columns: 1fr 1fr; gap: 0.5rem 0.75rem; }
+            .lp-cta-points li:nth-child(3) { grid-column: 1 / -1; }
+            .lp-section-head { margin-bottom: 1.75rem; }
+            .lp-program-card .lp-body { padding: 1.25rem 1.25rem 1.5rem; }
+            .lp-program-card h5 { font-size: 1rem; }
+            .lp-event-card { padding: 1rem; gap: 1rem; }
+            .lp-event-date { width: 60px; padding: 0.6rem 0.4rem; }
+            .lp-event-date .day { font-size: 1.35rem; }
+            .lp-event-title { font-size: 0.95rem; }
+            .lp-event-meta { font-size: 0.8rem; }
+            .lp-gallery-item { border-radius: 14px; }
+            .lp-footer { padding: 3rem 0 1.25rem; }
+            .lp-section-divider { width: 70%; }
+        }
+
+        /* ===== XS : HP kecil ≤575 ===== */
+        @media (max-width: 575.98px) {
+            .container { padding-left: 0.85rem; padding-right: 0.85rem; }
+            .lp-brand { font-size: 0.95rem; gap: 0.35rem; }
+            .lp-brand img { height: 24px; }
+            .lp-nav-toggler { width: 38px; height: 38px; font-size: 1.15rem; }
+            html { scroll-padding-top: 80px; }
+            body.lp-inner > section:first-of-type { padding-top: 5.75rem; }
+            .lp-hero-content { padding: clamp(3.5rem, 8vh, 5.75rem) 0 clamp(1.5rem, 4vh, 2.75rem); }
+            .lp-hero h1 { font-size: 1.75rem; margin-bottom: 1rem; }
+            .lp-hero p.lead { font-size: 0.92rem; margin-bottom: 1.5rem; }
+            .lp-hero-actions { flex-direction: column; width: 100%; max-width: 280px; margin: 0 auto; }
+            .lp-btn-light, .lp-btn-outline-light {
+                width: 100%;
+                padding: 0.75rem 1.25rem;
+            }
+            .lp-badge { font-size: 0.72rem; padding: 0.35rem 0.7rem; }
+            .lp-section-title { font-size: 1.4rem; }
+            .lp-section-eyebrow { font-size: 0.72rem; }
+            .lp-cta-strip { padding: 1.75rem 1.15rem; border-radius: 18px; }
+            .lp-cta-strip h3 { font-size: 1.25rem; }
+            .lp-cta-btn, .lp-cta-btn-outline { padding: 0.8rem 1.5rem; font-size: 0.95rem; white-space: normal; }
+            .lp-cta-registration { font-size: 0.85rem; }
+            .lp-hero-actions { max-width: 100%; }
+            .lp-program-card h5 { min-height: 0; }
+            .lp-welcome-quote { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+            .lp-cta-points { grid-template-columns: 1fr; }
+            .lp-cta-points li:nth-child(3) { grid-column: auto; }
+            .lp-event-card { padding: 0.85rem; gap: 0.85rem; }
+            .lp-event-date { width: 56px; padding: 0.55rem 0.35rem; }
+            .lp-event-date .day { font-size: 1.25rem; }
+            .lp-event-date .month { font-size: 0.65rem; }
+            .lp-welcome-quote { font-size: 0.85rem; padding: 0.75rem 0.85rem; }
+            .lp-welcome-quote .bi { font-size: 1.25rem; }
+            .lp-footer { padding: 2.5rem 0 1rem; font-size: 0.88rem; }
+            .lp-footer h5, .lp-footer h6 { font-size: 1rem; }
+            .lp-social a { width: 36px; height: 36px; }
+            .lp-footer-bottom { justify-content: center !important; text-align: center; }
+        }
+
+        /* ===== XXL : desktop besar ≥1400 ===== */
+        @media (min-width: 1400px) {
+            :root { --lp-navbar-max: 1320px; }
+            .container { max-width: 1320px; }
+            section.lp-section { padding: 5rem 0; }
+            .lp-hero-content { padding: clamp(6rem, 13vh, 10rem) 0 clamp(3rem, 7vh, 7rem); }
+            .lp-section-title { font-size: 2.25rem; }
+        }
+
+        /* ===== HP: background hero full layar (110lvh untuk menutupi celah putih di bawah) ===== */
+        @media (max-width: 991.98px) {
+            .lp-hero {
+                min-height: 100vh;
+                min-height: 100dvh;
+                min-height: 110lvh;
+                width: 100%;
+            }
+            .lp-hero-bg {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                min-height: 100vh;
+                min-height: 100dvh;
+                min-height: 110lvh;
+                background-size: cover;
+                background-position: center center;
+                background-repeat: no-repeat;
+            }
+        }
+
+        /* ===== Orientasi landscape HP (tinggi <600): hero tidak 100vh ===== */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .lp-hero { min-height: 0; padding: 5.5rem 0 2.5rem; }
+            .lp-hero-content { padding: 0; }
+        }
+
+        /* ===== Safe area iOS (notch) ===== */
+        @supports (padding: max(0px)) {
+            .lp-footer { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+            .lp-nav-menu { padding-bottom: env(safe-area-inset-bottom); }
+        }
+
+        @media (hover: none) {
+            .lp-glass:hover,
+            .lp-program-card:hover,
+            .lp-feature-card:hover,
+            .lp-jenjang-card:hover,
+            .lp-cta:hover,
+            .lp-btn-light:hover,
+            .lp-btn-outline-light:hover,
+            .lp-cta-btn:hover,
+            .lp-cta-btn-outline:hover {
+                transform: none;
+            }
+            .lp-gallery-item::after { opacity: 1; }
+            .lp-gallery-item .lp-gallery-overlay {
+                transform: none;
+                opacity: 1;
+            }
         }
     </style>
 
     @yield('style')
 </head>
-<body>
+<body class="{{ request()->routeIs('halaman-publik.beranda') ? 'lp-home' : 'lp-inner' }}">
 <div class="lp-scroll-progress" id="lpScrollProgress"></div>
 
+<div class="lp-nav-backdrop" id="lpNavBackdrop" aria-hidden="true"></div>
+
+@php
+    $currentPath = trim(request()->path(), '/');
+    $lpMenuPath = function (string $url) {
+        $url = trim($url);
+        if ($url === '' || str_starts_with($url, '#') || str_starts_with(strtolower($url), 'http')) {
+            return null;
+        }
+        $parsed = parse_url($url, PHP_URL_PATH);
+        $path = $parsed !== null ? $parsed : $url;
+        return trim($path, '/');
+    };
+@endphp
+
+{{-- Drawer mobile: dirender terpisah di akhir navbar-wrap agar tidak
+     bergantung pada `display: contents` (yang flaw-nya beragam di browser).
+     Desktop menggunakan menu inline di .lp-nav-desktop-menu. --}}
 <div class="lp-navbar-wrap">
-    <nav class="lp-navbar {{ request()->routeIs('halaman-publik.beranda') ? '' : 'is-page' }}" id="lpNavbar">
-        <a class="lp-brand" href="{{ route('halaman-publik.beranda') }}">
-            @if ($setting->logo)
-                <img src="{{ Storage::disk('public')->url('landing/' . $setting->logo) }}" alt="">
-            @endif
-            <span>{{ $setting->school_name ?? 'Sekolah' }}</span>
-        </a>
-
-        <button class="lp-nav-toggler" id="lpNavToggle" type="button" aria-label="Alihkan navigasi">
-            <i class="bi bi-list"></i>
-        </button>
-
-        @php
-            $currentPath = trim(request()->path(), '/');
-            $lpMenuPath = function (string $url) {
-                $url = trim($url);
-                if ($url === '' || str_starts_with($url, '#') || str_starts_with(strtolower($url), 'http')) {
-                    return null;
-                }
-                $parsed = parse_url($url, PHP_URL_PATH);
-                $path = $parsed !== null ? $parsed : $url;
-                return trim($path, '/');
-            };
-        @endphp
-        <div class="lp-nav-menu" id="lpNavMenu">
-            @foreach ($menus['header'] ?? [] as $item)
-                @php
-                    $itemPath = $lpMenuPath($item->url);
-                    $childActive = $item->child_items->contains(function ($child) use ($lpMenuPath, $currentPath) {
-                        $childPath = $lpMenuPath($child->url);
-                        return $childPath !== null && $childPath === $currentPath;
-                    });
-                    $isActive = ($itemPath !== null && $itemPath === $currentPath) || $childActive;
-                @endphp
-                @if ($item->child_items->isNotEmpty())
-                    <div class="lp-nav-item dropdown" data-dropdown>
-                        <a class="lp-nav-link {{ $isActive ? 'active' : '' }}" href="#" data-dropdown-toggle>
-                            {{ $item->title }}
-                            <i class="bi bi-chevron-down"></i>
-                        </a>
-                        <div class="lp-dropdown">
-                            @foreach ($item->child_items as $child)
-                                @php
-                                    $childPath = $lpMenuPath($child->url);
-                                    $isChildActive = $childPath !== null && $childPath === $currentPath;
-                                @endphp
-                                <a href="{{ $child->url }}" class="{{ $isChildActive ? 'active' : '' }}">
-                                    <i class="bi bi-arrow-right-short"></i>
-                                    {{ $child->title }}
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
-                @else
-                    <a class="lp-nav-link {{ $isActive ? 'active' : '' }}" href="{{ $item->url }}">{{ $item->title }}</a>
+    <div class="lp-navbar-inner">
+        <nav class="lp-navbar {{ request()->routeIs('halaman-publik.beranda') ? '' : 'is-page' }}" id="lpNavbar">
+            <a class="lp-brand" href="{{ route('halaman-publik.beranda') }}">
+                @if ($setting->logo)
+                    <img src="{{ Storage::disk('public')->url('landing/' . $setting->logo) }}" alt="">
                 @endif
-            @endforeach
-        </div>
+                <span>{{ $setting->school_name ?? 'Sekolah' }}</span>
+            </a>
 
-        <a href="{{ route('halaman-publik.ppdb') }}" class="lp-cta d-none d-lg-inline-flex">Daftar PPDB</a>
-    </nav>
+            <div class="lp-nav-desktop-menu">
+                @foreach ($menus['header'] ?? [] as $item)
+                    @php
+                        $itemPath = $lpMenuPath($item->url);
+                        $childActive = $item->child_items->contains(function ($child) use ($lpMenuPath, $currentPath) {
+                            $childPath = $lpMenuPath($child->url);
+                            return $childPath !== null && $childPath === $currentPath;
+                        });
+                        $isActive = ($itemPath !== null && $itemPath === $currentPath) || $childActive;
+                    @endphp
+                    @if ($item->child_items->isNotEmpty())
+                        <div class="lp-nav-item dropdown" data-dropdown>
+                            <a class="lp-nav-link {{ $isActive ? 'active' : '' }}" href="{{ $item->url }}" data-dropdown-toggle>
+                                <span>{{ $item->title }}</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </a>
+                            <div class="lp-dropdown">
+                                @foreach ($item->child_items as $child)
+                                    @php
+                                        $childPath = $lpMenuPath($child->url);
+                                        $isChildActive = $childPath !== null && $childPath === $currentPath;
+                                    @endphp
+                                    <a href="{{ $child->url }}" class="{{ $isChildActive ? 'active' : '' }}">
+                                        <i class="bi bi-arrow-right-short"></i>
+                                        {{ $child->title }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <div class="lp-nav-item">
+                            <a class="lp-nav-link {{ $isActive ? 'active' : '' }}" href="{{ $item->url }}">{{ $item->title }}</a>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+
+            <button class="lp-nav-toggler" id="lpNavToggle" type="button" aria-label="Buka menu" aria-controls="lpNavMenu" aria-expanded="false">
+                <i class="bi bi-list" id="lpNavToggleIcon"></i>
+            </button>
+        </nav>
+
+        <a href="{{ tenant()?->adminUrl() ?: '#' }}" class="lp-cta lp-cta-desktop" target="_blank" rel="noopener noreferrer">SabIT</a>
+    </div>
 </div>
 
 @yield('content')
@@ -1251,7 +1934,7 @@
 <footer class="lp-footer" id="kontak">
     <div class="container">
         <div class="row g-4 align-items-start">
-            <div class="col-lg-5 col-md-12">
+            <div class="col-lg-5 col-sm-12">
                 <h5 class="lp-brand mb-2" style="color:#fff;">
                     @if ($setting->logo)
                         <img src="{{ Storage::disk('public')->url('landing/' . $setting->logo) }}" alt="">
@@ -1290,7 +1973,7 @@
                 @endif
             </div>
 
-            <div class="col-lg-3 col-md-4">
+            <div class="col-lg-3 col-sm-4">
                 <h6>Tautan Cepat</h6>
                 <ul class="list-unstyled m-0">
                     <li class="mb-2"><a href="#tentang">Tentang Kami</a></li>
@@ -1302,7 +1985,7 @@
                 </ul>
             </div>
 
-            <div class="col-lg-4 col-md-8">
+            <div class="col-lg-4 col-sm-8">
                 <h6>Hubungi Kami</h6>
                 <p class="mb-2" style="opacity:.85;">Punya pertanyaan? Tim kami siap membantu Anda.</p>
                 <a href="{{ route('halaman-publik.kontak') }}" class="lp-link-soft" style="color:#fff;">
@@ -1311,7 +1994,7 @@
             </div>
         </div>
 
-        <div class="lp-footer-bottom d-flex flex-wrap justify-content-between">
+        <div class="lp-footer-bottom d-flex flex-wrap justify-content-between gap-2">
             <span>&copy; {{ date('Y') }}, dibuat dengan <i class="bi bi-heart-fill text-danger"></i> oleh Asta Brata untuk web yang lebih baik.</span>
             @if ($adminUrl = tenant()?->adminUrl())
                 <a href="{{ $adminUrl }}">Masuk Admin</a>
@@ -1319,6 +2002,66 @@
         </div>
     </div>
 </footer>
+
+{{-- Drawer mobile: dirender terpisah di akhir DOM, hidden di desktop,
+     tampil di mobile (≤991.98px). Tidak bergantung pada display:contents. --}}
+<div class="lp-nav-menu" id="lpNavMenu" aria-hidden="true">
+    <div class="lp-nav-menu-header">
+        <a class="lp-brand" href="{{ route('halaman-publik.beranda') }}">
+            @if ($setting->logo)
+                <img src="{{ Storage::disk('public')->url('landing/' . $setting->logo) }}" alt="">
+            @endif
+            <span>{{ $setting->school_name ?? 'Sekolah' }}</span>
+        </a>
+        <button class="lp-nav-close" id="lpNavClose" type="button" aria-label="Tutup menu">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="lp-nav-menu-body">
+        @foreach ($menus['header'] ?? [] as $item)
+            @php
+                $itemPath = $lpMenuPath($item->url);
+                $childActive = $item->child_items->contains(function ($child) use ($lpMenuPath, $currentPath) {
+                    $childPath = $lpMenuPath($child->url);
+                    return $childPath !== null && $childPath === $currentPath;
+                });
+                $isActive = ($itemPath !== null && $itemPath === $currentPath) || $childActive;
+            @endphp
+            @if ($item->child_items->isNotEmpty())
+                <div class="lp-nav-item dropdown" data-dropdown>
+                    <a class="lp-nav-link {{ $isActive ? 'active' : '' }}" href="{{ $item->url }}" data-dropdown-toggle>
+                        <span>{{ $item->title }}</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </a>
+                    <div class="lp-dropdown">
+                        @foreach ($item->child_items as $child)
+                            @php
+                                $childPath = $lpMenuPath($child->url);
+                                $isChildActive = $childPath !== null && $childPath === $currentPath;
+                            @endphp
+                            <a href="{{ $child->url }}" class="{{ $isChildActive ? 'active' : '' }}">
+                                <i class="bi bi-arrow-right-short"></i>
+                                {{ $child->title }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <div class="lp-nav-item">
+                    <a class="lp-nav-link {{ $isActive ? 'active' : '' }}" href="{{ $item->url }}">{{ $item->title }}</a>
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    <div class="lp-nav-menu-footer">
+        <a href="{{ tenant()?->adminUrl() ?: '#' }}" class="lp-cta-mobile" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-pencil-square"></i>
+            <span>SabIT</span>
+        </a>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -1330,6 +2073,7 @@
     // 1) Scroll progress + navbar shrink
     var bar = document.getElementById('lpScrollProgress');
     var nav = document.getElementById('lpNavbar');
+    var navbarWrap = document.querySelector('.lp-navbar-wrap');
     var ticking = false;
 
     function onScroll() {
@@ -1337,7 +2081,11 @@
         var h = doc.scrollHeight - doc.clientHeight;
         var pct = h > 0 ? (window.scrollY / h) * 100 : 0;
         if (bar) bar.style.width = pct + '%';
-        if (nav) nav.classList.toggle('is-scrolled', window.scrollY > 20);
+        var scrolled = window.scrollY > 20;
+        if (nav) nav.classList.toggle('is-scrolled', scrolled);
+        if (navbarWrap) navbarWrap.classList.toggle('is-scrolled', scrolled);
+        var inner = navbarWrap ? navbarWrap.querySelector('.lp-navbar-inner') : null;
+        if (inner) inner.classList.toggle('is-scrolled', scrolled);
         ticking = false;
     }
 
@@ -1367,29 +2115,125 @@
         revealEls.forEach(function (el) { el.classList.add('is-visible'); });
     }
 
-    // 3) Mobile nav toggle
+    // 3) Mobile drawer (slide dari kanan)
     var navToggle = document.getElementById('lpNavToggle');
     var navMenu = document.getElementById('lpNavMenu');
-    if (navToggle && navMenu) {
-        navToggle.addEventListener('click', function () {
-            navMenu.classList.toggle('is-open');
+    var navBackdrop = document.getElementById('lpNavBackdrop');
+    var navClose = document.getElementById('lpNavClose');
+
+    function openDrawer() {
+        if (!navMenu) return;
+        navMenu.classList.add('is-open');
+        navMenu.setAttribute('aria-hidden', 'false');
+        if (navBackdrop) navBackdrop.classList.add('is-open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+        if (navbarWrap) {
+            navbarWrap.classList.add('is-drawer-open');
+            var inner = navbarWrap.querySelector('.lp-navbar-inner');
+            if (inner) inner.classList.add('is-drawer-open');
+        }
+        document.body.classList.add('lp-nav-open');
+    }
+    function closeDrawer() {
+        if (!navMenu) return;
+        navMenu.classList.remove('is-open');
+        navMenu.setAttribute('aria-hidden', 'true');
+        if (navBackdrop) navBackdrop.classList.remove('is-open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+        if (navbarWrap) {
+            navbarWrap.classList.remove('is-drawer-open');
+            var inner = navbarWrap.querySelector('.lp-navbar-inner');
+            if (inner) inner.classList.remove('is-drawer-open');
+        }
+        document.body.classList.remove('lp-nav-open');
+    }
+    function isMobileViewport() {
+        return window.matchMedia && window.matchMedia('(max-width: 991.98px)').matches;
+    }
+
+    // Toggle drawer — HANYA satu sumber handler, tanpa inline onclick di markup.
+    if (navToggle) {
+        navToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (navMenu && navMenu.classList.contains('is-open')) closeDrawer();
+            else openDrawer();
+        });
+    }
+    if (navClose) {
+        navClose.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeDrawer();
+        });
+    }
+    if (navBackdrop) {
+        navBackdrop.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeDrawer();
         });
     }
 
-    // 4) Mobile dropdown toggle
-    var dropdownToggles = document.querySelectorAll('[data-dropdown-toggle]');
-    dropdownToggles.forEach(function (toggle) {
-        toggle.addEventListener('click', function (e) {
-            if (window.innerWidth < 992) {
-                e.preventDefault();
-                var item = toggle.closest('[data-dropdown]');
-                if (item) item.classList.toggle('is-open');
-            }
+    // Klik link di drawer: biarkan navigasi default terjadi (tidak ada listener
+    // yang memblokir). Drawer akan ter-reset otomatis setelah navigasi oleh
+    // pageshow listener di bawah.
+
+    // Fix: CTA di drawer (mis. .lp-cta-mobile) kadang terpicu 2x di mobile
+    // karena event bubble ke capture-phase listener lain. Hentikan propagasi
+    // dan biarkan navigasi default terjadi normal.
+    document.querySelectorAll('.lp-nav-menu .lp-cta-mobile').forEach(function (cta) {
+        cta.addEventListener('click', function (e) {
+            e.stopPropagation();
         });
     });
 
-    // 5) Smooth scroll for anchor links
+    // Mobile dropdown (submenu accordion) di dalam drawer.
+    // Desktop tetap pakai CSS :hover/:focus-within.
+    document.querySelectorAll('[data-dropdown-toggle]').forEach(function (toggle) {
+        toggle.addEventListener('click', function (e) {
+            if (!isMobileViewport()) return;
+            var item = toggle.closest('[data-dropdown]');
+            if (!item) return;
+            // Cegah navigasi ke parent (parent url) saat toggle submenu.
+            e.preventDefault();
+            var open = item.classList.toggle('is-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    });
+
+    // Klik di luar drawer (untuk menutup drawer saat klik area konten)
+    // Pakai 'click' di capture phase agar fire sebelum handler lain.
+    document.addEventListener('click', function (e) {
+        if (!navMenu || !navMenu.classList.contains('is-open')) return;
+        if (!isMobileViewport()) return;
+        if (navMenu.contains(e.target)) return;
+        if (navToggle && navToggle.contains(e.target)) return;
+        if (navClose && navClose.contains(e.target)) return;
+        if (navBackdrop && navBackdrop.contains(e.target)) return;
+        closeDrawer();
+    }, true);
+
+    // ESC menutup drawer
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && navMenu && navMenu.classList.contains('is-open')) {
+            closeDrawer();
+        }
+    });
+
+    // Saat resize ke desktop, bersihkan state drawer
+    window.addEventListener('resize', function () {
+        if (window.innerWidth >= 992) {
+            closeDrawer();
+        }
+    });
+
+    // Reset state setelah navigasi (pageshow fires setelah load, termasuk bfcache)
+    window.addEventListener('pageshow', function () {
+        closeDrawer();
+    });
+
+    // 5) Smooth scroll for anchor links (tidak termasuk link dalam drawer)
     document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+        if (navMenu && navMenu.contains(link)) return;
         link.addEventListener('click', function (e) {
             var id = link.getAttribute('href');
             if (id.length < 2) return;
@@ -1398,9 +2242,6 @@
             e.preventDefault();
             var top = target.getBoundingClientRect().top + window.scrollY - 100;
             window.scrollTo({ top: top, behavior: reduceMotion ? 'auto' : 'smooth' });
-            if (navMenu && navMenu.classList.contains('is-open')) {
-                navMenu.classList.remove('is-open');
-            }
         });
     });
 })();

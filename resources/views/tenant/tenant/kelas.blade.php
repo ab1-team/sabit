@@ -14,6 +14,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     @include('tenant.partials._fancy_inputs_head')
     <style>
@@ -33,6 +35,40 @@
         .modal-scroll .select2-container--open { z-index: 70; }
         .modal-scroll .select2-container--bootstrap-5 .select2-dropdown { z-index: 70; }
         .modal-scroll .select2-container--bootstrap-5 .select2-search__field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .15); }
+
+        /* DataTables tema invoice-style */
+        .table-wrap { overflow-x: auto; }
+        #kelas { width: 100% !important; }
+        #kelas thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border-bottom: 1px solid #e2e8f0; color: #475569; font-weight: 600; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; padding: .75rem 1rem; white-space: nowrap; }
+        #kelas tbody td { padding: .875rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        #kelas tbody tr:last-child td { border-bottom: 0; }
+        #kelas tbody tr { transition: background-color .15s ease; }
+        #kelas tbody tr:hover { background-color: #f8fafc; }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter { margin-bottom: .75rem; }
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label { color: #475569; font-size: .8125rem; font-weight: 500; display: inline-flex; align-items: center; gap: .5rem; }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input { border: 1px solid #cbd5e1 !important; border-radius: .5rem !important; padding: .375rem .625rem !important; font-size: .875rem !important; color: #1e293b; background: #fff; }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus { border-color: #6366f1 !important; outline: none !important; box-shadow: 0 0 0 3px rgba(99, 102, 241, .15) !important; }
+        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
+        .dataTables_wrapper .dataTables_info { color: #64748b !important; font-size: .8125rem !important; padding-top: .75rem; }
+        .dataTables_wrapper .dataTables_paginate { padding-top: .75rem; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-width: 2.25rem; height: 2.25rem; padding: 0 .65rem !important; margin: 0 2px !important; border-radius: .5rem !important; border: 1px solid #e2e8f0 !important; background: #fff !important; color: #475569 !important; font-weight: 600; font-size: .8125rem; cursor: pointer; transition: all .15s ease; }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input { max-width: 100%; }
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
+            .dataTables_wrapper .dataTables_filter input { width: 100%; min-width: 0; margin-left: 0; }
+            .dataTables_wrapper .dataTables_paginate .paginate_button { min-width: 2rem; height: 2rem; font-size: .75rem; padding: 0 .5rem !important; margin: 0 1px !important; }
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) { background: #eef2ff !important; border-color: #c7d2fe !important; color: #4f46e5 !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; box-shadow: 0 1px 2px rgba(79, 70, 229, .25); }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled { color: #cbd5e1 !important; background: #f8fafc !important; border-color: #f1f5f9 !important; cursor: not-allowed; }
+        .dataTables_wrapper .dataTables_processing { background: rgba(255, 255, 255, .85) !important; border: 1px solid #e2e8f0 !important; border-radius: .75rem !important; color: #475569 !important; font-weight: 600 !important; box-shadow: 0 10px 25px rgba(15, 23, 42, .08); }
+        .dataTables_empty { padding: 2.5rem 1rem !important; color: #94a3b8 !important; font-size: .875rem; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -56,77 +92,21 @@
         @include('tenant.partials.tenant_subnav', ['tenant' => $tenant, 'active' => 'kelas'])
 
         <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="hidden md:block overflow-x-auto">
-                <table class="min-w-[640px] w-full text-sm">
-                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+            <div class="table-wrap px-5 py-4">
+                <table id="kelas" class="table align-items-center mb-0 w-full text-sm text-slate-700">
+                    <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                         <tr>
-                            <th class="px-5 py-3 font-semibold">Kode</th>
-                            <th class="px-5 py-3 font-semibold">Nama Kelas</th>
-                            <th class="px-5 py-3 font-semibold">Tingkat</th>
-                            <th class="px-5 py-3 font-semibold">Kurikulum</th>
-                            <th class="px-5 py-3 text-center font-semibold">Aksi</th>
+                            <th class="px-3 py-3 text-left font-semibold">No</th>
+                            <th class="px-3 py-3 text-left font-semibold">Kode</th>
+                            <th class="px-3 py-3 text-left font-semibold">Nama Kelas</th>
+                            <th class="px-3 py-3 text-left font-semibold">Tingkat</th>
+                            <th class="px-3 py-3 text-left font-semibold">Kurikulum</th>
+                            <th class="px-3 py-3 text-center font-semibold">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse ($items as $k)
-                            @php $kur = $k->resolved_kurikulum; @endphp
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 font-mono text-xs font-semibold text-slate-700">{{ $k->kode_kelas }}</td>
-                                <td class="px-5 py-3 font-semibold text-slate-800">{{ $k->nama_kelas }}</td>
-                                <td class="px-5 py-3"><span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">{{ $k->tingkat }}</span></td>
-                                <td class="px-5 py-3 text-slate-700">{{ $kur?->nama_kurikulum ?? '—' }}</td>
-                                <td class="px-5 py-3 text-center">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" class="open-edit-modal inline-flex items-center rounded-lg bg-indigo-100 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-200"
-                                            data-update-url="{{ route('tenant.tenant.kelas.update', [$tenant, $k->id]) }}"
-                                            data-kode="{{ $k->kode_kelas }}"
-                                            data-nama="{{ $k->nama_kelas }}"
-                                            data-tingkat="{{ $k->tingkat }}"
-                                            data-kurikulum="{{ $k->kode_kurikulum }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <button type="button" class="delete-kelas inline-flex items-center rounded-lg bg-rose-100 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-200" data-action="{{ route('tenant.tenant.kelas.destroy', [$tenant, $k->id]) }}" data-name="{{ $k->kode_kelas }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.48 0 00-7.5 0"/></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="px-5 py-14 text-center text-sm text-slate-400">Belum ada kelas.</td></tr>
-                        @endforelse
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
-
-            <ul class="divide-y divide-slate-100 md:hidden">
-                @forelse ($items as $k)
-                    @php $kur = $k->resolved_kurikulum; @endphp
-                    <li class="px-4 py-3.5">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0">
-                                <p class="font-mono text-xs font-semibold text-slate-700">{{ $k->kode_kelas }}</p>
-                                <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ $k->nama_kelas }}</p>
-                                <p class="mt-0.5 truncate text-xs text-slate-600">Tingkat {{ $k->tingkat }} · {{ $kur?->nama_kurikulum ?? '—' }}</p>
-                            </div>
-                            <div class="flex flex-shrink-0 items-center gap-1">
-                                <button type="button" class="open-edit-modal inline-flex items-center rounded-lg bg-indigo-100 p-1.5 text-indigo-700 hover:bg-indigo-200"
-                                    data-update-url="{{ route('tenant.tenant.kelas.update', [$tenant, $k->id]) }}"
-                                    data-kode="{{ $k->kode_kelas }}"
-                                    data-nama="{{ $k->nama_kelas }}"
-                                    data-tingkat="{{ $k->tingkat }}"
-                                    data-kurikulum="{{ $k->kode_kurikulum }}">
-                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                </button>
-                                <button type="button" class="delete-kelas inline-flex items-center rounded-lg bg-rose-100 p-1.5 text-rose-700 hover:bg-rose-200" data-action="{{ route('tenant.tenant.kelas.destroy', [$tenant, $k->id]) }}" data-name="{{ $k->kode_kelas }}">
-                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.48 0 00-7.5 0"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                @empty
-                    <li class="px-5 py-14 text-center text-sm text-slate-400">Belum ada kelas.</li>
-                @endforelse
-            </ul>
         </section>
     </main>
 
@@ -156,8 +136,7 @@
                     @include('tenant.tenant._formulir_kelas', ['kelasItem' => $kelasItem])
                 </div>
                 <div class="mt-6 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-                    <button type="button" id="cancel-kelas-modal" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">Batal</button>
-                    <button type="submit" id="submit-kelas" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+                    <button type="submit" id="submit-kelas" class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         <span id="submit-label">Tambah Kelas</span>
                     </button>
@@ -172,6 +151,11 @@
     </form>
 
     @include('tenant.partials._fancy_inputs_scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
         const kelasModal = document.getElementById('kelas-modal');
         const kelasForm = document.getElementById('kelas-form');
@@ -195,6 +179,49 @@
             kelasModal.classList.toggle('flex', open);
             document.body.classList.toggle('overflow-hidden', open);
         }
+
+        const table = $('#kelas').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: true,
+            responsive: true,
+            scrollX: true,
+            scrollCollapse: true,
+            autoWidth: false,
+            pageLength: 15,
+            lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
+            ajax: {
+                url: @json(route('tenant.tenant.kelas.data', $tenant)),
+                error: function (xhr, error, thrown) {
+                    console.error('[DataTables kelas] AJAX error:', error, thrown);
+                    console.error('[DataTables kelas] Status:', xhr.status);
+                    console.error('[DataTables kelas] Response:', xhr.responseText ? xhr.responseText.substring(0, 1500) : '(empty)');
+                    var msg = '<div class="px-5 py-4 text-left"><div class="font-semibold text-rose-700">Gagal memuat data kelas (HTTP ' + xhr.status + ').</div><pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-3 text-xs text-slate-700">' + (xhr.responseText ? $('<div>').text(xhr.responseText.substring(0, 1500)).html() : '(kosong)') + '</pre></div>';
+                    $('#kelas tbody').html('<tr><td colspan="6">' + msg + '</td></tr>');
+                },
+            },
+            language: {
+                emptyTable: 'Belum ada kelas.',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 data',
+                infoFiltered: '(difilter dari _MAX_ total)',
+                lengthMenu: 'Tampilkan _MENU_ data',
+                loadingRecords: 'Memuat…',
+                processing: 'Memproses…',
+                search: 'Cari:',
+                zeroRecords: 'Tidak ada kelas yang cocok.',
+                paginate: { first: '«', last: '»', next: '›', previous: '‹' },
+            },
+            order: [[1, 'asc']],
+            columns: [
+                { data: 'DT_RowIndex', orderable: false, searchable: false, className: 'ps-3 text-slate-500 tabular-nums' },
+                { data: 'kode_kelas', name: 'kelas.kode_kelas', className: 'ps-3 font-mono text-xs font-semibold text-slate-700 whitespace-nowrap' },
+                { data: 'nama_kelas', name: 'kelas.nama_kelas', className: 'ps-3 font-semibold text-slate-800' },
+                { data: 'tingkat', name: 'kelas.tingkat', className: 'ps-3' },
+                { data: 'kurikulum_nama', name: 'kurikulum.nama_kurikulum', orderable: false, className: 'ps-3 text-slate-700' },
+                { data: 'action', orderable: false, searchable: false, className: 'text-center whitespace-nowrap' },
+            ],
+        });
 
         function openCreateModal() {
             kelasForm.action = @json(route('tenant.tenant.kelas.store', $tenant));
@@ -225,11 +252,12 @@
         }
 
         document.getElementById('add-kelas').addEventListener('click', openCreateModal);
-        document.querySelectorAll('.open-edit-modal').forEach(function (btn) {
-            btn.addEventListener('click', function () { openEditModal(this); });
+
+        $('#kelas').on('click', '.open-edit-modal', function () {
+            openEditModal(this);
         });
+
         document.getElementById('close-kelas-modal').addEventListener('click', function () { setModalState(false); });
-        document.getElementById('cancel-kelas-modal').addEventListener('click', function () { setModalState(false); });
         kelasModal.addEventListener('click', function (event) {
             if (event.target === kelasModal) setModalState(false);
         });
@@ -246,34 +274,36 @@
             submitLabel.textContent = 'Menyimpan…';
         });
 
-        document.querySelectorAll('.delete-kelas').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const action = this.dataset.action;
-                const name = this.dataset.name;
-                Swal.fire({
-                    title: 'Hapus kelas ini?',
-                    text: 'Kelas ' + name + ' akan dihapus. Tindakan ini tidak dapat dibatalkan.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ya, hapus',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 focus:outline-none focus:ring-4 focus:ring-rose-200 mx-1',
-                        cancelButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 mx-1',
-                    },
-                }).then(function (result) {
-                    if (!result.isConfirmed) return;
-                    deleteForm.action = action;
-                    deleteForm.submit();
-                });
+        $('#kelas').on('click', '.delete-kelas', function () {
+            const action = this.dataset.action;
+            const name = this.dataset.name;
+            Swal.fire({
+                title: 'Hapus kelas ini?',
+                text: 'Kelas ' + name + ' akan dihapus. Tindakan ini tidak dapat dibatalkan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 focus:outline-none focus:ring-4 focus:ring-rose-200 mx-1',
+                    cancelButton: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 mx-1',
+                },
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                deleteForm.action = action;
+                deleteForm.submit();
             });
         });
+
+        @if ($errors->any())
+        setModalState(true);
+        @endif
     </script>
 
     @if (session('success'))
-        <script>Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>
+        <script>Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true }).then(function () { table.ajax.reload(null, false); });</script>
     @endif
     @if (session('error'))
         <script>Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: @json(session('error')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>

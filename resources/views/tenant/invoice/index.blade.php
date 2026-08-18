@@ -47,10 +47,34 @@
         .table-wrap { overflow-x: auto; }
         #invoices { width: 100% !important; }
         #invoices thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border-bottom: 1px solid #e2e8f0; color: #475569; font-weight: 600; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; padding: .75rem 1rem; white-space: nowrap; }
-        #invoices tbody td { padding: .875rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+#invoices tbody td { padding: .875rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         #invoices tbody tr:last-child td { border-bottom: 0; }
         #invoices tbody tr { transition: background-color .15s ease; }
         #invoices tbody tr:hover { background-color: #f8fafc; }
+
+        td.dtr-control, td.control { position: relative; padding-left: 2.25rem !important; cursor: pointer; }
+        td.dtr-control::before, td.control::before {
+            content: '';
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            width: 0.875rem;
+            height: 0.875rem;
+            margin-top: -0.4375rem;
+            border: 2px solid #6366f1;
+            border-radius: 0.25rem;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, transparent 45%, #6366f1 45%, #6366f1 55%, transparent 55%) center/100% 100% no-repeat, #fff;
+            transition: transform .15s ease;
+        }
+        tr.dtr-expanded td.dtr-control::before, tr.dtr-expanded td.control::before {
+            transform: rotate(180deg);
+        }
+        #invoices .dtr-details { padding: 0.5rem 0; }
+        #invoices .dtr-details > li { padding: 0.5rem 1rem; border-bottom: 1px solid #f1f5f9; display: flex; gap: 0.75rem; align-items: flex-start; }
+        #invoices .dtr-details > li:last-child { border-bottom: 0; }
+        #invoices .dtr-details .dtr-title { font-weight: 600; color: #64748b; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.04em; min-width: 7rem; padding-top: 0.125rem; }
+        #invoices .dtr-details .dtr-data { color: #1e293b; font-size: 0.875rem; word-break: break-word; }
         .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter { margin-bottom: .75rem; }
         .dataTables_wrapper .dataTables_length label,
@@ -84,13 +108,13 @@
     @include('tenant.partials.bilah-atas')
 
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+<header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-indigo-600">Tenant Console</p>
-                    <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Invoice</h2>
-                <p class="mt-1 text-sm text-slate-500">Kelola catatan invoice dan status pembayaran.</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600 sm:text-sm">Tenant Console</p>
+                    <h2 class="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">Invoice</h2>
+                <p class="mt-1 text-xs text-slate-500 sm:text-sm">Kelola catatan invoice dan status pembayaran.</p>
             </div>
-            <button type="button" id="add-invoice" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto">
+            <button type="button" id="add-invoice" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:w-auto sm:py-2.5">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Tambah Invoice
             </button>
@@ -98,11 +122,12 @@
 
         @include('tenant.partials.tenant-filter')
 
-        <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="table-wrap px-5 py-4">
+<section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="table-wrap px-3 py-3 sm:px-5 sm:py-4">
                 <table id="invoices" class="table align-items-center mb-0 w-full text-sm text-slate-700">
-                    <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
+<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                         <tr>
+                            <th class="control px-3 py-3 text-left font-semibold" aria-label="Detail"></th>
                             <th class="px-3 py-3 text-left font-semibold">No</th>
                             <th class="px-3 py-3 text-left font-semibold">Jenis Pembayaran</th>
                             <th class="px-3 py-3 text-left font-semibold">Pemilik</th>
@@ -330,8 +355,9 @@
                 zeroRecords: 'Tidak ada invoice yang cocok.',
                 paginate: { first: '«', last: '»', next: '›', previous: '‹' },
             },
-            order: [[4, 'desc']],
+order: [[5, 'desc']],
             columns: [
+                { className: 'control', orderable: false, searchable: false, defaultContent: '', width: '2.25rem' },
                 { data: 'DT_RowIndex', orderable: false, searchable: false, width: '4%' },
                 { data: 'jenis_pembayaran', name: 'admin_invoice.jenis_pembayaran', className: 'ps-3 font-semibold text-slate-800 whitespace-nowrap' },
                 { data: 'owner', name: 'owner', className: 'ps-3 text-slate-700' },
@@ -343,9 +369,29 @@
                 { data: 'action', orderable: false, searchable: false, className: 'text-center whitespace-nowrap' },
             ],
             columnDefs: [
-                { targets: 0, orderable: false, searchable: false },
+                { targets: 0, orderable: false, searchable: false, className: 'control' },
+                { targets: 1, orderable: false, searchable: false },
                 { targets: -1, orderable: false, searchable: false },
+                { className: 'all', targets: [0, 2, 8] },
+                { className: 'min-tablet', targets: [1, 3, 4, 5, 6, 7] },
+                { className: 'min-desktop', targets: [3, 4] },
             ],
+            responsive: {
+                details: {
+                    type: 'column',
+                    target: 'tr',
+                    renderer: function (api, rowIdx, columns) {
+                        var data = $.map(columns, function (c, i) {
+                            if (c.hidden && c.data !== null && c.data !== '') {
+                                var title = c.title || api.column(i).header().textContent || '';
+                                return '<li><span class="dtr-title">' + $('<div>').text(title).html() + '</span> <span class="dtr-data">' + (c.data || '') + '</span></li>';
+                            }
+                            return '';
+                        }).join('');
+                        return data ? $('<ul class="dtr-details" />').append(data) : false;
+                    }
+                }
+            },
             rowCallback: function (row, data) {
                 $(row).attr('data-invoice-id', data.id);
                 $(row).attr('data-payment-type', data.jenis_pembayaran || '');
@@ -431,8 +477,8 @@
             paymentJumlah.val(paymentJumlah.maskMoney('unmasked')[0]);
         });
 
-        $('#invoices tbody').on('click', 'tr', function (e) {
-            if ($(e.target).closest('.print-invoice, .delete-invoice').length) return;
+$('#invoices tbody').on('click', 'tr', function (e) {
+            if ($(e.target).closest('.print-invoice, .delete-invoice, td.control, td.dtr-control').length) return;
             if (this.dataset.status !== 'unpaid') return;
             document.getElementById('payment-invoice-id').textContent = 'Invoice #' + this.dataset.invoiceId;
             document.getElementById('payment-idv').value = this.dataset.invoiceId;
@@ -471,11 +517,11 @@
         @endif
     </script>
 
-    @if (session('success'))
-        <script>Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true }).then(function () { table.ajax.reload(null, false); });</script>
+@if (session('success'))
+        <script>Swal.fire({ toast: true, position: window.innerWidth < 640 ? 'top' : 'top-end', icon: 'success', title: @json(session('success')), showConfirmButton: false, timer: 3000, timerProgressBar: true }).then(function () { table.ajax.reload(null, false); });</script>
     @endif
     @if (session('error'))
-        <script>Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: @json(session('error')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>
+        <script>Swal.fire({ toast: true, position: window.innerWidth < 640 ? 'top' : 'top-end', icon: 'error', title: @json(session('error')), showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>
     @endif
 </body>
 </html>

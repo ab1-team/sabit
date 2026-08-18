@@ -49,7 +49,7 @@
             @else
                 <a href="{{ route('halaman-publik.ppdb') }}" class="lp-btn-light">Daftar PPDB 2026/2027 <i class="bi bi-arrow-right"></i></a>
             @endif
-            <a href="{{ tenant()?->adminUrl() ?: '#' }}" class="lp-btn-outline-light" target="_blank" rel="noopener noreferrer">SabIT</a>
+            <a href="{{ route('halaman-publik.ppdb') }}" class="lp-btn-outline-light">Daftar PPDB</a>
         </div>
         <div class="lp-reveal mt-4 d-flex flex-wrap justify-content-center gap-2" data-delay="4">
             <span class="lp-badge"><i class="bi bi-patch-check-fill"></i> Terakreditasi A</span>
@@ -132,15 +132,18 @@
                         ? Storage::disk('public')->url('landing/' . $post->image)
                         : $imgs[$i % 3];
                 @endphp
-                <div class="col-md-4">
-                    <div class="lp-program-card lp-reveal" data-from="zoom" data-delay="{{ $i + 1 }}">
+                <div class="col-md-6 col-lg-4 d-flex">
+                    <div class="lp-program-card lp-reveal h-100 w-100 d-flex flex-column" data-from="zoom" data-delay="{{ $i + 1 }}">
                         <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-thumb">
                             <img src="{{ $img }}" alt="{{ $title }}" loading="lazy">
                         </a>
-                        <div class="lp-body">
+                        <div class="lp-body d-flex flex-column flex-grow-1">
                             <span class="lp-tag">{{ $cat }}</span>
                             <h5><a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="text-dark">{{ $title }}</a></h5>
-                            <p>{{ $desc }}</p>
+                            <p class="flex-grow-1">{{ $desc }}</p>
+                            <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-link-soft mt-2">
+                                Baca selengkapnya <i class="bi bi-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -153,15 +156,18 @@
                     ];
                 @endphp
                 @foreach ($fallback as $i => $f)
-                    <div class="col-md-4">
-                        <div class="lp-program-card lp-reveal" data-from="zoom" data-delay="{{ $i + 1 }}">
+                    <div class="col-md-6 col-lg-4 d-flex">
+                        <div class="lp-program-card lp-reveal h-100 w-100 d-flex flex-column" data-from="zoom" data-delay="{{ $i + 1 }}">
                             <div class="lp-thumb">
                                 <img src="{{ $f['img'] }}" alt="{{ $f['title'] }}" loading="lazy">
                             </div>
-                            <div class="lp-body">
+                            <div class="lp-body d-flex flex-column flex-grow-1">
                                 <span class="lp-tag">{{ $f['cat'] }}</span>
                                 <h5>{{ $f['title'] }}</h5>
-                                <p>{{ $f['desc'] }}</p>
+                                <p class="flex-grow-1">{{ $f['desc'] }}</p>
+                                <a href="{{ route('halaman-publik.daftar-artikel') }}" class="lp-link-soft mt-2">
+                                    Baca selengkapnya <i class="bi bi-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -184,24 +190,24 @@
 
         <div class="row g-3 g-lg-4">
             @foreach ($events as $i => $event)
-                <div class="col-md-6">
-                    <div class="lp-glass lp-event-card lp-reveal" data-from="zoom" data-delay="{{ (($i % 3) + 1) }}">
+                <div class="col-md-6 col-lg-6 d-flex">
+                    <div class="lp-glass lp-event-card lp-reveal h-100 w-100" data-from="zoom" data-delay="{{ (($i % 3) + 1) }}">
                         <div class="lp-event-date">
                             <span class="day">{{ $event->start_date?->format('d') }}</span>
                             <span class="month">{{ $event->start_date?->translatedFormat('M') }}</span>
                         </div>
-                        <div>
+                        <div class="lp-event-body">
                             <h5 class="lp-event-title">{{ $event->title }}</h5>
                             @if ($event->location)
                                 <div class="lp-event-meta">
                                     <i class="bi bi-geo-alt"></i>
-                                    {{ $event->location }}
+                                    <span>{{ $event->location }}</span>
                                 </div>
                             @endif
                             @if ($event->start_time)
                                 <div class="lp-event-meta">
                                     <i class="bi bi-clock"></i>
-                                    {{ \Carbon\Carbon::parse($event->start_time)->format('H:i') }} WIB
+                                    <span>{{ \Carbon\Carbon::parse($event->start_time)->format('H:i') }} WIB</span>
                                 </div>
                             @endif
                         </div>
@@ -256,13 +262,19 @@
         </div>
         <div class="row g-3">
             @foreach ($announcements as $i => $item)
-                <div class="col-md-6 col-lg-4">
-                    <div class="lp-glass lp-ann-card lp-reveal" data-from="zoom" data-delay="{{ (($i % 3) + 1) }}">
+                <div class="col-md-6 col-lg-4 d-flex">
+                    <div class="lp-glass lp-ann-card lp-reveal h-100 w-100 d-flex flex-column" data-from="zoom" data-delay="{{ (($i % 3) + 1) }}">
                         <div class="lp-ann-date">
                             <i class="bi bi-calendar-event"></i>
                             {{ $item->published_at?->translatedFormat('d F Y') }}
                         </div>
-                        <h5>{{ $item->title }}</h5>
+                        <h5 class="lp-ann-title">{{ $item->title }}</h5>
+                        @if (!empty($item->excerpt))
+                            <p class="lp-ann-excerpt">{{ \Illuminate\Support\Str::limit(strip_tags($item->excerpt), 90) }}</p>
+                        @endif
+                        <a href="{{ route('halaman-publik.pengumuman') }}" class="lp-link-soft mt-auto pt-2">
+                            Baca selengkapnya <i class="bi bi-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
             @endforeach

@@ -104,6 +104,7 @@ $centralRoutes = function () {
 
         // Tenant management (pusat mengelola sekolah)
         Route::get('/tenant', [TenantController::class, 'index'])->name('tenant.tenant.index');
+        Route::get('/tenant/data', [TenantController::class, 'data'])->name('tenant.tenant.data');
         Route::post('/tenant', [TenantController::class, 'store'])->name('tenant.tenant.store');
         Route::get('/tenant/{tenant}', [TenantController::class, 'show'])->name('tenant.tenant.show');
         Route::put('/tenant/{tenant}', [TenantController::class, 'update'])->name('tenant.tenant.update');
@@ -121,6 +122,7 @@ $centralRoutes = function () {
             Route::post('user/{user}/reset-password', [UserOperatorController::class, 'resetPassword'])->name('user.reset-password');
 
             Route::get('tahun-akademik', [TahunAkademikController::class, 'index'])->name('tahun-akademik.index');
+            Route::get('tahun-akademik/data', [TahunAkademikController::class, 'data'])->name('tahun-akademik.data');
             Route::post('tahun-akademik', [TahunAkademikController::class, 'store'])->name('tahun-akademik.store');
             Route::put('tahun-akademik/{tahun_akademik}', [TahunAkademikController::class, 'update'])->name('tahun-akademik.update');
             Route::delete('tahun-akademik/{tahun_akademik}', [TahunAkademikController::class, 'destroy'])->name('tahun-akademik.destroy');
@@ -137,26 +139,31 @@ $centralRoutes = function () {
 
             // Master data akademik + referensi (pusat)
             Route::get('jabatan', [JabatanPusatController::class, 'index'])->name('jabatan.index');
+            Route::get('jabatan/data', [JabatanPusatController::class, 'data'])->name('jabatan.data');
             Route::post('jabatan', [JabatanPusatController::class, 'store'])->name('jabatan.store');
             Route::put('jabatan/{jabatan}', [JabatanPusatController::class, 'update'])->name('jabatan.update');
             Route::delete('jabatan/{jabatan}', [JabatanPusatController::class, 'destroy'])->name('jabatan.destroy');
 
             Route::get('kurikulum', [KurikulumPusatController::class, 'index'])->name('kurikulum.index');
+            Route::get('kurikulum/data', [KurikulumPusatController::class, 'data'])->name('kurikulum.data');
             Route::post('kurikulum', [KurikulumPusatController::class, 'store'])->name('kurikulum.store');
             Route::put('kurikulum/{kurikulum}', [KurikulumPusatController::class, 'update'])->name('kurikulum.update');
             Route::delete('kurikulum/{kurikulum}', [KurikulumPusatController::class, 'destroy'])->name('kurikulum.destroy');
 
             Route::get('jurusan', [JurusanPusatController::class, 'index'])->name('jurusan.index');
+            Route::get('jurusan/data', [JurusanPusatController::class, 'data'])->name('jurusan.data');
             Route::post('jurusan', [JurusanPusatController::class, 'store'])->name('jurusan.store');
             Route::put('jurusan/{jurusan}', [JurusanPusatController::class, 'update'])->name('jurusan.update');
             Route::delete('jurusan/{jurusan}', [JurusanPusatController::class, 'destroy'])->name('jurusan.destroy');
 
             Route::get('kelas', [KelasPusatController::class, 'index'])->name('kelas.index');
+            Route::get('kelas/data', [KelasPusatController::class, 'data'])->name('kelas.data');
             Route::post('kelas', [KelasPusatController::class, 'store'])->name('kelas.store');
             Route::put('kelas/{kelas}', [KelasPusatController::class, 'update'])->name('kelas.update');
             Route::delete('kelas/{kelas}', [KelasPusatController::class, 'destroy'])->name('kelas.destroy');
 
             Route::get('ruangan', [RuanganPusatController::class, 'index'])->name('ruangan.index');
+            Route::get('ruangan/data', [RuanganPusatController::class, 'data'])->name('ruangan.data');
             Route::post('ruangan', [RuanganPusatController::class, 'store'])->name('ruangan.store');
             Route::put('ruangan/{ruangan}', [RuanganPusatController::class, 'update'])->name('ruangan.update');
             Route::delete('ruangan/{ruangan}', [RuanganPusatController::class, 'destroy'])->name('ruangan.destroy');

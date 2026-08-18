@@ -520,6 +520,74 @@
         #sidenav-main .nav .nav-link.text-dark:hover {
             color: #1a1a1a !important;
         }
+
+        /* ============ Sidebar buka/tutup — responsive ============ */
+        /* Backdrop untuk drawer mobile */
+        .lp-sidenav-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .45);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 1049;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .25s ease, visibility 0s linear .25s;
+        }
+        .lp-sidenav-backdrop.is-visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity .25s ease;
+        }
+
+        /* Tombol hamburger di pojok kiri navbar mobile */
+        .lp-sidenav-burger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: transparent;
+            border: 0;
+            padding: 0;
+            color: #1a1a1a;
+            cursor: pointer;
+            transition: background .2s ease;
+            flex-shrink: 0;
+        }
+        .lp-sidenav-burger:hover { background: rgba(15, 23, 42, .06); }
+        .lp-sidenav-burger .material-symbols-rounded { font-size: 22px; }
+
+        /* Mobile (<1200px): drawer overlay */
+        @media (max-width: 1199.98px) {
+            .g-sidenav-show:not(.g-sidenav-pinned) body,
+            body.g-sidenav-show:not(.g-sidenav-pinned) {
+                overflow-x: hidden;
+            }
+            /* Pastikan sidebar hidden default di mobile */
+            body:not(.g-sidenav-pinned) #sidenav-main {
+                transform: translateX(-15.5rem);
+            }
+        }
+
+        /* Pinned state pada mobile: drawer di atas konten */
+        @media (max-width: 1199.98px) {
+            body.g-sidenav-pinned #sidenav-main {
+                transform: translateX(0);
+                box-shadow: 0 24px 64px -12px rgba(15, 23, 42, .25);
+                z-index: 1050;
+            }
+            body.g-sidenav-pinned .main-content {
+                position: relative;
+                z-index: 1;
+            }
+        }
+
+        /* Desktop (≥1200px): sidebar default tampil; pinned => icon mini */
+        @media (min-width: 1200px) {
+            .lp-sidenav-backdrop { display: none !important; }
+        }
     </style>
 
 
@@ -527,6 +595,7 @@
 </head>
 
 <body class="g-sidenav-show bg-gray-100">
+    <div class="lp-sidenav-backdrop" id="lpSidenavBackdrop" aria-hidden="true"></div>
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start ms-2 my-2 bg-white border-radius-lg"
         id="sidenav-main">
         <div class="sidenav-header">
@@ -872,20 +941,86 @@
     @endif
 
 
-    <script>
-        $('.btn-logout').on('click', function(e) {
-            e.preventDefault()
-            Swal.fire({
-                title: 'Keluar dari aplikasi?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, keluar',
-                cancelButtonText: 'Batal'
-            }).then(v => {
-                if (v.isConfirmed) $('#formLogout').submit()
-            })
+<script>
+    $('.btn-logout').on('click', function(e) {
+        e.preventDefault()
+        Swal.fire({
+            title: 'Keluar dari aplikasi?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, keluar',
+            cancelButtonText: 'Batal'
+        }).then(v => {
+            if (v.isConfirmed) $('#formLogout').submit()
         })
-    </script>
+    })
+</script>
+
+<script>
+(function () {
+    var body = document.body;
+    var burger = document.getElementById('lpSidenavBurger');
+    var backdrop = document.getElementById('lpSidenavBackdrop');
+    var sidenav = document.getElementById('sidenav-main');
+    var iconSidenav = document.getElementById('iconSidenav');
+    var STORAGE_KEY = 'lp_sidenav_pinned';
+    var MOBILE_MAX = 1199.98;
+    var isMobile = function () { return window.innerWidth <= MOBILE_MAX; };
+
+    function setPinned(pinned) {
+        if (pinned) body.classList.add('g-sidenav-pinned');
+        else body.classList.remove('g-sidenav-pinned');
+        if (backdrop) backdrop.classList.toggle('is-visible', isMobile() && pinned);
+        if (burger) burger.setAttribute('aria-expanded', pinned ? 'true' : 'false');
+
+        // Sinkronkan class bg-white dengan gaya bawaan Material Dashboard
+        // supaya saat dibuka lagi, background putih tetap ada.
+        if (sidenav) {
+            sidenav.classList.remove('bg-transparent');
+            if (pinned) sidenav.classList.add('bg-white');
+        }
+        try { localStorage.setItem(STORAGE_KEY, pinned ? '1' : '0'); } catch (e) {}
+    }
+
+    function toggle() {
+        setPinned(!body.classList.contains('g-sidenav-pinned'));
+    }
+
+    // Restore state (hanya desktop; di mobile default hidden)
+    try {
+        var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === '1' && !isMobile()) setPinned(true);
+        else setPinned(false);
+    } catch (e) { setPinned(false); }
+
+    if (burger) burger.addEventListener('click', function (e) { e.preventDefault(); toggle(); });
+    if (backdrop) backdrop.addEventListener('click', function () { if (isMobile()) setPinned(false); });
+
+    // Buang listener bawaan Material Dashboard pada iconSidenav (yang menghapus
+    // bg-white saat toggle), lalu pasang listener kita sendiri yang konsisten.
+    if (iconSidenav) {
+        var clone = iconSidenav.cloneNode(true);
+        iconSidenav.parentNode.replaceChild(clone, iconSidenav);
+        clone.addEventListener('click', function (e) { e.preventDefault(); toggle(); });
+    }
+
+    // Tutup otomatis saat route berubah / menu di klik (mobile)
+    document.querySelectorAll('#sidenav-main a.nav-link').forEach(function (a) {
+        a.addEventListener('click', function () {
+            if (isMobile()) setTimeout(function () { setPinned(false); }, 80);
+        });
+    });
+
+    // Auto-close ketika breakpoint berubah
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            if (!isMobile() && backdrop) backdrop.classList.remove('is-visible');
+        }, 150);
+    });
+})();
+</script>
     @yield('script')
 </body>
 

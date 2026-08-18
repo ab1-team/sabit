@@ -55,6 +55,39 @@
         box-shadow: 0 20px 48px -16px rgba(15, 23, 42, 0.15);
         margin-top: 3rem;
     }
+    .lp-map-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border-top: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .lp-map-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--lp-primary);
+        text-decoration: none;
+        padding: 0.5rem 0.9rem;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 1px solid rgba(var(--lp-primary-rgb), 0.2);
+        transition: all 0.2s ease;
+    }
+    .lp-map-link:hover {
+        background: var(--lp-primary);
+        color: #fff;
+        border-color: var(--lp-primary);
+    }
+    .lp-map-link i { font-size: 1rem; }
+    .lp-info-value { word-break: break-word; }
+    @media (max-width: 767.98px) {
+        .lp-map-wrap { margin-top: 2rem; border-radius: var(--lp-radius-lg); }
+        .lp-map-wrap .ratio { --bs-aspect-ratio: 75%; }
+        .lp-card-lg { padding: 1.35rem; }
+    }
 </style>
 @endsection
 
@@ -166,10 +199,34 @@
         </div>
 
         @if ($setting->google_maps_url)
+            @php
+                $mapsRaw = trim($setting->google_maps_url);
+                $mapsEmbed = $mapsRaw;
+                if ($mapsRaw !== '' && !str_contains($mapsRaw, 'output=embed')) {
+                    if (preg_match('/[?&]q=([^&]+)/', $mapsRaw, $m)) {
+                        $q = $m[1];
+                        $mapsEmbed = 'https://www.google.com/maps?q=' . $q . '&output=embed';
+                    } elseif (preg_match('#/place/([^/@?]+)#', $mapsRaw, $m)) {
+                        $q = $m[1];
+                        $mapsEmbed = 'https://www.google.com/maps?q=' . rawurlencode($q) . '&output=embed';
+                    } elseif (preg_match('#@(-?\d+\.\d+),(-?\d+\.\d+)#', $mapsRaw, $m)) {
+                        $lat = $m[1]; $lng = $m[2];
+                        $mapsEmbed = "https://www.google.com/maps?q={$lat},{$lng}&z=15&output=embed";
+                    } else {
+                        $q = rawurlencode($mapsRaw);
+                        $mapsEmbed = 'https://www.google.com/maps?q=' . $q . '&output=embed';
+                    }
+                }
+            @endphp
             <div class="lp-map-wrap lp-reveal" data-from="zoom">
                 <div class="ratio ratio-21x9">
-                    <iframe src="{{ $setting->google_maps_url }}" loading="lazy"
+                    <iframe src="{{ $mapsEmbed }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
                             style="border:0" allowfullscreen></iframe>
+                </div>
+                <div class="lp-map-actions">
+                    <a href="{{ $mapsRaw }}" target="_blank" rel="noopener" class="lp-map-link">
+                        <i class="bi bi-geo-alt-fill"></i> Buka di Google Maps
+                    </a>
                 </div>
             </div>
         @endif

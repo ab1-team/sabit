@@ -13,12 +13,12 @@
 @endphp
 
 @if ($tenant)
-    <nav class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white px-2 py-2 shadow-sm">
-        <ul class="flex w-full items-center justify-between gap-1">
+    <nav class="mt-6 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+        <ul class="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-stretch sm:gap-1">
             @foreach ($subNav as $item)
                 @php $isActive = request()->routeIs($item['match']); @endphp
-                <li class="flex-1">
-                    <a href="{{ route($item['route'], $tenant) }}" class="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition {{ $isActive ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <li class="min-w-0">
+                    <a href="{{ route($item['route'], $tenant) }}" class="flex min-h-11 items-center justify-start gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-[11px] font-medium transition sm:inline-flex sm:justify-center sm:gap-2 sm:px-3 sm:text-sm {{ $isActive ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                         @if ($item['icon'] === 'building')
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         @elseif ($item['icon'] === 'users')

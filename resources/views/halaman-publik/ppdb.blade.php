@@ -34,7 +34,7 @@
         max-width: 640px;
         margin: 0 auto 1.75rem;
     }
-    .lp-ppdb-cta {
+    .lp-ppdb-hero .lp-ppdb-cta {
         display: inline-flex;
         gap: 0.7rem;
         justify-content: center;
@@ -50,6 +50,76 @@
     }
     @media (max-width: 991.98px) {
         .lp-ppdb-wrap { grid-template-columns: 1fr; }
+        .lp-ppdb-side { display: none; }
+        .lp-ppdb-hero { padding: 4.5rem 0 3.5rem; }
+    }
+    @media (max-width: 767.98px) {
+        .lp-ppdb-hero { padding: 4rem 0 3rem; }
+        .lp-ppdb-hero h1 {
+            font-size: clamp(1.4rem, 6vw, 1.85rem);
+            margin: 2rem 0 0.75rem;
+            line-height: 1.2;
+        }
+        .lp-ppdb-hero p { font-size: 0.95rem; margin-bottom: 1.5rem; padding: 0 0.5rem; }
+        .lp-ppdb-hero .lp-ppdb-cta { flex-direction: column; width: 100%; max-width: 320px; margin: 0 auto; gap: 0.6rem; }
+        .lp-ppdb-hero .lp-ppdb-cta a { width: 100%; justify-content: center; }
+        .lp-ppdb-card { min-width: 0; padding: 1.15rem; }
+        .lp-ppdb-card * { min-width: 0; overflow-wrap: anywhere; }
+        .lp-faq-q { font-size: 0.9rem; padding: 0.85rem 0.95rem; }
+        .lp-faq-q > span { min-width: 0; overflow-wrap: anywhere; }
+    }
+    /* === Card-style table khusus mobile (≤767px) === */
+    @media (max-width: 767.98px) {
+        .lp-ppdb-table,
+        .lp-ppdb-table thead,
+        .lp-ppdb-table tbody,
+        .lp-ppdb-table tr,
+        .lp-ppdb-table th,
+        .lp-ppdb-table td { display: block; }
+        .lp-ppdb-table thead { display: none; }
+        .lp-ppdb-table {
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            border-radius: 0;
+            overflow: visible;
+        }
+        .lp-ppdb-table tbody tr {
+            background: #fff;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: var(--lp-radius-md);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .lp-ppdb-table tbody tr:last-child { margin-bottom: 0; }
+        .lp-ppdb-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.75rem;
+            padding: 0.4rem 0;
+            border: 0;
+            font-size: 0.88rem;
+        }
+        .lp-ppdb-table td + td {
+            border-top: 1px dashed rgba(15, 23, 42, 0.06);
+        }
+        .lp-ppdb-table td::before {
+            content: attr(data-label);
+            flex: 0 0 auto;
+            font-weight: 600;
+            color: var(--lp-muted);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .lp-ppdb-table td:last-child { padding-bottom: 0.1rem; }
+        .lp-ppdb-table td strong { color: var(--lp-primary); }
+    }
+    @media (max-width: 480px) {
+        .lp-ppdb-hero { padding: 3.5rem 0 2.5rem; }
+        .lp-ppdb-hero h1 { font-size: 1.35rem; }
     }
 
     /* ====== Sidebar ====== */
@@ -156,6 +226,7 @@
     }
 
     /* ====== Tabel jadwal ====== */
+    .lp-ppdb-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .lp-ppdb-table {
         width: 100%;
         border-collapse: separate;
@@ -178,6 +249,9 @@
     }
     .lp-ppdb-table tbody tr:last-child td { border-bottom: 0; }
     .lp-ppdb-table tbody tr:hover { background: rgba(var(--lp-primary-rgb), 0.03); }
+
+    /* Card-style table di mobile (≤767px) */
+    .lp-ppdb-cards-mobile { display: none; }
 
     /* ====== FAQ ====== */
     .lp-faq-item {
@@ -260,21 +334,6 @@
 @section('content')
 
 {{-- ====== Hero PPDB ====== --}}
-@php
-    $ppdbHeroYear = date('Y');
-    $ppdbHeroNextYear = $ppdbHeroYear + 1;
-    $ppdbHeroSchool = $setting->school_name ?? 'sekolah kami';
-    $ppdbHeroTitle = str_replace(
-        ['{{year}}', '{{school}}'],
-        [$ppdbHeroYear . '/' . $ppdbHeroNextYear, $ppdbHeroSchool],
-        $ppdbCta['title'] ?? 'Penerimaan Peserta Didik Baru'
-    );
-    $ppdbHeroParagraph = str_replace(
-        ['{{year}}', '{{school}}'],
-        [$ppdbHeroYear . '/' . $ppdbHeroNextYear, $ppdbHeroSchool],
-        $ppdbCta['paragraph'] ?? 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.'
-    );
-@endphp
 <section class="lp-ppdb-hero">
     <div class="container text-center">
         @if (!empty($ppdb->eyebrow))
@@ -282,18 +341,18 @@
                 {{ $ppdb->eyebrow }}
             </div>
         @endif
-        <h1 class="lp-reveal" data-from="zoom">{{ $ppdbHeroTitle }}</h1>
+        <h1 class="lp-reveal" data-from="zoom">{{ $ppdb->title ?? 'Penerimaan Peserta Didik Baru' }}</h1>
         <p class="lp-reveal" data-delay="1">
-            {{ $ppdbHeroParagraph }}
+            {{ $ppdb->subtitle ?? 'Mari bergabung bersama kami wujudkan pendidikan berkualitas.' }}
         </p>
         <div class="lp-ppdb-cta lp-reveal" data-delay="2">
-            <a href="{{ $ppdb->cta_url ?: route('halaman-publik.ppdb') }}" class="lp-btn-light">
+            <a href="{{ $ppdb->cta_url ?: route('halaman-publik.kontak') }}" class="lp-btn-light">
                 <i class="bi bi-pencil-square"></i>
-                <span>{{ $ppdb->cta_text ?? 'Formulir Pendaftaran' }}</span>
+                {{ $ppdb->cta_text ?? 'Formulir Pendaftaran Online' }}
             </a>
             <a href="{{ $ppdb->secondary_url ?: route('halaman-publik.kontak') }}" class="lp-btn-outline-light">
                 <i class="bi bi-telephone"></i>
-                <span>{{ $ppdb->secondary_text ?? 'Kontak' }}</span>
+                {{ $ppdb->secondary_text ?? 'Kontak Kami' }}
             </a>
         </div>
     </div>
@@ -379,7 +438,7 @@
                 <div id="jadwal" class="lp-ppdb-card lp-reveal" data-from="zoom">
                     <h5><i class="bi bi-calendar2-week-fill"></i> Jadwal &amp; Biaya Pendidikan</h5>
                     @if ($schedules->isNotEmpty())
-                        <div class="table-responsive mt-2">
+                        <div class="lp-ppdb-table-wrap mt-2">
                             <table class="lp-ppdb-table">
                                 <thead>
                                     <tr>
@@ -392,14 +451,14 @@
                                 <tbody>
                                     @foreach ($schedules as $s)
                                         <tr>
-                                            <td><strong>{{ $s->gelombang }}</strong></td>
-                                            <td>
+                                            <td data-label="Gelombang"><strong>{{ $s->gelombang }}</strong></td>
+                                            <td data-label="Periode">
                                                 {{ $s->start_date?->translatedFormat('d M Y') }}
                                                 &ndash;
                                                 {{ $s->end_date?->translatedFormat('d M Y') }}
                                             </td>
-                                            <td>{{ \App\Support\PpdbFormat::rupiah($s->biaya_daftar) }}</td>
-                                            <td>{{ \App\Support\PpdbFormat::rupiah($s->spp_bulanan) }}</td>
+                                            <td data-label="Biaya Pendaftaran">{{ $s->biaya_daftar ?? '-' }}</td>
+                                            <td data-label="SPP / Bulan">{{ $s->spp_bulanan ?? '-' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -420,15 +479,7 @@
                                 <i class="bi bi-chevron-down"></i>
                             </button>
                             <div class="lp-faq-a">
-                                @php
-                                    $answer = (string) $faq->answer;
-                                    $hasTags = $answer !== strip_tags($answer);
-                                @endphp
-                                @if ($hasTags)
-                                    {!! $answer !!}
-                                @else
-                                    {!! nl2br(e($answer)) !!}
-                                @endif
+                                {!! $faq->answer !!}
                             </div>
                         </div>
                     @empty
@@ -441,29 +492,25 @@
                     <div class="row align-items-center g-4">
                         <div class="col-lg-7">
                             <span class="lp-cta-eyebrow">
-                                <i class="bi bi-megaphone-fill"></i>
-                                {{ $ppdb->bottom_eyebrow ?: 'PPDB ' . date('Y') . '/' . (date('Y') + 1) }}
+                                <i class="bi bi-megaphone-fill"></i> PPDB {{ date('Y') }}/{{ date('Y') + 1 }}
                             </span>
-                            <h3 class="mb-2">{{ $ppdb->bottom_title ?: 'Siap mendaftarkan putra/putri Anda?' }}</h3>
+                            <h3 class="mb-2">Siap mendaftarkan putra/putri Anda?</h3>
                             <p class="mb-0">
-                                {{ $ppdb->bottom_paragraph ?: 'Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.' }}
+                                Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.
                             </p>
                         </div>
                         <div class="col-lg-5">
                             <div class="lp-cta-actions lp-ppdb-cta-actions">
-                                <a href="{{ $ppdb->bottom_primary_url ?: ($ppdb->cta_url ?: route('halaman-publik.ppdb')) }}" class="lp-cta-btn">
-                                    <i class="bi bi-pencil-square"></i>
-                                    <span>{{ $ppdb->bottom_primary_text ?: 'Formulir Pendaftaran' }}</span>
+                                <a href="{{ $ppdb->cta_url ?: route('halaman-publik.kontak') }}" class="lp-cta-btn">
+                                    <span>Mulai Pendaftaran Online</span>
+                                    <i class="bi bi-arrow-right"></i>
                                 </a>
-                                @if (!empty($ppdb->bottom_meta))
-                                    <div class="lp-cta-meta">
-                                        <i class="bi bi-shield-check"></i> {{ $ppdb->bottom_meta }}
-                                    </div>
-                                @else
-                                    <div class="lp-cta-meta">
-                                        <i class="bi bi-shield-check"></i> Konsultasi gratis sebelum mendaftar
-                                    </div>
-                                @endif
+                                <a href="{{ route('halaman-publik.kontak') }}" class="lp-cta-btn-outline">
+                                    <i class="bi bi-telephone"></i> Hubungi Tim PPDB
+                                </a>
+                                <div class="lp-cta-meta">
+                                    <i class="bi bi-shield-check"></i> Konsultasi gratis sebelum mendaftar
+                                </div>
                             </div>
                         </div>
                     </div>

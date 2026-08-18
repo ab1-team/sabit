@@ -29,8 +29,13 @@ class MenuStructureSeeder extends Seeder
         //   19  Profil              - section profil, struktur, fasilitas
         //   20  Berita              - lp_artikel
         //   21  Galeri              - lp_galeri
+        //   36  Video               - lp_video (YouTube)
         //   22  Pengumuman          - lp_pengumuman
         //   23  Kontak              - pesan masuk dari form landing
+        //
+        // PPDB (id=25) juga parent dari group 'landing' (parent_id=15) sebagai
+        // dropdown yang punya child 31-35. Urutannya digeser ke 23 supaya
+        // tidak bentrok dengan Kontak (id=23, urutan=22).
         //
         // PPDB dipecah jadi dropdown sendiri (parent=25 + child 26-30):
         //   25  PPDB                - parent dropdown (route='#')
@@ -48,7 +53,7 @@ class MenuStructureSeeder extends Seeder
         // hanya sebagai label visual di sidebar.
         DB::table('menu')->insertOrIgnore([
             ['id' => 15, 'nama_menu' => 'Landing Page', 'route' => '#', 'icon' => 'language', 'urutan' => 15, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => null, 'created_at' => null, 'updated_at' => null],
-            ['id' => 25, 'nama_menu' => 'PPDB', 'route' => '#', 'icon' => 'how_to_reg', 'urutan' => 22, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
+            ['id' => 25, 'nama_menu' => 'PPDB', 'route' => '#', 'icon' => 'how_to_reg', 'urutan' => 23, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
         ]);
 
         // Child dengan parent_id=15 (Landing Page) atau parent_id=25 (PPDB).
@@ -72,8 +77,9 @@ class MenuStructureSeeder extends Seeder
             ['id' => 19, 'nama_menu' => 'Profil',              'route' => '/app/admin-landing/profile-sections', 'icon' => 'account_balance',  'urutan' => 17, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 20, 'nama_menu' => 'Berita',              'route' => '/app/admin-landing/posts',            'icon' => 'article',          'urutan' => 18, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 21, 'nama_menu' => 'Galeri',              'route' => '/app/admin-landing/galleries',        'icon' => 'photo_library',    'urutan' => 19, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
-            ['id' => 22, 'nama_menu' => 'Pengumuman',          'route' => '/app/admin-landing/announcements',    'icon' => 'campaign',         'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
-            ['id' => 23, 'nama_menu' => 'Kontak',              'route' => '/app/admin-landing/contact-messages', 'icon' => 'contact_mail',     'urutan' => 21, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 36, 'nama_menu' => 'Video',               'route' => '/app/admin-landing/videos',           'icon' => 'play_circle',      'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 22, 'nama_menu' => 'Pengumuman',          'route' => '/app/admin-landing/announcements',    'icon' => 'campaign',         'urutan' => 21, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 23, 'nama_menu' => 'Kontak',              'route' => '/app/admin-landing/contact-messages', 'icon' => 'contact_mail',     'urutan' => 22, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 31, 'nama_menu' => 'Pengaturan PPDB',     'route' => '/app/admin-landing/ppdb-cta',         'icon' => 'tune',             'urutan' => 1,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
             ['id' => 32, 'nama_menu' => 'Persyaratan',         'route' => '/app/admin-landing/ppdb/persyaratan', 'icon' => 'fact_check',       'urutan' => 2,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
             ['id' => 33, 'nama_menu' => 'Alur',                'route' => '/app/admin-landing/ppdb/tahapan',     'icon' => 'timeline',         'urutan' => 3,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],

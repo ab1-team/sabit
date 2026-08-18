@@ -35,6 +35,7 @@
         $statItems = [
             ['label' => 'Berita', 'value' => $stats['posts'], 'icon' => 'article', 'from' => '#0ea5e9', 'to' => '#0c7fbb'],
             ['label' => 'Galeri', 'value' => $stats['galleries'], 'icon' => 'photo_library', 'from' => '#f59e0b', 'to' => '#d97706'],
+            ['label' => 'Video', 'value' => $stats['videos'], 'icon' => 'play_circle', 'from' => '#ef4444', 'to' => '#c73838'],
             ['label' => 'Pengumuman', 'value' => $stats['announcements'], 'icon' => 'campaign', 'from' => '#ef4444', 'to' => '#c73838'],
             ['label' => 'Pesan', 'value' => $stats['unread_messages'], 'icon' => 'mail', 'from' => '#ec4899', 'to' => '#be185d', 'badge' => $stats['unread_messages'] > 0],
         ];
@@ -76,6 +77,7 @@
                     ['route' => 'app.admin-landing.profile-sections', 'icon' => 'account_balance', 'title' => 'Profil', 'sub' => 'Section profil, struktur, fasilitas', 'color' => '#0ea5e9'],
                     ['route' => 'app.admin-landing.posts', 'icon' => 'article', 'title' => 'Berita', 'sub' => 'Artikel & program', 'color' => '#f59e0b'],
                     ['route' => 'app.admin-landing.galleries', 'icon' => 'photo_library', 'title' => 'Galeri', 'sub' => 'Album foto', 'color' => '#8b5cf6'],
+                    ['route' => 'app.admin-landing.videos', 'icon' => 'play_circle', 'title' => 'Video', 'sub' => 'Video YouTube', 'color' => '#ef4444'],
                     ['route' => 'app.admin-landing.announcements', 'icon' => 'campaign', 'title' => 'Pengumuman', 'sub' => 'Info sekolah', 'color' => '#ef4444'],
                     ['route' => 'app.admin-landing.contact-messages', 'icon' => 'contact_mail', 'title' => 'Kontak', 'sub' => 'Pesan masuk', 'color' => '#10b981'],
                 ];

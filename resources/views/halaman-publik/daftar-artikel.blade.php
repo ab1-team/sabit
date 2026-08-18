@@ -23,25 +23,28 @@
         @else
             <div class="row g-3 g-lg-4">
                 @foreach ($posts as $i => $post)
-                    <div class="col-md-6 col-lg-4">
-                        <div class="lp-program-card lp-reveal h-100" data-from="zoom" data-delay="{{ (($i % 3) + 1) }}">
+                    <div class="col-md-6 col-lg-4 d-flex">
+                        <div class="lp-program-card lp-reveal h-100 w-100 d-flex flex-column" data-from="zoom" data-delay="{{ (($i % 3) + 1) }}">
                             @if ($post->image)
                                 <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-thumb">
                                     <img src="{{ Storage::disk('public')->url('landing/' . $post->image) }}" alt="" loading="lazy">
                                 </a>
                             @endif
-                            <div class="lp-body">
+                            <div class="lp-body d-flex flex-column flex-grow-1">
                                 @if ($post->category)
                                     <span class="lp-tag">{{ $post->category }}</span>
                                 @endif
                                 <h5>
                                     <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="text-dark">{{ $post->title }}</a>
                                 </h5>
-                                <p class="text-muted small mb-3">
+                                <p class="lp-post-meta text-muted small mb-2">
                                     <i class="bi bi-calendar3 me-1"></i>
                                     {{ $post->published_at?->translatedFormat('d F Y') }}
                                 </p>
-                                <p class="mb-0">{{ Str::limit(strip_tags($post->excerpt ?: $post->content), 110) }}</p>
+                                <p class="flex-grow-1 mb-0">{{ Str::limit(strip_tags($post->excerpt ?: $post->content), 110) }}</p>
+                                <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-link-soft mt-2">
+                                    Baca selengkapnya <i class="bi bi-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
                     </div>

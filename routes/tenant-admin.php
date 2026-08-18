@@ -245,6 +245,14 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::put('/galleries/{gallery}', [AdminLandingController::class, 'galleryUpdate'])->name('galleries.update');
         Route::delete('/galleries/{gallery}', [AdminLandingController::class, 'galleryDestroy'])->name('galleries.destroy');
 
+        Route::get('/videos', [AdminLandingController::class, 'videos'])->name('videos');
+        Route::get('/videos/data', [AdminLandingController::class, 'videosData'])->name('videos.data');
+        Route::get('/videos/create', [AdminLandingController::class, 'videoCreate'])->name('videos.create');
+        Route::post('/videos', [AdminLandingController::class, 'videoStore'])->name('videos.store');
+        Route::get('/videos/{video}/edit', [AdminLandingController::class, 'videoEdit'])->name('videos.edit');
+        Route::put('/videos/{video}', [AdminLandingController::class, 'videoUpdate'])->name('videos.update');
+        Route::delete('/videos/{video}', [AdminLandingController::class, 'videoDestroy'])->name('videos.destroy');
+
         Route::get('/struktur', [AdminLandingController::class, 'struktur'])->name('struktur');
         Route::get('/struktur/create', [AdminLandingController::class, 'strukturCreate'])->name('struktur.create');
         Route::post('/struktur', [AdminLandingController::class, 'strukturStore'])->name('struktur.store');

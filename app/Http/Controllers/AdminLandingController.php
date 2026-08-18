@@ -18,6 +18,7 @@ use App\Models\Landing\BagianProfilLanding;
 use App\Models\Landing\PengaturanLanding;
 use App\Models\Landing\StrukturOrganisasiLanding;
 use App\Models\Landing\FasilitasLanding;
+use App\Models\Landing\VideoLanding;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -83,6 +84,7 @@ class AdminLandingController extends Controller
             'stats' => [
                 'posts' => ArtikelLanding::count(),
                 'galleries' => GaleriLanding::count(),
+                'videos' => VideoLanding::count(),
                 'announcements' => PengumumanLanding::count(),
                 'unread_messages' => PesanKontakLanding::unread()->count(),
             ],
@@ -1149,6 +1151,368 @@ class AdminLandingController extends Controller
         $model->delete();
 
         return $this->deleteSuccess($request, 'Foto berhasil dihapus.', 'app.admin-landing.galleries');
+    }
+
+    public function videos(Request $request)
+    {
+        return view('admin-landing.video.indeks', [
+            'title' => 'Video',
+        ]);
+    }
+
+    public function videosData(Request $request)
+    {
+        $query = VideoLanding::query();
+
+        return DataTables::eloquent($query)
+            ->addColumn('preview_col', function ($v) {
+                $thumb = $v->display_thumb;
+                $isLocal = $v->isLocal();
+                if ($thumb) {
+                    return '<div class="lp-video-thumb"><img src="'.e($thumb).'" alt="" loading="lazy"></div>'
+                        .'<span class="material-symbols-rounded lp-video-play">play_circle</span>';
+                }
+                if ($isLocal) {
+                    return '<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">movie</span></div>';
+                }
+                return '<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">videocam_off</span></div>';
+            })
+            ->addColumn('source_col', function ($v) {
+                if ($v->isLocal()) {
+                    return '<span class="lp-status-badge is-local">'
+                        .'<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-3px;">movie</span> Lokal</span>';
+                }
+                return '<span class="lp-status-badge is-yt">'
+                    .'<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-3px;">smart_display</span> YouTube</span>';
+            })
+            ->addColumn('title_col', function ($v) {
+                $html = '<div class="lp-video-title">'.e($v->title).'</div>';
+                if (!empty($v->description)) {
+                    $excerpt = \Illuminate\Support\Str::limit(strip_tags($v->description), 90);
+                    $html .= '<small>'.e($excerpt).'</small>';
+                }
+                return $html;
+            })
+            ->addColumn('url_col', function ($v) {
+                if ($v->isLocal()) {
+                    $path = $v->file_path ?: '-';
+                    $short = \Illuminate\Support\Str::limit($path, 60);
+                    return '<span class="lp-video-url" title="'.e($path).'">'
+                        .'<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">description</span> '
+                        .e($short).'</span>';
+                }
+                $url = (string) $v->youtube_url;
+                $short = \Illuminate\Support\Str::limit($url, 60);
+                $html = '<a href="'.e($url).'" target="_blank" rel="noopener" class="text-decoration-none lp-video-url" title="'.e($url).'">';
+                $html .= '<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">open_in_new</span> ';
+                $html .= e($short).'</a>';
+                return $html;
+            })
+            ->addColumn('status_col', function ($v) {
+                return $v->is_published
+                    ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
+                    : '<span class="lp-status-badge is-draft">Draft</span>';
+            })
+            ->addColumn('action', function ($v) {
+                $edit = route('app.admin-landing.videos.edit', $v->id);
+                $destroy = route('app.admin-landing.videos.destroy', $v->id);
+                $html  = '<div class="lp-table-actions justify-content-center">';
+                $html .= '<a href="'.e($edit).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit video">';
+                $html .= '<span class="material-symbols-rounded">edit</span></a>';
+                $html .= '<form action="'.e($destroy).'" method="POST" data-confirm="'.e('Hapus video "'.$v->title.'" ?').'" class="d-inline">';
+                $html .= csrf_field().method_field('DELETE');
+                $html .= '<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus video">';
+                $html .= '<span class="material-symbols-rounded">delete</span></button>';
+                $html .= '</form></div>';
+                return $html;
+            })
+            ->editColumn('is_published', function ($v) {
+                return $v->is_published ? 1 : 0;
+            })
+            ->rawColumns(['preview_col', 'source_col', 'title_col', 'url_col', 'status_col', 'action'])
+            ->orderColumn('id', 'id $1')
+            ->make(true);
+    }
+
+    public function videoCreate()
+    {
+        return view('admin-landing.video.formulir', [
+            'title' => 'Tambah Video',
+            'video' => new VideoLanding(),
+            'action' => route('app.admin-landing.videos.store'),
+        ]);
+    }
+
+    public function videoStore(Request $request)
+    {
+        $source = $request->input('source', VideoLanding::SOURCE_YOUTUBE);
+
+        $rules = [
+            'title' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'source' => ['required', Rule::in([VideoLanding::SOURCE_YOUTUBE, VideoLanding::SOURCE_LOCAL])],
+            'is_published' => ['nullable', 'boolean'],
+        ];
+        if ($source === VideoLanding::SOURCE_YOUTUBE) {
+            $rules['youtube_url'] = ['required', 'string', 'max:500'];
+        } else {
+            // Cek file video lewat BOTH ekstensi dan MIME (libmagic) — kasusumum:
+            //  - MP4 iPhone/Canon tulis sebagai 'application/octet-stream'
+            //  - MOV iPhone tulis sebagai 'video/quicktime'
+            //  - MKV terdeteksi 'video/x-matroska'
+            // Jadi gunakan kombinasi yang longgar. Poster tetap opsional.
+            $rules['video_file'] = ['required', 'file', 'max:51200', function ($attr, $value, $fail) {
+                if (! $value instanceof \Illuminate\Http\UploadedFile || ! $value->isValid()) return;
+                $ext = strtolower($value->getClientOriginalExtension());
+                $okExt = in_array($ext, ['mp4','m4v','mov','webm','mkv','qt'], true);
+                $mime = strtolower((string) $value->getMimeType());
+                $okMime = in_array($mime, [
+                    'video/mp4','video/webm','video/quicktime','video/x-matroska','video/x-m4v',
+                    'application/octet-stream','application/mp4',
+                ], true);
+                if (! $okExt && ! $okMime) {
+                    $fail('Format video harus mp4, mov, m4v, webm, atau mkv. (Terdeteksi ekstensi: '.$ext.', MIME: '.$mime.')');
+                }
+            }];
+            $rules['video_poster'] = ['nullable', 'file', 'max:5120', function ($attr, $value, $fail) {
+                if (! $value instanceof \Illuminate\Http\UploadedFile) return;
+                if (! $value->isValid()) return;
+                $ext = strtolower($value->getClientOriginalExtension());
+                $okExt = in_array($ext, ['jpg','jpeg','png','webp'], true);
+                $mime = strtolower((string) $value->getMimeType());
+                $okMime = str_starts_with($mime, 'image/');
+                if (! $okExt && ! $okMime) {
+                    $fail('Poster harus berupa gambar (jpg, jpeg, png, webp).');
+                }
+            }];
+        }
+        $data = $request->validate($rules, [
+            'title.required' => 'Judul video wajib diisi.',
+            'source.required' => 'Sumber video wajib dipilih.',
+            'source.in' => 'Sumber video tidak valid.',
+            'youtube_url.required' => 'URL YouTube wajib diisi.',
+            'video_file.required' => 'File video wajib dipilih.',
+            'video_file.mimes' => 'Format video harus mp4, mov, m4v, webm, atau mkv.',
+            'video_file.max' => 'Ukuran video maksimal 50MB.',
+            'video_poster.mimes' => 'Poster harus berformat jpg, jpeg, png, atau webp.',
+            'video_poster.max' => 'Ukuran poster maksimal 5MB.',
+        ]);
+
+        $data['source'] = $source;
+        $data['is_published'] = $request->boolean('is_published');
+
+        if ($source === VideoLanding::SOURCE_YOUTUBE) {
+            $embed = self::normalizeYoutubeEmbed($data['youtube_url']);
+            if (! $embed) {
+                return $this->saveSuccess($request, 'URL YouTube tidak dikenali.', null) ?: back()->withErrors(['youtube_url' => 'URL YouTube tidak dikenali.'])->withInput();
+            }
+            $data['youtube_url'] = $embed;
+        } else {
+            $path = $request->file('video_file')->store($this->uploadDir() . '/videos', 'public');
+            $data['file_path'] = $path;
+            if ($request->hasFile('video_poster')) {
+                $data['poster'] = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
+            } else {
+                $data['poster'] = null;
+            }
+            $data['youtube_url'] = null;
+        }
+
+        try {
+            $video = VideoLanding::create($data);
+        } catch (\Throwable $e) {
+            // DB insert gagal setelah upload sukses → bersihkan file agar tidak jadi yatim.
+            if (! empty($data['file_path'])) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($data['file_path']);
+            }
+            if (! empty($data['poster'])) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($data['poster']);
+            }
+            \Illuminate\Support\Facades\Log::error('Gagal simpan Video: ' . $e->getMessage(), [
+                'source' => $source,
+                'title' => $data['title'] ?? null,
+            ]);
+            throw $e;
+        }
+
+        return $this->saveSuccess($request, 'Video berhasil ditambahkan.', 'app.admin-landing.videos');
+    }
+
+    public function videoEdit($video)
+    {
+        $model = VideoLanding::findOrFail($video);
+
+        return view('admin-landing.video.formulir', [
+            'title' => 'Edit Video',
+            'video' => $model,
+            'action' => route('app.admin-landing.videos.update', $model->id),
+        ]);
+    }
+
+    public function videoUpdate(Request $request, $video)
+    {
+        $model = VideoLanding::findOrFail($video);
+        $source = $request->input('source', $model->source ?: VideoLanding::SOURCE_YOUTUBE);
+
+        $rules = [
+            'title' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'source' => ['required', Rule::in([VideoLanding::SOURCE_YOUTUBE, VideoLanding::SOURCE_LOCAL])],
+            'is_published' => ['nullable', 'boolean'],
+        ];
+        if ($source === VideoLanding::SOURCE_YOUTUBE) {
+            $rules['youtube_url'] = ['required', 'string', 'max:500'];
+        } else {
+            $rules['video_file'] = ['nullable', 'file', 'max:51200', function ($attr, $value, $fail) {
+                if (! $value instanceof \Illuminate\Http\UploadedFile || ! $value->isValid()) return;
+                $ext = strtolower($value->getClientOriginalExtension());
+                $okExt = in_array($ext, ['mp4','m4v','mov','webm','mkv','qt'], true);
+                $mime = strtolower((string) $value->getMimeType());
+                $okMime = in_array($mime, [
+                    'video/mp4','video/webm','video/quicktime','video/x-matroska','video/x-m4v',
+                    'application/octet-stream','application/mp4',
+                ], true);
+                if (! $okExt && ! $okMime) {
+                    $fail('Format video harus mp4, mov, m4v, webm, atau mkv. (Terdeteksi ekstensi: '.$ext.', MIME: '.$mime.')');
+                }
+            }];
+            $rules['video_poster'] = ['nullable', 'file', 'max:5120', function ($attr, $value, $fail) {
+                if (! $value instanceof \Illuminate\Http\UploadedFile) return;
+                if (! $value->isValid()) return;
+                $ext = strtolower($value->getClientOriginalExtension());
+                $okExt = in_array($ext, ['jpg','jpeg','png','webp'], true);
+                $mime = strtolower((string) $value->getMimeType());
+                $okMime = str_starts_with($mime, 'image/');
+                if (! $okExt && ! $okMime) {
+                    $fail('Poster harus berupa gambar (jpg, jpeg, png, webp).');
+                }
+            }];
+        }
+        $data = $request->validate($rules, [
+            'title.required' => 'Judul video wajib diisi.',
+            'source.required' => 'Sumber video wajib dipilih.',
+            'source.in' => 'Sumber video tidak valid.',
+            'youtube_url.required' => 'URL YouTube wajib diisi.',
+            'video_file.mimes' => 'Format video harus mp4, mov, m4v, webm, atau mkv.',
+            'video_file.max' => 'Ukuran video maksimal 50MB.',
+            'video_poster.mimes' => 'Poster harus berformat jpg, jpeg, png, atau webp.',
+            'video_poster.max' => 'Ukuran poster maksimal 5MB.',
+        ]);
+
+        $data['source'] = $source;
+        $data['is_published'] = $request->boolean('is_published');
+
+        if ($source === VideoLanding::SOURCE_YOUTUBE) {
+            $embed = self::normalizeYoutubeEmbed($data['youtube_url']);
+            if (! $embed) {
+                return back()->withErrors(['youtube_url' => 'URL YouTube tidak dikenali.'])->withInput();
+            }
+            $data['youtube_url'] = $embed;
+            if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
+                Storage::disk('public')->delete($model->file_path);
+            }
+            if ($model->poster && Storage::disk('public')->exists($model->poster)) {
+                Storage::disk('public')->delete($model->poster);
+            }
+            $data['file_path'] = null;
+            $data['poster'] = null;
+        } else {
+            $newFilePath = null;
+            if ($request->hasFile('video_file')) {
+                if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
+                    Storage::disk('public')->delete($model->file_path);
+                }
+                $newFilePath = $request->file('video_file')->store($this->uploadDir() . '/videos', 'public');
+                $data['file_path'] = $newFilePath;
+            }
+            if ($request->hasFile('video_poster')) {
+                if ($model->poster && Storage::disk('public')->exists($model->poster)) {
+                    Storage::disk('public')->delete($model->poster);
+                }
+                $data['poster'] = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
+            }
+            $data['youtube_url'] = null;
+        }
+
+        try {
+            $model->fill($data)->save();
+        } catch (\Throwable $e) {
+            // Kalau upload baru berhasil tapi save() gagal, hapus file baru
+            // agar tidak jadi yatim saat DB roll back (atau model tidak konsisten).
+            if (! empty($newFilePath) && Storage::disk('public')->exists($newFilePath)) {
+                Storage::disk('public')->delete($newFilePath);
+            }
+            \Illuminate\Support\Facades\Log::error('Gagal update Video: ' . $e->getMessage(), ['id' => $model->id]);
+            throw $e;
+        }
+
+        return $this->saveSuccess($request, 'Video berhasil diperbarui.', 'app.admin-landing.videos');
+    }
+
+    public function videoDestroy(Request $request, $video)
+    {
+        $model = VideoLanding::findOrFail($video);
+        if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
+            Storage::disk('public')->delete($model->file_path);
+        }
+        if ($model->poster && Storage::disk('public')->exists($model->poster)) {
+            Storage::disk('public')->delete($model->poster);
+        }
+        $model->delete();
+
+        return $this->deleteSuccess($request, 'Video berhasil dihapus.', 'app.admin-landing.videos');
+    }
+
+    /**
+     * Ekstrak ID video YouTube dari berbagai format URL:
+     *  - https://www.youtube.com/watch?v=ID
+     *  - https://youtu.be/ID
+     *  - https://www.youtube.com/embed/ID
+     *  - https://www.youtube.com/shorts/ID
+     *  - https://m.youtube.com/watch?v=ID
+     * Mengembalikan null bila tidak terdeteksi.
+     */
+    public static function extractYoutubeId(?string $url): ?string
+    {
+        if (! $url) return null;
+        $url = trim($url);
+
+        if (preg_match('#youtu\.be/([A-Za-z0-9_-]{6,})#i', $url, $m)) {
+            return $m[1];
+        }
+        if (preg_match('#youtube\.com/embed/([A-Za-z0-9_-]{6,})#i', $url, $m)) {
+            return $m[1];
+        }
+        if (preg_match('#youtube\.com/shorts/([A-Za-z0-9_-]{6,})#i', $url, $m)) {
+            return $m[1];
+        }
+        if (preg_match('#youtube\.com/(?:watch\?v=|v/)([A-Za-z0-9_-]{6,})#i', $url, $m)) {
+            return $m[1];
+        }
+        if (preg_match('#^([A-Za-z0-9_-]{6,})$#', $url)) {
+            return $url;
+        }
+        return null;
+    }
+
+    /**
+     * Normalisasi URL YouTube apapun jadi URL embed resmi:
+     *  https://www.youtube.com/embed/ID
+     * Aman dipanggil di view publik.
+     */
+    public static function normalizeYoutubeEmbed(?string $url): ?string
+    {
+        $id = self::extractYoutubeId($url);
+        return $id ? 'https://www.youtube.com/embed/'.$id : null;
+    }
+
+    /**
+     * URL thumbnail YouTube. Gunakan maxresdefault sebagai default,
+     * fallback ke hqdefault jika tidak tersedia.
+     */
+    public static function youtubeThumbnailUrl(string $id): string
+    {
+        return 'https://i.ytimg.com/vi/'.$id.'/hqdefault.jpg';
     }
 
     public function struktur()
