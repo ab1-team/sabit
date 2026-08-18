@@ -81,7 +81,7 @@
         'Master Data' => null,
         'Transaksi' => null,
         'Pelaporan' => null,
-        'landing' => 'submenu_landing',
+        'landing' => null,
     ];
 
     // Kelompokkan parent menu berdasarkan group. Parent akan di-render di

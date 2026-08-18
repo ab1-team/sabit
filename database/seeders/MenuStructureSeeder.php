@@ -20,11 +20,19 @@ class MenuStructureSeeder extends Seeder
         // dan "PPDB" (id=25) harus ada sebelum child dengan parent_id=15/25
         // di-insert.
         //
-        // Menu Landing Page. group = 'landing' dipakai oleh middleware hak.akses:landing
-        // untuk memetakan hak akses user ke route /app/admin-landing/*.
+        // KEDUA parent (Landing Page id=15 DAN PPDB id=25) adalah top-level
+        // (parent_id NULL) agar sidebar merender dua dropdown terpisah yang
+        // berdiri sendiri di section group 'landing'. Jika PPDB dibuat
+        // parent_id=15, ia akan dirender sebagai child Landing Page (link
+        // mati dengan route='#'), sehingga sub-menu PPDB (Pengaturan PPDB,
+        // Persyaratan, Alur, Jadwal, FAQ) tidak bisa dibuka dari UI.
+        //
+        // group = 'landing' dipakai oleh middleware hak.akses:landing untuk
+        // memetakan hak akses user ke route /app/admin-landing/*.
         //
         // Mulai migrasi 2026_08_12_000011_restructure_landing_admin_menus:
-        // Sub-menu disusun ulang menjadi 7 item sesuai halaman publik:
+        // Sub-menu Landing Page (parent_id=15) menjadi 7 item sesuai halaman
+        // publik:
         //   16  Pengaturan Website   - identitas, kontak, warna, background, SEO
         //   19  Profil              - section profil, struktur, fasilitas
         //   20  Berita              - lp_artikel
@@ -33,27 +41,22 @@ class MenuStructureSeeder extends Seeder
         //   22  Pengumuman          - lp_pengumuman
         //   23  Kontak              - pesan masuk dari form landing
         //
-        // PPDB (id=25) juga parent dari group 'landing' (parent_id=15) sebagai
-        // dropdown yang punya child 31-35. Urutannya digeser ke 23 supaya
-        // tidak bentrok dengan Kontak (id=23, urutan=22).
-        //
-        // PPDB dipecah jadi dropdown sendiri (parent=25 + child 26-30):
-        //   25  PPDB                - parent dropdown (route='#')
-        //   26  Pengaturan PPDB     - route /app/admin-landing/ppdb-cta
-        //   27  Persyaratan         - route /app/admin-landing/ppdb/persyaratan
-        //   28  Alur                - route /app/admin-landing/ppdb/tahapan
-        //   29  Jadwal              - route /app/admin-landing/ppdb/jadwal
-        //   30  FAQ                 - route /app/admin-landing/ppdb/faq
+        // Sub-menu PPDB (parent_id=25):
+        //   31  Pengaturan PPDB     - route /app/admin-landing/ppdb-cta
+        //   32  Persyaratan         - route /app/admin-landing/ppdb/persyaratan
+        //   33  Alur                - route /app/admin-landing/ppdb/tahapan
+        //   34  Jadwal              - route /app/admin-landing/ppdb/jadwal
+        //   35  FAQ                 - route /app/admin-landing/ppdb/faq
         //
         // Catatan: id=24 sudah dihapus oleh migration
         // 2026_08_12_000008_remove_landing_konten_and_nav_menus.php dan tidak
         // boleh dipakai ulang.
         //
-        // id=15 (Landing Page) menjadi parent dropdown inert (route='#')
-        // hanya sebagai label visual di sidebar.
+        // id=15 dan id=25 masing-masing menjadi parent dropdown inert
+        // (route='#') hanya sebagai label visual di sidebar.
         DB::table('menu')->insertOrIgnore([
             ['id' => 15, 'nama_menu' => 'Landing Page', 'route' => '#', 'icon' => 'language', 'urutan' => 15, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => null, 'created_at' => null, 'updated_at' => null],
-            ['id' => 25, 'nama_menu' => 'PPDB', 'route' => '#', 'icon' => 'how_to_reg', 'urutan' => 23, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15, 'created_at' => null, 'updated_at' => null],
+            ['id' => 25, 'nama_menu' => 'PPDB', 'route' => '#', 'icon' => 'how_to_reg', 'urutan' => 16, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => null, 'created_at' => null, 'updated_at' => null],
         ]);
 
         // Child dengan parent_id=15 (Landing Page) atau parent_id=25 (PPDB).
