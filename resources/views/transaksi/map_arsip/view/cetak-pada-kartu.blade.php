@@ -48,7 +48,7 @@
     @foreach ($transaksis as $i => $trx)
         <div class="row-kartu">
             <div>{{ $i + 1 }}</div>
-            <div>{{ Tanggal::tglIndo($trx->tanggal) }}</div>
+            <div>{{ Tanggal::tglIndo($trx->tanggal_transaksi) }}</div>
             <div>
                 @if ( $trx->spp)
                     {{ Tanggal::namabulan($trx->spp->tanggal) }}
