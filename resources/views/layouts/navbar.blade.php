@@ -27,17 +27,67 @@
                 </a>
             </li>
 
+            @php
+                $contactMsgRoute = \Illuminate\Support\Facades\Route::has('app.admin-landing.contact-messages')
+                    ? route('app.admin-landing.contact-messages')
+                    : '#';
+            @endphp
             <li class="nav-item dropdown pe-3 d-flex align-items-center">
-                <a href="javascript:;" class="nav-link text-body p-0" data-bs-toggle="dropdown">
+                <a href="{{ $contactMsgRoute }}"
+                   class="nav-link text-body p-0 position-relative"
+                   id="lpBellNotif"
+                   data-bs-toggle="dropdown"
+                   aria-expanded="false">
                     <span class="material-symbols-rounded">notifications</span>
+                    @if(($unreadContactCount ?? 0) > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="font-size:.6rem;padding:.25rem .4rem;line-height:1;">
+                            {{ $unreadContactCount > 99 ? '99+' : $unreadContactCount }}
+                        </span>
+                    @endif
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4">
-                    <li class="mb-2">
-                        <a class="dropdown-item border-radius-md d-flex align-items-center" href="/app/profile">
-                            <span class="material-symbols-rounded me-2">info</span>
-                            <span>Belum ada notifikasi</span>
-                        </a>
+                <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" style="min-width:320px;max-width:360px;">
+                    <li class="d-flex justify-content-between align-items-center px-2 mb-2">
+                        <span class="fw-semibold small">Pesan Masuk Landing</span>
+                        @if(($unreadContactCount ?? 0) > 0)
+                            <span class="badge bg-danger rounded-pill">{{ $unreadContactCount }} belum dibaca</span>
+                        @endif
                     </li>
+                    @forelse(($recentContactMessages ?? collect()) as $msg)
+                        <li class="mb-1">
+                            <a class="dropdown-item border-radius-md d-flex align-items-start py-2"
+                               href="{{ $contactMsgRoute }}">
+                                <span class="material-symbols-rounded me-2 text-primary" style="font-size:20px;">mail</span>
+                                <span class="flex-grow-1">
+                                    <span class="d-block fw-semibold small text-truncate" style="max-width:240px;">
+                                        {{ $msg->name ?: 'Anonim' }}
+                                    </span>
+                                    <span class="d-block text-muted small text-truncate" style="max-width:240px;">
+                                        {{ $msg->subject ?: '(tanpa subjek)' }}
+                                    </span>
+                                    <span class="d-block text-muted" style="font-size:.7rem;">
+                                        {{ optional($msg->created_at)->diffForHumans() }}
+                                    </span>
+                                </span>
+                            </a>
+                        </li>
+                    @empty
+                        <li class="mb-2">
+                            <span class="dropdown-item border-radius-md d-flex align-items-center text-muted">
+                                <span class="material-symbols-rounded me-2">info</span>
+                                <span class="small">Tidak ada pesan masuk.</span>
+                            </span>
+                        </li>
+                    @endforelse
+                    @if(($unreadContactCount ?? 0) > 0)
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item border-radius-md text-center small fw-semibold text-primary"
+                               href="{{ $contactMsgRoute }}">
+                                Lihat semua pesan
+                            </a>
+                        </li>
+                    @endif
                 </ul>
             </li>
 

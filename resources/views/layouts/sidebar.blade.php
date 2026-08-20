@@ -84,6 +84,16 @@
         'landing' => null,
     ];
 
+    // Path yang mengidentifikasi menu "Pesan Kontak Landing" untuk badge
+    // unread. Dicocokkan secara suffix agar '/app/admin-landing/contact-messages'
+    // dan '/app/admin-landing/contact-messages/data' keduanya dianggap.
+    $contactMsgPath = '/app/admin-landing/contact-messages';
+    $isContactMsg = function ($route) use ($contactMsgPath) {
+        if (empty($route)) return false;
+        $r = trim($route, '/');
+        return $r === ltrim($contactMsgPath, '/') || str_starts_with($r, ltrim($contactMsgPath, '/') . '/');
+    };
+
     // Kelompokkan parent menu berdasarkan group. Parent akan di-render di
     // section group-nya; child yang menempel pada parent diambil via
     // $menus->where('parent_id', ...).
@@ -148,10 +158,18 @@
                             <div class="collapse {{ $showOpen ? 'show' : '' }}" id="{{ $collapseId }}">
                                 <ul class="nav ms-4">
                                     @foreach($itemChildren as $child)
-                                        @php $childIsActive = $isActive($child->route); @endphp
+                                        @php
+                                            $childIsActive = $isActive($child->route);
+                                            $childIsContact = $isContactMsg($child->route);
+                                        @endphp
                                         <li class="nav-item">
-                                            <a class="nav-link text-dark py-2" href="{{ $safeUrl($child->route) }}">
+                                            <a class="nav-link text-dark py-2 d-flex align-items-center justify-content-between" href="{{ $safeUrl($child->route) }}">
                                                 <span class="sidenav-normal">{{ $childIsActive ? '• ' : '' }}{{ $child->nama_menu }}</span>
+                                                @if($childIsContact && ($unreadContactCount ?? 0) > 0)
+                                                    <span class="badge bg-danger rounded-pill ms-2" style="font-size:.65rem;padding:.2rem .45rem;">
+                                                        {{ $unreadContactCount > 99 ? '99+' : $unreadContactCount }}
+                                                    </span>
+                                                @endif
                                             </a>
                                         </li>
                                     @endforeach

@@ -49,5 +49,35 @@ class AppServiceProvider extends ServiceProvider
             $view->with('appLogoUrl', Profil::logoUrl());
             $view->with('appName', $profil->nama ?? config('app.name'));
         });
+
+        // View composer untuk navbar & sidebar: menyediakan jumlah & daftar
+        // pesan masuk dari formulir kontak landing page yang belum dibaca.
+        // Hanya dihitung untuk user yang sudah login agar tidak membebani
+        // query publik.
+        $contactBadgeComposer = function ($view) {
+            $unreadCount = 0;
+            $recentMessages = collect();
+
+            if (auth()->check()) {
+                $model = \App\Models\Landing\PesanKontakLanding::class;
+                if (class_exists($model)) {
+                    try {
+                        $unreadCount = $model::unread()->count();
+                        $recentMessages = $model::unread()
+                            ->orderByDesc('created_at')
+                            ->limit(5)
+                            ->get(['id', 'name', 'subject', 'created_at']);
+                    } catch (\Throwable $e) {
+                        // tabel belum ada (tenant baru) — abaikan.
+                    }
+                }
+            }
+
+            $view->with('unreadContactCount', $unreadCount);
+            $view->with('recentContactMessages', $recentMessages);
+        };
+
+        View::composer('layouts.navbar', $contactBadgeComposer);
+        View::composer('layouts.sidebar', $contactBadgeComposer);
     }
 }
