@@ -152,8 +152,23 @@
         $addBtn = '<a href="'.e(route('app.admin-landing.galleries.create')).'" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1">'
             .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>'
             .'<span class="align-middle">Tambah Foto</span></a>';
+
+        // Tombol cepat ke CRUD Video. Menu "Video" sudah dihilangkan dari
+        // sidebar (lihat migration tenant merge_video_into_gallery_menu),
+        // tetapi route & controller CRUD video tetap aktif. Tampilkan tombol
+        // ini sebagai pintasan di halaman Galeri agar admin tidak kehilangan
+        // akses kelola video. Akses tetap dijaga oleh middleware
+        // hak.akses:landing (semua route admin-landing berada di belakang
+        // middleware yang sama).
+        $videoBtn = '';
+        if (\Illuminate\Support\Facades\Route::has('app.admin-landing.videos')) {
+            $videoBtn = '<a href="'.e(route('app.admin-landing.videos')).'" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">'
+                .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">smart_display</span>'
+                .'<span class="align-middle">Kelola Video</span></a>';
+        }
     @endphp
-    <div class="d-flex justify-content-end mb-3">
+    <div class="d-flex justify-content-end gap-2 mb-3 flex-wrap">
+        {!! $videoBtn !!}
         {!! $addBtn !!}
     </div>
 

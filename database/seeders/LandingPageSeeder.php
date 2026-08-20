@@ -61,15 +61,16 @@ class LandingPageSeeder extends Seeder
             return;
         }
 
-        // Header: ringkas, hanya tautan utama.
+        // Header: ringkas, hanya tautan utama. Galeri (sesuai strategi
+        // merge_video_into_gallery_menu) sudah memuat foto + video dalam satu
+        // halaman /galeri, sehingga tidak perlu lagi entri menu "Video".
         $header = [
             ['title' => 'Home', 'url' => '/', 'sort_order' => 1],
             ['title' => 'Profil', 'url' => '/profil', 'sort_order' => 2],
             ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 3],
             ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 4],
-            ['title' => 'Video', 'url' => '/video', 'sort_order' => 5],
-            ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 6],
-            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 7],
+            ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 5],
+            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 6],
         ];
 
         foreach ($header as $item) {
@@ -103,9 +104,8 @@ class LandingPageSeeder extends Seeder
         $footer = [
             ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 2],
             ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 3],
-            ['title' => 'Video', 'url' => '/video', 'sort_order' => 4],
-            ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 5],
-            ['title' => 'Kontak Kami', 'url' => '/kontak', 'sort_order' => 6],
+            ['title' => 'Pengumuman', 'url' => '/pengumuman', 'sort_order' => 4],
+            ['title' => 'Kontak Kami', 'url' => '/kontak', 'sort_order' => 5],
         ];
 
         foreach ($footer as $item) {

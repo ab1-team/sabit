@@ -80,9 +80,14 @@ class MenuStructureSeeder extends Seeder
             ['id' => 19, 'nama_menu' => 'Profil',              'route' => '/app/admin-landing/profile-sections', 'icon' => 'account_balance',  'urutan' => 17, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 20, 'nama_menu' => 'Berita',              'route' => '/app/admin-landing/posts',            'icon' => 'article',          'urutan' => 18, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 21, 'nama_menu' => 'Galeri',              'route' => '/app/admin-landing/galleries',        'icon' => 'photo_library',    'urutan' => 19, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
-            ['id' => 36, 'nama_menu' => 'Video',               'route' => '/app/admin-landing/videos',           'icon' => 'play_circle',      'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
-            ['id' => 22, 'nama_menu' => 'Pengumuman',          'route' => '/app/admin-landing/announcements',    'icon' => 'campaign',         'urutan' => 21, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
-            ['id' => 23, 'nama_menu' => 'Kontak',              'route' => '/app/admin-landing/contact-messages', 'icon' => 'contact_mail',     'urutan' => 22, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            // Menu "Video" (id 36) dihilangkan dari seeder mengikuti strategi
+            // merge Video ke Galeri. Route & CRUD video tetap aktif (lihat
+            // route /app/admin-landing/videos), dan admin masih bisa kelola
+            // video lewat tombol "Kelola Video" di halaman CRUD Galeri. Entry
+            // menu Video di-nonaktifkan (bukan dihapus) untuk tenant existing
+            // oleh migration 2026_08_20_135128_merge_video_into_gallery_menu.
+            ['id' => 22, 'nama_menu' => 'Pengumuman',          'route' => '/app/admin-landing/announcements',    'icon' => 'campaign',         'urutan' => 20, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
+            ['id' => 23, 'nama_menu' => 'Kontak',              'route' => '/app/admin-landing/contact-messages', 'icon' => 'contact_mail',     'urutan' => 21, 'status' => 'aktif', 'group' => 'landing', 'parent_id' => 15],
             ['id' => 31, 'nama_menu' => 'Pengaturan PPDB',     'route' => '/app/admin-landing/ppdb-cta',         'icon' => 'tune',             'urutan' => 1,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
             ['id' => 32, 'nama_menu' => 'Persyaratan',         'route' => '/app/admin-landing/ppdb/persyaratan', 'icon' => 'fact_check',       'urutan' => 2,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],
             ['id' => 33, 'nama_menu' => 'Alur',                'route' => '/app/admin-landing/ppdb/tahapan',     'icon' => 'timeline',         'urutan' => 3,  'status' => 'aktif', 'group' => 'landing', 'parent_id' => 25],

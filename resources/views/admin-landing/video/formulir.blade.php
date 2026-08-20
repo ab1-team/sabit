@@ -367,9 +367,9 @@
                     Isi semua kolom bertanda <span class="text-danger">*</span>.
                 </span>
                 <div class="d-flex flex-wrap gap-2 justify-content-end">
-                    <a href="{{ route('app.admin-landing.videos') }}" class="btn btn-light d-inline-flex align-items-center gap-1">
+                    <a href="{{ route('app.admin-landing.galleries') }}" class="btn btn-light d-inline-flex align-items-center gap-1">
                         <span class="material-symbols-rounded align-middle" style="font-size:18px;">arrow_back</span>
-                        <span class="align-middle">Kembali</span>
+                        <span class="align-middle">Kembali ke Galeri</span>
                     </a>
                     <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1">
                         <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>

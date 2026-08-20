@@ -32,10 +32,10 @@
     </div>
 
     @php
+        $galleryTotal = ($stats['galleries'] ?? 0) + ($stats['videos'] ?? 0);
         $statItems = [
             ['label' => 'Berita', 'value' => $stats['posts'], 'icon' => 'article', 'from' => '#0ea5e9', 'to' => '#0c7fbb'],
-            ['label' => 'Galeri', 'value' => $stats['galleries'], 'icon' => 'photo_library', 'from' => '#f59e0b', 'to' => '#d97706'],
-            ['label' => 'Video', 'value' => $stats['videos'], 'icon' => 'play_circle', 'from' => '#ef4444', 'to' => '#c73838'],
+            ['label' => 'Galeri', 'value' => $galleryTotal, 'sub' => $stats['galleries'].' foto &middot; '.($stats['videos'] ?? 0).' video', 'icon' => 'photo_library', 'from' => '#f59e0b', 'to' => '#d97706'],
             ['label' => 'Pengumuman', 'value' => $stats['announcements'], 'icon' => 'campaign', 'from' => '#ef4444', 'to' => '#c73838'],
             ['label' => 'Pesan', 'value' => $stats['unread_messages'], 'icon' => 'mail', 'from' => '#ec4899', 'to' => '#be185d', 'badge' => $stats['unread_messages'] > 0],
         ];
@@ -55,6 +55,9 @@
                             @endif
                         </div>
                         <div class="text-muted small text-truncate">{{ $s['label'] }}</div>
+                        @if (!empty($s['sub']))
+                            <div class="text-muted" style="font-size:.65rem;">{!! $s['sub'] !!}</div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -76,8 +79,7 @@
                     ['route' => 'app.admin-landing.ppdb-cta', 'icon' => 'how_to_reg', 'title' => 'PPDB', 'sub' => 'CTA, persyaratan, alur, jadwal, FAQ', 'color' => '#f97316'],
                     ['route' => 'app.admin-landing.profile-sections', 'icon' => 'account_balance', 'title' => 'Profil', 'sub' => 'Section profil, struktur, fasilitas', 'color' => '#0ea5e9'],
                     ['route' => 'app.admin-landing.posts', 'icon' => 'article', 'title' => 'Berita', 'sub' => 'Artikel & program', 'color' => '#f59e0b'],
-                    ['route' => 'app.admin-landing.galleries', 'icon' => 'photo_library', 'title' => 'Galeri', 'sub' => 'Album foto', 'color' => '#8b5cf6'],
-                    ['route' => 'app.admin-landing.videos', 'icon' => 'play_circle', 'title' => 'Video', 'sub' => 'YouTube & upload lokal', 'color' => '#ef4444'],
+                    ['route' => 'app.admin-landing.galleries', 'icon' => 'photo_library', 'title' => 'Galeri', 'sub' => 'Album foto & video', 'color' => '#8b5cf6'],
                     ['route' => 'app.admin-landing.announcements', 'icon' => 'campaign', 'title' => 'Pengumuman', 'sub' => 'Info sekolah', 'color' => '#ef4444'],
                     ['route' => 'app.admin-landing.contact-messages', 'icon' => 'contact_mail', 'title' => 'Kontak', 'sub' => 'Pesan masuk', 'color' => '#10b981'],
                 ];

@@ -130,6 +130,7 @@ class HalamanPublikController extends Controller
                 ->orderBy('album')
                 ->pluck('album'),
             'album' => $album,
+            'videos' => VideoLanding::published()->latest('id')->limit(8)->get(),
         ]);
     }
 

@@ -400,10 +400,16 @@
             </h1>
             <p class="lp-vid-head-sub">Kelola video YouTube dan upload lokal untuk halaman /video publik.</p>
         </div>
-        <a href="{{ route('app.admin-landing.videos.create') }}" class="btn btn-primary lp-vid-head-cta">
-            <span class="material-symbols-rounded">add</span>
-            <span>Tambah Video</span>
-        </a>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <a href="{{ route('app.admin-landing.galleries') }}" class="btn btn-outline-secondary lp-vid-head-back" title="Kembali ke Galeri">
+                <span class="material-symbols-rounded align-middle" style="font-size:18px;">arrow_back</span>
+                <span class="align-middle">Kembali ke Galeri</span>
+            </a>
+            <a href="{{ route('app.admin-landing.videos.create') }}" class="btn btn-primary lp-vid-head-cta">
+                <span class="material-symbols-rounded">add</span>
+                <span>Tambah Video</span>
+            </a>
+        </div>
     </div>
 
     {{-- Stat strip --}}
