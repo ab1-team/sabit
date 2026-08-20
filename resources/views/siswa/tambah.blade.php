@@ -329,7 +329,7 @@
                                         <label class="form-label">Nominal SPP / Bulan (ribu)</label>
                                         <input type="text" name="spp_nominal" id="spp_nominal"
                                             class="form-control nominal text-end"
-                                            value="{{ \App\Utils\Angka::format(($nominalSpp ?? 0) * 100, 0) }}"
+                                            value="{{ \App\Utils\Angka::format($nominalSpp ?? 0, 2) }}"
                                             placeholder="0">
                                     </div>
                                 </div>
@@ -572,8 +572,9 @@
 
         // Mask nominal SPP
         $(".nominal").maskMoney({
-            thousands: ',',
-            decimal: '.',
+            thousands: '.',
+            decimal: ',',
+            precision: 2,
             allowZero: true,
             allowNegative: false
         });
@@ -585,7 +586,7 @@
                 url: '/app/siswa/nominal-spp',
                 data: { tahun_akademik: tahun },
                 success: function(res) {
-                    var nominal = parseInt(res.nominal || 0, 10) * 100;
+                    var nominal = (res.nominal || 0).toString();
                     $('#spp_nominal').val(nominal).maskMoney('mask');
                     $('#spp_nominal').closest('.input-group').addClass('is-filled');
                 }
