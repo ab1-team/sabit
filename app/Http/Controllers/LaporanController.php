@@ -111,9 +111,18 @@ class LaporanController extends Controller
                 'type'       => 'textarea',
                 'keterangan' => $calk->catatan ?? ''
             ]);
-        } elseif (in_array($file, ['pembayaran_spp', 'daftar_ulang', 'pembangunan', 'ujian_semester', 'bantuan_yayasan'], true)) {
+} elseif (in_array($file, ['pembayaran_spp', 'daftar_ulang', 'pembangunan', 'ujian_semester', 'bantuan_yayasan'], true)) {
+
+            $tahunAkademikId = request('tahun_akademik_id');
+            $tahunAkademikNama = null;
+            if (!empty($tahunAkademikId)) {
+                $tahunAkademikNama = TahunAkademik::whereKey($tahunAkademikId)->value('nama_tahun');
+            }
 
             $kodeKelasList = AnggotaKelas::where('status', 'aktif')
+                ->when($tahunAkademikNama, function ($q) use ($tahunAkademikNama) {
+                    $q->where('tahun_akademik', $tahunAkademikNama);
+                })
                 ->select('kode_kelas')
                 ->distinct()
                 ->orderBy('kode_kelas')
@@ -122,7 +131,7 @@ class LaporanController extends Controller
 
             $kelasMap = Kelas::whereIn('kode_kelas', $kodeKelasList)->get()->keyBy('kode_kelas');
 
-            $sub_laporan = [];
+            $sub_laporan = [['value' => '', 'title' => '--- Semua Kelas ---']];
             foreach ($kodeKelasList as $kodeKelas) {
                 $k = $kelasMap[$kodeKelas] ?? null;
                 $sub_laporan[] = [
@@ -233,17 +242,12 @@ class LaporanController extends Controller
         if (!$rek) {
             return abort(404, 'Rekening tidak ditemukan!');
         }
-        $data['rek'] = $rek;
+$data['rek'] = $rek;
         $data['judul'] = "Buku Besar " . ($rek->kode_akun ?? '-') . " (" . Tanggal::namaBulan($tgl_awal_bulan) . " $thn)";
+        $data['title'] = "Buku Besar " . ($rek->nama_akun ?? ($rek->kode_akun ?? '-'));
 
-        $kode = $rek->kode_akun;
-        $isDebet = ($rek->jenis_mutasi == 'debet');
-
-        // Helper inline — saldo: +(debit) atau -(kredit) untuk akun Debet-normal,
-        // atau kebalikannya untuk akun Kredit-normal.
-        $sumExpr = fn ($col) => $isDebet
-            ? "COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0) - COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0)"
-            : "COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0) - COALESCE(SUM(CASE WHEN {$col} = ? THEN jumlah ELSE 0 END),0)";
+$kode = $rek->kode_akun;
+        $isDebet = (strtolower((string) $rek->jenis_mutasi) === 'debet');
 
         // 1) Saldo awal tahun: 1 query aggregate
         $saldo_awal_raw = (float) DB::table('transaksi')
@@ -409,20 +413,41 @@ class LaporanController extends Controller
             ? 'Arus Kas (' . $namaBulan . ' ' . $thn . ')'
             : 'Arus Kas (Tahun ' . $thn . ')';
 
-        // ambil arus kas dengan transaksi bulan berjalan
-        $data['arus_kas'] = MasterArusKas::with([
-            'child',
-            'child.rek_debit.rek.transaksiDebit' => function ($q) use ($tgl_awal_bulan, $tgl_akhir_bulan) {
-                $q->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
-                    ->where('rekening_kredit', 'like', '1.1.01%')
-                    ->limit(500);
-            },
-            'child.rek_kredit.rek.transaksiKredit' => function ($q) use ($tgl_awal_bulan, $tgl_akhir_bulan) {
-                $q->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
-                    ->where('rekening_debit', 'like', '1.1.01%')
-                    ->limit(500);
+// ambil arus kas dengan transaksi bulan berjalan
+        $arusKas = MasterArusKas::with(['child', 'child.rek_debit', 'child.rek_kredit'])
+            ->where('parent_id', 0)
+            ->get();
+
+        foreach ($arusKas as $top) {
+            foreach ($top->child as $child) {
+                $akun3 = $child->rek_debit ?: $child->rek_kredit;
+                if (!$akun3) continue;
+
+                $kodeList = $akun3->rekeningByPrefix()->pluck('kode_akun')->all();
+                if (empty($kodeList)) {
+                    $child->setAttribute('transaksi_list', collect());
+                    continue;
+                }
+
+                $debitTrx = DB::table('transaksi')
+                    ->whereIn('rekening_debit', $kodeList)
+                    ->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
+                    ->whereNull('deleted_at')
+                    ->orderBy('tanggal_transaksi')
+                    ->get();
+
+                $kreditTrx = DB::table('transaksi')
+                    ->whereIn('rekening_kredit', $kodeList)
+                    ->whereBetween('tanggal_transaksi', [$tgl_awal_bulan, $tgl_akhir_bulan])
+                    ->whereNull('deleted_at')
+                    ->orderBy('tanggal_transaksi')
+                    ->get();
+
+                $child->setAttribute('transaksi_list', collect()->merge($debitTrx)->merge($kreditTrx));
             }
-        ])->where('parent_id', 0)->get();
+        }
+
+        $data['arus_kas'] = $arusKas;
         $data['ttd'] = TandaTangan::first();
 
         // hitung saldo kas sampai akhir bulan sebelumnya
@@ -436,11 +461,11 @@ class LaporanController extends Controller
         return $this->respond($view, $data, 'arus-kas.xls');
     }
 
-    private function laba_rugi(array $data)
+private function laba_rugi(array $data)
     {
         $thn  = $data['tahun'];
-        $bln  = $data['bulan'] ?? null;
-        $hari = $data['hari'] ?? null;
+        $bln  = isset($data['bulan']) && $data['bulan'] !== '' ? str_pad($data['bulan'], 2, '0', STR_PAD_LEFT) : null;
+        $hari = isset($data['hari'])  && $data['hari']  !== '' ? str_pad($data['hari'],  2, '0', STR_PAD_LEFT) : null;
 
         $tgl = $thn
             . ($bln ? '-' . $bln : '-12')
@@ -520,8 +545,9 @@ class LaporanController extends Controller
             ->values()
             ->all();
 
-        $data['akun1'] = AkunLevel1::where('lev1', '<=', 3)
+$data['akun1'] = AkunLevel1::whereIn('kode_akun', ['1.0.00.00', '2.0.00.00', '3.0.00.00'])
             ->with(['akun2.akun3.rek' => function ($q) use ($rekeningIdsYangPunyaTrx) {
+                $q->whereNull('tgl_nonaktif');
                 if (!empty($rekeningIdsYangPunyaTrx)) {
                     $q->whereIn('kode_akun', $rekeningIdsYangPunyaTrx);
                 }
@@ -529,6 +555,27 @@ class LaporanController extends Controller
             ->orderBy('kode_akun', 'ASC')
             ->get();
 
+        $keuangan = new Keuangan();
+        $lr = $keuangan->listLabaRugi($tgl_akhir);
+
+        $sumSaldo = function ($coll) {
+            $sum = 0;
+            foreach ($coll as $rek) {
+                $sum += (float) ($rek->saldo ?? 0);
+            }
+            return $sum;
+        };
+        $pendapatan = $sumSaldo($lr['pendapatan']);
+        $beban      = $sumSaldo($lr['beban']);
+        $bp         = $sumSaldo($lr['bp']);
+        $pen        = $sumSaldo($lr['pen']);
+        $pendl      = $sumSaldo($lr['pendl']);
+        $beb        = $sumSaldo($lr['beb']);
+        $ph         = $sumSaldo($lr['ph']);
+
+        $laba_rugi_berjalan = ($pendapatan + $pen + $pendl) - ($beban + $bp + $beb + $ph);
+
+        $data['laba_rugi_berjalan'] = $laba_rugi_berjalan;
 
         $data['tgl_awal']  = $tgl_awal;
         $data['tgl_akhir'] = $tgl_akhir;
@@ -618,7 +665,7 @@ class LaporanController extends Controller
 
         $data['profil'] = Profil::first();
 
-        $data['akun1'] = AkunLevel1::where('lev1', '<=', 3)
+        $data['akun1'] = AkunLevel1::whereIn('kode_akun', ['1.0.00.00', '2.0.00.00', '3.0.00.00'])
             ->with(['akun2.akun3.rek' => function ($q) {
                 $q->whereNull('tgl_nonaktif');
             }])
@@ -649,13 +696,20 @@ $request->validate([
             'sub_laporan'       => 'nullable',
         ]);
 
-        $data = [
+$data = [
             'tgl_awal'          => $request->tgl_awal,
             'tgl_akhir'         => $request->tgl_akhir,
             'tahun_akademik_id' => $request->tahun_akademik_id,
             'sub_laporan'       => $request->sub_laporan,
             'title'             => 'Laporan Pembayaran SPP',
         ];
+
+        if (empty($data['tahun_akademik_id'])) {
+            $taAktif = TahunAkademik::aktif();
+            if ($taAktif) {
+                $data['tahun_akademik_id'] = $taAktif->id;
+            }
+        }
 
         $data['kelas'] = !empty($data['sub_laporan'])
             ? Kelas::where('kode_kelas', $data['sub_laporan'])->first()
@@ -687,6 +741,7 @@ $request->validate([
         }
 
         $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn'])
+            ->where('status', 'aktif')
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
@@ -696,6 +751,7 @@ $request->validate([
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
             })
+            ->orderBy('kode_kelas')
             ->orderBy('id')
             ->get();
 
@@ -746,8 +802,10 @@ $request->validate([
                 ];
             });
 
-            $row->target_sd_saat_ini = $aggByAk[$row->id]['B'] ?? 0;
-            $row->sd_periode_ini = $aggByAk[$row->id]['L'] ?? 0;
+            // Total tagihan = jumlah semua baris spp (Lunas maupun Belum). Pembayaran = hanya yang Lunas.
+// Sisa Pembayaran = Tagihan - Pembayaran (>=0; berarti "sisa yang belum dibayar").
+            $row->target_sd_saat_ini = ($aggByAk[$row->id]['B'] ?? 0) + ($aggByAk[$row->id]['L'] ?? 0);
+            $row->sd_periode_ini    = $aggByAk[$row->id]['L'] ?? 0;
             $row->sisa = $row->target_sd_saat_ini - $row->sd_periode_ini;
 
             return $row;
@@ -778,11 +836,11 @@ $request->validate([
         );
     }
 
-    public function pembangunan(Request $request)
+public function pembangunan(Request $request)
     {
         return $this->laporanPembayaranNonSpp(
             $request,
-            '4.1.01.04',
+            '4.1.01.03',
             'Laporan Pembayaran Pembangunan',
             'laporan-pembangunan.pdf',
             fn($row) => $this->nominalJenisBiaya($row, 3)
@@ -793,7 +851,7 @@ $request->validate([
     {
         return $this->laporanPembayaranNonSpp(
             $request,
-            '4.1.01.03',
+            '4.1.01.04',
             'Laporan Pembayaran Ujian Semester',
             'laporan-ujian-semester.pdf',
             fn($row) => $this->nominalJenisBiaya($row, 4)
@@ -825,7 +883,7 @@ $request->validate([
             'sub_laporan'       => 'nullable',
         ]);
 
-        $data = [
+$data = [
             'tgl_awal'          => $request->tgl_awal,
             'tgl_akhir'         => $request->tgl_akhir,
             'tahun_akademik_id' => $request->tahun_akademik_id,
@@ -833,6 +891,13 @@ $request->validate([
             'kode_akun'         => $kodeAkun,
             'title'             => $title,
         ];
+
+        if (empty($data['tahun_akademik_id'])) {
+            $taAktif = TahunAkademik::aktif();
+            if ($taAktif) {
+                $data['tahun_akademik_id'] = $taAktif->id;
+            }
+        }
 
         $data['kelas'] = !empty($data['sub_laporan'])
             ? Kelas::where('kode_kelas', $data['sub_laporan'])->first()
@@ -847,10 +912,6 @@ $request->validate([
         ];
 
         $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn,tahun_akademik', 'tahunAkademik:id,nama_tahun'])
-            ->whereHas('siswa.transaksi', function ($q) use ($kodeAkun, $tglAwal, $tglAkhir) {
-                $q->where('rekening_kredit', $kodeAkun)
-                    ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir]);
-            })
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
@@ -860,6 +921,7 @@ $request->validate([
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
             })
+            ->where('status', 'aktif')
             ->orderBy('id')
             ->get();
 
@@ -871,6 +933,7 @@ $request->validate([
                 ->whereIn('siswa_id', $siswaIds)
                 ->where('rekening_kredit', $kodeAkun)
                 ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir])
+                ->whereNull('deleted_at')
                 ->orderByDesc('tanggal_transaksi')
                 ->get(['siswa_id', 'tanggal_transaksi', 'jumlah']);
 
@@ -888,6 +951,7 @@ $request->validate([
             $stat = $trxBySiswa[$sid] ?? null;
             $row->tgl_bayar_terakhir = $stat['max'] ?? null;
             $row->realisasi = $stat['sum'] ?? 0;
+            $row->sudah_bayar = $stat !== null;
             return $row;
         });
 

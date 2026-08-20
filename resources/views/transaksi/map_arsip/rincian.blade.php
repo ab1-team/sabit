@@ -2,19 +2,37 @@
     use App\Utils\Tanggal;
 @endphp
 
-<div class="row">
+<div class="row" data-siswa-id="{{ $siswa->id }}">
     <div class="col-12">
         <div class="card m-0" style="border-radius:0">
             <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-lines-fill me-1"></i>
+                        An. {{ $siswa->nama }}
+                        <small class="text-muted">({{ $siswa->nisn }})</small>
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filterTahunAkademik" class="form-label mb-0 small text-muted">Tahun Akademik:</label>
+                        <select id="filterTahunAkademik" class="form-select form-select-sm" style="min-width: 160px;">
+                            @forelse ($tahunList ?? [] as $ta)
+                                <option value="{{ $ta }}" @selected($ta === ($tahunDipilih ?? null))>
+                                    {{ $ta }}
+                                </option>
+                            @empty
+                                <option value="">(Tidak ada)</option>
+                            @endforelse
+                        </select>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table id="keuangan" class="table align-items-center table-striped">
                         <thead>
                             <tr align="center">
                                 <th width="6%">ID</th>
-                                <th width="12%">Tanggal Trx</th>
-                                <th width="14%">Kode Akun</th>
-                                <th width="36%">Keterangan</th>
-                                <th width="12%">Nominal</th>
+                                <th width="14%">Tanggal Trx</th>
+                                <th width="46%">Keterangan</th>
+                                <th width="14%">Nominal</th>
                                 <th width="20%">Aksi</th>
                             </tr>
                         </thead>
@@ -25,12 +43,6 @@
                                     <td align="center">
 
                                         {{ Tanggal::tglIndo($item->tanggal_transaksi) }}
-                                    </td>
-                                    <td align="center">
-                                        <div class="small">
-                                            <div>D: {{ $item->rekeningDebit->kode_akun ?? '-' }}</div>
-                                            <div>K: {{ $item->rekeningKredit->kode_akun ?? '-' }}</div>
-                                        </div>
                                     </td>
                                     <td>{{ $item->keterangan }}</td>
                                     <td align="right" style="padding-right: 10px;">
@@ -57,15 +69,20 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center">
-                                        Tidak ada transaksi SPP
+                                    <td colspan="5" class="text-center text-muted">
+                                        @if (!empty($tahunDipilih))
+                                            Tidak ada transaksi untuk tahun akademik
+                                            <strong>{{ $tahunDipilih }}</strong>
+                                        @else
+                                            Tidak ada transaksi SPP
+                                        @endif
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                         <tfoot>
                             <tr class="fw-bold">
-                                <td colspan="4" class="text-end">Jumlah</td>
+                                <td colspan="3" class="text-end">Jumlah</td>
                                 <td class="text-end">
                                     {{ \App\Utils\Angka::format($siswa->transaksi->sum(fn($t) => $t->getRawOriginal('jumlah')), 0) }}
                                 </td>

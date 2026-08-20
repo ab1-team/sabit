@@ -21,8 +21,8 @@
     </div>
 
     <div class="sm:col-span-2">
-        <label for="keterangan" class="mb-1.5 block text-sm font-semibold text-slate-700">Keterangan</label>
-        <input type="text" id="keterangan" name="keterangan" value="{{ $initialKet }}" class="invoice-input" placeholder="Opsional" autocomplete="off">
+        <label for="keterangan" class="mb-1.5 block text-sm font-semibold text-slate-700">Tahun Ajaran Ganjil/Genap <span class="text-rose-500">*</span></label>
+        <input type="text" id="keterangan" name="keterangan" required value="{{ $initialKet }}" class="invoice-input" placeholder="Tahun Ajaran Ganjil/Genap" autocomplete="off">
         @error('keterangan')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
     </div>
 </div>

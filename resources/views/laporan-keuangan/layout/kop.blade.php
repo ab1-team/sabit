@@ -11,7 +11,7 @@
                 {{ strtoupper($profil->nama ?? 'SISTEM AKADEMIK') }}
             </div>
             <div style="font-weight:bold; font-size:14px; line-height:1.15; margin:2px 0 0 0;">
-                PEMBAYARAN SPP
+                {{ strtoupper($title ?? 'LAPORAN KEUANGAN') }}
             </div>
             <div style="font-size:10px; color:#555; line-height:1.15; margin:2px 0 0 0;">
                 <i>{{ $profil->alamat ?? 'alamat' }}</i>

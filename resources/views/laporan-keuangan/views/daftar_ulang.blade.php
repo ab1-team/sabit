@@ -27,18 +27,24 @@
 
         <thead>
             <tr style="text-align:center; font-weight:bold;">
-                <th style="border:1px solid #000; width:5%;">No</th>
+                <th style="border:1px solid #000; width:4%;">No</th>
+                <th style="border:1px solid #000; width:8%;">Kelas</th>
                 <th style="border:1px solid #000; width:10%;">NISN</th>
-                <th style="border:1px solid #000; width:25%;">Nama Siswa</th>
+                <th style="border:1px solid #000; width:23%;">Nama Siswa</th>
                 <th style="border:1px solid #000; width:15%;">Tgl Bayar Terakhir</th>
-                <th style="border:1px solid #000; width:20%;">Jumlah Bayar</th>
-                <th style="border:1px solid #000; width:25%;">Keterangan</th>
+                <th style="border:1px solid #000; width:18%;">Jumlah Bayar</th>
+                <th style="border:1px solid #000; width:22%;">Keterangan</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($anggotaKelas as $i => $row)
+                @php $sudahBayar = $row->sudah_bayar ?? false; @endphp
                 <tr>
                     <td style="border:1px solid #000; text-align:center;">{{ $i + 1 }}</td>
+
+                    <td style="border:1px solid #000; text-align:center;">
+                        {{ $row->kode_kelas }}
+                    </td>
 
                     <td style="border:1px solid #000; text-align:center;">
                         {{ $row->siswa->nisn ?? '-' }}
@@ -55,21 +61,39 @@
                     </td>
 
                     <td style="border:1px solid #000; text-align:right;">
-                        {{ \App\Utils\Angka::format($row->realisasi ?? 0, 2) }}
+                        {{ $sudahBayar ? \App\Utils\Angka::format($row->realisasi ?? 0, 2) : '-' }}
                     </td>
 
-                    <td style="border:1px solid #000; text-align:center;">
-                        Sudah Bayar
+                    <td style="border:1px solid #000; text-align:center; color: {{ $sudahBayar ? 'black' : 'red' }};">
+                        {{ $sudahBayar ? 'Sudah Bayar' : 'Belum Bayar' }}
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="border:1px solid #000; text-align:center; font-style:italic;">
-                        Tidak ada siswa yang membayar pada periode ini
+                    <td colspan="7" style="border:1px solid #000; text-align:center; font-style:italic;">
+                        Tidak ada siswa pada filter ini
                     </td>
                 </tr>
             @endforelse
         </tbody>
 
+        @if ($anggotaKelas->count() > 0)
+            @php
+                $totalSiswa = $anggotaKelas->count();
+                $sudahBayarCount = $anggotaKelas->filter(fn($r) => $r->sudah_bayar ?? false)->count();
+                $totalRealisasi = $anggotaKelas->sum(fn($r) => $r->sudah_bayar ? ($r->realisasi ?? 0) : 0);
+            @endphp
+            <tfoot>
+                <tr style="font-weight:bold; background:#f1f5f9;">
+                    <td colspan="5" style="border:1px solid #000; text-align:right; padding:6px;">
+                        Total Sudah Bayar: {{ $sudahBayarCount }} / {{ $totalSiswa }} siswa
+                    </td>
+                    <td style="border:1px solid #000; text-align:right;">
+                        {{ \App\Utils\Angka::format($totalRealisasi, 2) }}
+                    </td>
+                    <td style="border:1px solid #000;"></td>
+                </tr>
+            </tfoot>
+        @endif
     </table>
 @endsection

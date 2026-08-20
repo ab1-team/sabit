@@ -4,18 +4,49 @@
 @endphp
 
 <style>
-    #detailJurnalContent .table-responsive,
+    #detailJurnalContent .table-responsive {
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+    }
+
     #detailJurnalContent .dataTables_wrapper,
     #detailJurnalContent .dataTables_scroll,
     #detailJurnalContent .dataTables_scrollBody,
-    #detailJurnalContent .dataTables_scrollHead,
-    #detailJurnalContent .card,
-    #detailJurnalContent .card-body {
+    #detailJurnalContent .dataTables_scrollHead {
         overflow: visible !important;
+    }
+
+    #detailJurnalContent .dataTables_scrollBody {
+        overflow-x: auto !important;
     }
 
     #detailJurnalContent .dropdown-menu {
         z-index: 13050 !important;
+    }
+
+    #detailJurnalContent #tableJurnalUmum {
+        width: 100% !important;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    #detailJurnalContent #tableJurnalUmum thead th,
+    #detailJurnalContent #tableJurnalUmum tbody td {
+        padding: 0.65rem 0.9rem;
+        vertical-align: middle;
+    }
+
+    #detailJurnalContent #tableJurnalUmum thead th {
+        white-space: nowrap;
+        font-weight: 600;
+        background-color: #f8f9fa;
+    }
+
+    #detailJurnalContent #tableJurnalUmum tbody td {
+        white-space: normal;
+        word-break: break-word;
+        border-bottom: 1px solid #f1f3f5;
     }
 </style>
 
@@ -30,10 +61,8 @@
                                 <th>ID</th>
                                 <th>Tanggal</th>
                                 <th>Kode Akun</th>
-                                <th>Nama Akun</th>
                                 <th>Keterangan</th>
                                 <th>Nominal</th>
-                                <th>Pengguna</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -71,20 +100,17 @@
             { data: 'id', name: 'id' },
             { data: 'tgl_fmt', name: 'tanggal_transaksi' },
             { data: 'kode_akun', name: 'kode_akun', orderable: false, searchable: false },
-            { data: 'rekening_debit_nama', name: 'nama_akun', orderable: false, searchable: false,
-                render: function (data, type, row) {
-                    const d = data || '-';
-                    const k = row.rekening_kredit_nama || '-';
-                    return '<div class="small"><div>' + d + '</div><div>' + k + '</div></div>';
-                }
-            },
             { data: 'ket', name: 'keterangan' },
             { data: 'nominal_fmt', name: 'jumlah', className: 'text-end' },
-            { data: 'user', name: 'user', orderable: false, searchable: false },
             { data: 'aksi', name: 'aksi', orderable: false, searchable: false, className: 'text-center text-nowrap' }
         ],
         columnDefs: [
-            { targets: 7, width: '350px' }
+            { targets: 0, width: '70px', className: 'text-center' },
+            { targets: 1, width: '120px' },
+            { targets: 2, width: '140px' },
+            { targets: 3, width: 'auto' },
+            { targets: 4, width: '160px', className: 'text-end' },
+            { targets: 5, width: '220px', className: 'text-center text-nowrap' }
         ],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>t<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         pageLength: 10,

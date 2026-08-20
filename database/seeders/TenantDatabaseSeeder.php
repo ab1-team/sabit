@@ -105,10 +105,13 @@ $bendaharaMenuIds = array_values(array_diff($allMenuIds, $landingMenuIds));
         );
 
         // Tahun akademik
-        $ta = TahunAkademik::firstOrCreate(['nama_tahun' => date('Y').'/'.(date('Y')+1)], [
-            'keterangan' => 'Tahun Pelajaran',
-            'status'     => 'aktif',
-        ]);
+        $ta = TahunAkademik::updateOrCreate(
+            ['nama_tahun' => date('Y').'/'.(date('Y')+1)],
+            [
+                'keterangan' => 'Tahun Ajaran Ganjil/Genap',
+                'status'     => 'aktif',
+            ]
+        );
 
         // Paket data master: ruangan, kelas, jurusan, jenis_transaksi, jenis_biaya,
         // jenis_pembayaran, jenis_laporan, sub_laporan.

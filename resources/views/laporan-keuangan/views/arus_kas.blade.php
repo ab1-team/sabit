@@ -67,22 +67,17 @@
                         $bg = $number % 2 == 0 ? '240,240,240' : '200,200,200';
                         $jumlah = 0;
 
-                        foreach ($akun3->rek as $rek) {
-                            foreach ($rek->transaksiDebit as $trx) {
-                                if (
-                                    $trx->tanggal_transaksi >= $tgl_awal_bulan &&
-                                    $trx->tanggal_transaksi <= $tgl_akhir_bulan
-                                ) {
-                                    $jumlah += $trx->jumlah;
-                                }
+                        // Akumulasi jumlah dari transaksi_list (sudah disiapkan controller):
+                        //   debit -> +;   kredit -> -.
+                        foreach (($child->transaksi_list ?? collect()) as $trx) {
+                            $inRange = $trx->tanggal_transaksi >= $tgl_awal_bulan
+                                    && $trx->tanggal_transaksi <= $tgl_akhir_bulan;
+                            if (!$inRange) continue;
+                            if (in_array($trx->rekening_debit, $akun3->rekeningByPrefix()->pluck('kode_akun')->all())) {
+                                $jumlah += (float) $trx->jumlah;
                             }
-                            foreach ($rek->transaksiKredit as $trx) {
-                                if (
-                                    $trx->tanggal_transaksi >= $tgl_awal_bulan &&
-                                    $trx->tanggal_transaksi <= $tgl_akhir_bulan
-                                ) {
-                                    $jumlah -= $trx->jumlah;
-                                }
+                            if (in_array($trx->rekening_kredit, $akun3->rekeningByPrefix()->pluck('kode_akun')->all())) {
+                                $jumlah -= (float) $trx->jumlah;
                             }
                         }
 

@@ -1,6 +1,23 @@
 @php
     use App\Utils\Keuangan;
     $i = 0;
+    $totalAset = 0;
+    $totalUtangModal = 0;
+    foreach ($akun1 as $lev1) {
+        $levSum = 0;
+        foreach ($lev1->akun2 as $lev2) {
+            foreach ($lev2->akun3 as $lev3) {
+                $levSum += Keuangan::hitungSaldo($lev3);
+            }
+        }
+        $kode = $lev1->kode_akun ?? '';
+        if (str_starts_with($kode, '1.')) {
+            $totalAset += $levSum;
+        } elseif (str_starts_with($kode, '2.') || str_starts_with($kode, '3.')) {
+            $totalUtangModal += $levSum;
+        }
+    }
+    $selisihNeraca = $totalAset - $totalUtangModal;
 @endphp
 
 @extends('laporan-keuangan.layout.dasar')
@@ -207,7 +224,7 @@
                                 </tr>
 
                                 {{-- DETAIL REKENING (PENJELASAN SAJA) --}}
-                                @foreach ($lev3->rek as $rek)
+                                @foreach ($lev3->rekeningByPrefix() as $rek)
                                     @php
                                         $saldo_rek = Keuangan::hitungSaldoCALK($rek, $tgl_awal, $tgl_akhir);
                                     @endphp
@@ -236,9 +253,14 @@
                 </table>
             </div>
 
-            <div style="color: #f44335">
-                Ada selisih antara Jumlah Aset dan Jumlah Liabilitas + Ekuitas sebesar
-                <b>......</b>
+            <div style="color: {{ abs($selisihNeraca) < 0.01 ? '#0a7d28' : '#f44335' }}">
+                @if (abs($selisihNeraca) < 0.01)
+                    Neraca BALANCE: Jumlah Aset = Jumlah Liabilitas + Ekuitas = <b>{{ Keuangan::formatSaldo($totalAset) }}</b>
+                @else
+                    Ada selisih antara Jumlah Aset dan Jumlah Liabilitas + Ekuitas sebesar
+                    <b>{{ Keuangan::formatSaldo($selisihNeraca) }}</b>
+                    (Aset: {{ Keuangan::formatSaldo($totalAset) }}, Liabilitas+Ekuitas: {{ Keuangan::formatSaldo($totalUtangModal) }})
+                @endif
             </div>
         </li>
         <li style="margin-top: 12px;">

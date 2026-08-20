@@ -14,7 +14,10 @@ class Keuangan
     {
         $saldo = 0;
 
-        $kodeAkunList = $lev3->rek->pluck('kode_akun')->all();
+        $rekenings = method_exists($lev3, 'rekeningByPrefix')
+            ? $lev3->rekeningByPrefix()
+            : $lev3->rek;
+        $kodeAkunList = $rekenings->pluck('kode_akun')->all();
         if (empty($kodeAkunList)) {
             return 0;
         }
@@ -42,10 +45,10 @@ class Keuangan
             ->selectRaw('rekening_kredit as kode_akun, SUM(jumlah) as total')
             ->pluck('total', 'kode_akun');
 
-        foreach ($lev3->rek as $rekening) {
+        foreach ($rekenings as $rekening) {
             $d = (float) ($debits[$rekening->kode_akun] ?? 0);
             $k = (float) ($kredits[$rekening->kode_akun] ?? 0);
-            $saldo_rekening = $rekening->jenis_mutasi === 'debet'
+            $saldo_rekening = strtolower((string) $rekening->jenis_mutasi) === 'debet'
                 ? $d - $k
                 : $k - $d;
             $saldo += $saldo_rekening;
@@ -122,7 +125,7 @@ class Keuangan
             return $collection->map(function ($rek) use ($debits, $kredits) {
                 $d = (float) ($debits[$rek->kode_akun] ?? 0);
                 $k = (float) ($kredits[$rek->kode_akun] ?? 0);
-                $rek->saldo = $rek->normal == 'D' ? $d - $k : $k - $d;
+                $rek->saldo = strtolower((string) $rek->jenis_mutasi) === 'debet' ? $d - $k : $k - $d;
                 return $rek;
             });
         };
@@ -138,33 +141,13 @@ class Keuangan
         ];
     }
 
-    private function hitungLabarugi(Rekening $rek, string $tgl): float
-    {
-        $debit = (float) $rek->transaksiDebit()
-            ->where('tanggal_transaksi', '<=', $tgl)
-            ->whereNull('deleted_at')
-            ->sum('jumlah');
-
-        $kredit = (float) $rek->transaksiKredit()
-            ->where('tanggal_transaksi', '<=', $tgl)
-            ->whereNull('deleted_at')
-            ->sum('jumlah');
-
-        return $rek->normal == 'D' ? $debit - $kredit : $kredit - $debit;
-    }
-
-    public function saldoKas($tgl_akhir, $mode = 'akhir')
+    public function saldoKas($tgl_akhir)
     {
         $tanggal = explode('-', $tgl_akhir);
         $thn = $tanggal[0];
 
-        if ($mode == 'awal') {
-            $range_awal = "$thn-01-01";
-            $range_akhir = date('Y-m-d', strtotime($tgl_akhir . ' -1 day'));
-        } else {
-            $range_awal = "$thn-01-01";
-            $range_akhir = $tgl_akhir;
-        }
+        $range_awal  = "$thn-01-01";
+        $range_akhir = $tgl_akhir;
 
         $rekeningKas = Rekening::query()
             ->where(function ($q) {
@@ -235,7 +218,7 @@ class Keuangan
             ->whereNull('deleted_at')
             ->sum('jumlah');
 
-        $saldo_rekening = $rekening->jenis_mutasi === 'debet'
+        $saldo_rekening = strtolower((string) $rekening->jenis_mutasi) === 'debet'
             ? $total_debit - $total_kredit
             : $total_kredit - $total_debit;
 

@@ -16,6 +16,7 @@ use App\Utils\Angka;
 use App\Utils\Tanggal;
 use App\Models\Rekening;
 use App\Models\Saldo;
+use App\Models\TahunAkademik;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,7 @@ class TransaksiController extends Controller
     public function index()
     {
         $title = 'Jurnal Umum';
-        $jenisTransaksi = JenisTransaksi::orderBy('nama')->get(['id', 'nama']);
+        $jenisTransaksi = JenisTransaksi::orderBy('id')->get(['id', 'nama']);
         $rekening = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun', 'asc')->get(['kode_akun', 'nama_akun', 'lev1']);
         $totalSaldo = (float) DB::table('saldo')->sum(DB::raw('debit - kredit'));
 
@@ -534,15 +535,25 @@ class TransaksiController extends Controller
     /**
      * Store PEMBAYARAN SPP
      */
-    public function pembayaranSPPStore(Request $request)
+public function pembayaranSPPStore(Request $request)
     {
-$request->validate([
+        $request->validate([
             'tanggal' => 'required|date',
             'siswa_id' => 'required',
             'sumber_dana' => 'required',
             'jenis_biaya' => 'required',
             'keterangan' => 'required',
         ]);
+
+        $inputTanggal = Carbon::parse($request->tanggal)->startOfDay();
+        $akhirBulanBerjalan = Carbon::now()->endOfMonth()->endOfDay();
+        if ($inputTanggal->gt($akhirBulanBerjalan)) {
+            $namaBatal = Carbon::now()->translatedFormat('F Y');
+            return response()->json([
+                'success' => false,
+                'msg' => "Tanggal pembayaran tidak boleh melebihi bulan berjalan ({$namaBatal}). Silakan pilih tanggal di bulan ini atau sebelumnya."
+            ], 422);
+        }
 
         $jp = JenisPembayaran::byKodeAkun($request->jenis_biaya);
         if (!$jp) {
@@ -738,19 +749,44 @@ $request->validate([
     /**
      * Detail PEMBAYARAN SPP
      */
-    public function pembayaranSPPDetail($id)
+    public function pembayaranSPPDetail(Request $request, $id)
     {
+        $tahunList = TahunAkademik::orderByDesc('nama_tahun')
+            ->pluck('nama_tahun')
+            ->filter()
+            ->values();
+
+        $tahunAktif = optional(TahunAkademik::aktif())->nama_tahun;
+        $tahunDipilih = $request->query('tahun_akademik')
+            ?: ($tahunList->contains($tahunAktif) ? $tahunAktif : ($tahunList->first() ?? null));
+
         $siswa = Siswa::with([
             'kelas',
-            'transaksi' => function ($q) {
+            'anggotaKelas.tahunAkademik:id,nama_tahun,status',
+            'transaksi' => function ($q) use ($tahunDipilih, $id) {
                 $q->whereNull('deleted_at')
                     ->latest('id')
                     ->limit(200)
                     ->with(['spp', 'rekeningDebit:id,kode_akun,nama_akun', 'rekeningKredit:id,kode_akun,nama_akun']);
+
+                if ($tahunDipilih) {
+                    $kodeKelas = \App\Models\AnggotaKelas::where('id_siswa', $id)
+                        ->where('tahun_akademik', $tahunDipilih)
+                        ->pluck('kode_kelas')
+                        ->filter()
+                        ->unique()
+                        ->values();
+
+                    if ($kodeKelas->isNotEmpty()) {
+                        $q->whereIn('kelas', $kodeKelas);
+                    } else {
+                        $q->whereRaw('1 = 0');
+                    }
+                }
             }
         ])->findOrFail($id, ['id', 'nama', 'nisn', 'nipd', 'kode_kelas', 'ruang']);
 
-        return view('transaksi.map_arsip.rincian', compact('siswa'));
+        return view('transaksi.map_arsip.rincian', compact('siswa', 'tahunList', 'tahunDipilih'));
     }
 
     /**

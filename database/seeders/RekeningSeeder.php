@@ -57,6 +57,7 @@ class RekeningSeeder extends Seeder
             [311, 3, 1, 1, 1, '3.1.01.01', 'Aset Neto Tanpa Pembatasan', 'kredit'],
             [312, 3, 1, 2, 1, '3.1.02.01', 'Aset Neto Dengan Pembatasan', 'kredit'],
             [321, 3, 2, 1, 1, '3.2.01.01', 'Surplus Tahun Berjalan', 'kredit'],
+            [322, 3, 2, 2, 1, '3.2.02.01', 'Laba Rugi Berjalan', 'kredit'],
             [411, 4, 1, 1, 1, '4.1.01.01', 'Pendapatan SPP', 'kredit'],
             [411, 4, 1, 1, 2, '4.1.01.02', 'Pendapatan Daftar Ulang', 'kredit'],
             [411, 4, 1, 1, 3, '4.1.01.03', 'Pendapatan Pembangunan', 'kredit'],

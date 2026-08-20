@@ -281,6 +281,29 @@
             loadTransaksiSiswa('detail');
         });
 
+        $(document).off('change.filterTA', '#filterTahunAkademik')
+            .on('change.filterTA', '#filterTahunAkademik', function() {
+                let ta = $(this).val();
+                let content = '#detailContent';
+                let siswaId = $('#detailContent [data-siswa-id]').first().data('siswa-id') || null;
+                if (!siswaId) return;
+                $(content).html(`
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-danger"></div>
+                        <p class="mt-2">Memuat detail transaksi...</p>
+                    </div>
+                `);
+                let url = '/app/transaksi/pembayaranSPPDetail/' + siswaId
+                    + (ta ? '?tahun_akademik=' + encodeURIComponent(ta) : '');
+                $.get(url)
+                    .done(function(res) {
+                        $(content).html(res);
+                    })
+                    .fail(function() {
+                        $(content).html('<div class="alert alert-danger">Gagal memuat detail.</div>');
+                    });
+            });
+
         $(document).on('click', '#btnPrintAllDetail', function() {
             loadTransaksiSiswa('printAll');
         });

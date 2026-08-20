@@ -242,7 +242,7 @@
             });
         }
 
-        $('#laporan').on('change', function() {
+$('#laporan').on('change', function() {
             const file = $(this).val();
 
             adjustLayout(file);
@@ -266,7 +266,8 @@
                 type: 'GET',
                 data: {
                     tahun: $('select[name="tahun"]').val(),
-                    bulan: $('select[name="bulan"]').val()
+                    bulan: $('select[name="bulan"]').val(),
+                    tahun_akademik_id: $('select[name="tahun_akademik_id"]').val()
                 },
                 success: function(res) {
                     $('#subLaporan').html(res);
@@ -278,6 +279,25 @@
                             theme: 'bootstrap-5'
                         });
                     }
+                }
+            });
+        });
+
+        $('select[name="tahun_akademik_id"]').on('change', function() {
+            const file = $('#laporan').val();
+            if (!file) return;
+
+            $.ajax({
+                url: '/app/pelaporan/sub_laporan/' + file,
+                type: 'GET',
+                data: {
+                    tahun: $('select[name="tahun"]').val(),
+                    bulan: $('select[name="bulan"]').val(),
+                    tahun_akademik_id: $(this).val()
+                },
+                success: function(res) {
+                    $('#subLaporan').html(res);
+                    $('#sub_laporan').select2({ theme: 'bootstrap-5' });
                 }
             });
         });

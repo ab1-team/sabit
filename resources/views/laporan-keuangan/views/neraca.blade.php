@@ -1,6 +1,15 @@
 @php
     use App\Utils\Keuangan;
     $i = 0;
+    $isLev1Aset = function($lev1) {
+        return str_starts_with($lev1->kode_akun ?? '', '1.');
+    };
+    $isLev1Utang = function($lev1) {
+        return str_starts_with($lev1->kode_akun ?? '', '2.');
+    };
+    $isLev1Modal = function($lev1) {
+        return str_starts_with($lev1->kode_akun ?? '', '3.');
+    };
 @endphp
 <title>{{ $title }}</title>
 
@@ -64,6 +73,13 @@
             <tr>
                 <td colspan="3" height="6"></td>
             </tr>
+            @if ($isLev1Modal($lev1))
+                <tr style="background:#c8c8c8; font-weight:bold;">
+                    <td>3.2.02.</td>
+                    <td>Laba Rugi Berjalan (Surplus/Defisit)</td>
+                    <td align="right">{{ Keuangan::formatSaldo($laba_rugi_berjalan ?? 0) }}</td>
+                </tr>
+            @endif
         @endforeach
     </table>
     <table class="table table-bordered" width="100%" border="0" cellspacing="0" cellpadding="0">

@@ -2,6 +2,68 @@
 @endif
 
 <style>
+  /* Popup notifikasi pojok kanan atas */
+  #popupNotifContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .popup-notif-item {
+    pointer-events: auto;
+    min-width: 280px;
+    max-width: 380px;
+    padding: 14px 18px 14px 46px;
+    border-radius: 10px;
+    color: #fff;
+    background: #e53935;
+    box-shadow: 0 8px 24px rgba(229, 57, 53, .25), 0 2px 6px rgba(229, 57, 53, .18);
+    position: relative;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: popupSlideIn .35s cubic-bezier(.4,1.4,.6,1) both;
+  }
+  .popup-notif-item::before {
+    content: "!";
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .25);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .popup-notif-item.fadeout {
+    animation: popupFadeOut .35s ease forwards;
+  }
+  .popup-notif-item strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    opacity: .92;
+  }
+  @keyframes popupSlideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+  }
+  @keyframes popupFadeOut {
+    from { transform: translateX(0);     opacity: 1; }
+    to   { transform: translateX(120%); opacity: 0; }
+  }
+
   .sop-cetakkartu.sop-disabled,
   .sop-cetakkartu[disabled] {
     opacity: .45;
@@ -102,6 +164,8 @@
     }
   }
 </style>
+
+<div id="popupNotifContainer" aria-live="polite" aria-atomic="true"></div>
 
 <div class="row d-flex align-items-stretch">
     <div class="col-md-8 d-flex">
@@ -258,7 +322,7 @@
                                 class="input-group input-group-outline mb-3 {{ old('nominal', optional($anggota_kelas)->spp_nominal) ? 'is-filled' : '' }}">
                                 <label class="form-label">Nominal</label>
                                 <input type="text" name="nominal" id="nominal" class="form-control nominal"
-                                    readonly>
+                                    placeholder=" " readonly>
                             </div>
                         </div>
                     </div>
@@ -469,14 +533,69 @@ document.querySelectorAll('#toast-wrapper .toast').forEach(el => {
         $('.select2').select2({
             theme: 'bootstrap-5'
         });
+
+        const namaBulanBerjalan = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        const today = new Date();
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        function showPopupError(title, message) {
+            const container = document.getElementById('popupNotifContainer');
+            if (!container) return;
+            const el = document.createElement('div');
+            el.className = 'popup-notif-item';
+            el.innerHTML = '<strong>' + title + '</strong>' + message;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.classList.add('fadeout');
+                setTimeout(() => el.remove(), 400);
+            }, 4500);
+        }
+
         flatpickr('.datepicker', {
-            dateFormat: 'Y-m-d'
+            dateFormat: 'Y-m-d',
+            minDate: '2000-01-01',
+            maxDate: lastDayOfMonth,
+            disable: [
+                function(date) {
+                    return date.getFullYear() > today.getFullYear()
+                        || (date.getFullYear() === today.getFullYear() && date.getMonth() > today.getMonth());
+                }
+            ],
+            onChange: function(selectedDates, dateStr) {
+                if (!dateStr) return;
+                const picked = new Date(dateStr + 'T00:00:00');
+                if (picked.getFullYear() > today.getFullYear()
+                    || (picked.getFullYear() === today.getFullYear() && picked.getMonth() > today.getMonth())) {
+                    showPopupError(
+                        'Tanggal Tidak Valid',
+                        'Tidak boleh input tanggal di bulan berikutnya (' + namaBulanBerjalan + ' atau setelahnya). Silakan pilih tanggal di bulan berjalan atau sebelumnya.'
+                    );
+                    this.setDate(today > lastDayOfMonth ? lastDayOfMonth : today, false);
+                    $('.datepicker').val('');
+                }
+            }
         });
         $('.nominal').maskMoney({
             thousands: ',',
             decimal: '.',
             precision: 2,
             allowZero: true
+        });
+
+        $('#FormPembayaranSPP').on('submit', function(e) {
+            const tgl = $('input[name="tanggal"]').val();
+            if (!tgl) return true;
+            const picked = new Date(tgl + 'T00:00:00');
+            if (picked.getFullYear() > today.getFullYear()
+                || (picked.getFullYear() === today.getFullYear() && picked.getMonth() > today.getMonth())) {
+                e.preventDefault();
+                showPopupError(
+                    'Tanggal Tidak Valid',
+                    'Tidak boleh input tanggal di bulan berikutnya (' + namaBulanBerjalan + ' atau setelahnya).'
+                );
+                return false;
+            }
+            return true;
         });
 
         $('#jenis_biaya').on('change', function() {
@@ -505,6 +624,7 @@ document.querySelectorAll('#toast-wrapper .toast').forEach(el => {
             const syncNominalLabel = () => {
                 const v = $('#nominal').val().trim();
                 $('#nominal').closest('.input-group').toggleClass('is-filled', v !== '');
+                $('#nominal').closest('.input-group').toggleClass('is-focused', false);
             };
 
             if (isSpp) {
@@ -610,8 +730,11 @@ document.querySelectorAll('#toast-wrapper .toast').forEach(el => {
             $('#nominal').closest('.input-group').toggleClass('is-filled', total > 0);
         });
 
-        $('#nominal').on('input', function() {
-            $(this).closest('.input-group').toggleClass('is-filled', $(this).val().trim() !== '');
+        $('#nominal').on('input keyup change blur', function() {
+            const v = $(this).val().trim();
+            const g = $(this).closest('.input-group');
+            g.toggleClass('is-filled', v !== '');
+            g.toggleClass('is-focused', false);
         });
 
         const $ta = $('textarea.form-control');
