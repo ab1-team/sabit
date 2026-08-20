@@ -109,7 +109,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
     Route::get('/system/generate-tunggakan', [SystemController::class, 'GenerateTunggakan']);
     Route::get('/system/piutang-status', [SystemController::class, 'piutangStatus']);
 
-    Route::get('/Transaksi/pembayaran-spp', [TransaksiController::class, 'pembayaranSPP']);
+    Route::get('/transaksi/pembayaran-spp', [TransaksiController::class, 'pembayaranSPP']);
     Route::get('/transaksi/daftar-inventaris', [TransaksiController::class, 'daftarInventaris']);
     Route::get('/transaksi/saldo/{kode_akun}', [TransaksiController::class, 'saldo']);
     Route::post('/transaksi/ProsesPembayaran', [TransaksiController::class, 'pembayaranSPPStore']);
@@ -123,7 +123,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
     Route::get('/transaksi/cetak-kartu-ujian/{id}/{jenis}', [TransaksiController::class, 'cetakKartuUjian'])
         ->where('jenis', 'uts1|uts2|pas1|pas2');
     Route::delete('/transaksi/pembayaranSPPDestroy/{Transaksi}', [TransaksiController::class, 'pembayaranSPPDestroy']);
-    Route::resource('/Transaksi', TransaksiController::class);
+    Route::resource('/transaksi', TransaksiController::class);
     Route::get('/transaksi/jurnal-umum/data', [TransaksiController::class, 'jurnalUmumData'])->name('transaksi.jurnalUmumData');
     Route::get('/transaksi/jurnal-umum/detail', [TransaksiController::class, 'jurnalUmumDetail'])->name('transaksi.jurnalUmumDetail');
     Route::get('/transaksi/jurnal-umum/cetak', [TransaksiController::class, 'jurnalUmumCetak'])->name('transaksi.jurnalUmumCetak');

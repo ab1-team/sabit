@@ -22,7 +22,7 @@ use App\Utils\Tanggal;
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($siswa->getTransaksi as $item)
+                            @forelse ($siswa->transaksi as $item)
                             <tr>
                                 <td class="text-center">
                                     <div class="form-check">

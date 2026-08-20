@@ -35,8 +35,8 @@ class TransaksiController extends Controller
     public function index()
     {
         $title = 'Jurnal Umum';
-        $jenisTransaksi = JenisTransaksi::orderBy('nama')->get(['id', 'nama', 'kode_akun']);
-        $rekening = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun', 'asc')->get(['kode_akun', 'nama_akun']);
+        $jenisTransaksi = JenisTransaksi::orderBy('nama')->get(['id', 'nama']);
+        $rekening = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun', 'asc')->get(['kode_akun', 'nama_akun', 'lev1']);
         $totalSaldo = (float) DB::table('saldo')->sum(DB::raw('debit - kredit'));
 
         return view('transaksi.index', compact('title', 'jenisTransaksi', 'rekening', 'totalSaldo'));
@@ -116,6 +116,7 @@ class TransaksiController extends Controller
                 'invoice' => 0,
                 'kode_spp' => '0',
                 'siswa_id' => 0,
+                'kelas' => null,
                 'idtp' => '0',
                 'urutan' => '0',
             ]);
@@ -166,6 +167,7 @@ class TransaksiController extends Controller
                 'invoice' => 0,
                 'kode_spp' => '0',
                 'siswa_id' => 0,
+                'kelas' => null,
                 'idtp' => '0',
                 'urutan' => '0',
             ]);
@@ -203,6 +205,7 @@ class TransaksiController extends Controller
                 'invoice' => 0,
                 'kode_spp' => '0',
                 'siswa_id' => 0,
+                'kelas' => null,
                 'idtp' => '0',
             ];
 
@@ -238,6 +241,7 @@ class TransaksiController extends Controller
                 'keterangan_transaksi' => 'Penjualan ' . $jumlah_unit . ' unit ' . $barang . ' (' . $id_inv . ')',
                 'jumlah' => $harga_jual,
                 'urutan' => '0',
+                'kelas' => null,
             ];
 
             if ($status != 'rusak') {
@@ -280,6 +284,7 @@ class TransaksiController extends Controller
                         'keterangan_transaksi' => 'Revaluasi ' . $jumlah_unit . ' unit ' . $barang . ' (' . $id_inv . ')',
                         'jumlah' => $jumlah,
                         'urutan' => '0',
+                        'kelas' => null,
                     ];
 
                     Transaksi::create($trx_revaluasi);
@@ -548,6 +553,13 @@ $request->validate([
         }
         $isSpp = $jp->isSpp();
 
+        $kelasSnapshot = optional(
+            AnggotaKelas::where('id_siswa', $request->siswa_id)
+                ->where('status', 'aktif')
+                ->orderByDesc('id')
+                ->first()
+        )->kode_kelas;
+
         $kodeSpp  = $request->input('kode_spp', []);
         $nominals = $request->input('nominal_spp', []);
 
@@ -663,6 +675,7 @@ $request->validate([
                     'rekening_kredit' => $rekeningKredit,
                     'kode_spp' => $spp->kode,
                     'siswa_id' => $request->siswa_id,
+                    'kelas' => $kelasSnapshot,
                     'jumlah' => $nilai,
                     'keterangan' => $request->keterangan . '(' .
                         Tanggal::namaBulan($spp->tanggal) . ' ' .
@@ -685,6 +698,7 @@ $request->validate([
                 'rekening_kredit' => $jp->kode_akun,
                 'kode_spp' => '0',
                 'siswa_id' => $request->siswa_id,
+                'kelas' => $kelasSnapshot,
                 'jumlah' => Angka::parseInt($request->nominal),
                 'keterangan' => $request->keterangan,
                 'user_id' => auth()->user()->id,
@@ -734,7 +748,7 @@ $request->validate([
                     ->limit(200)
                     ->with(['spp', 'rekeningDebit:id,kode_akun,nama_akun', 'rekeningKredit:id,kode_akun,nama_akun']);
             }
-        ])->findOrFail($id, ['id', 'nama', 'nisn', 'nis', 'nipd', 'kode_kelas']);
+        ])->findOrFail($id, ['id', 'nama', 'nisn', 'nipd', 'kode_kelas', 'ruang']);
 
         return view('transaksi.map_arsip.rincian', compact('siswa'));
     }
@@ -747,19 +761,19 @@ $request->validate([
         $siswa = Siswa::findOrFail($id);
 
 $anggota_kelas = AnggotaKelas::where('id_siswa', $id)
-            ->with(['getSpp'])
+            ->with(['spp'])
             ->where('status', 'aktif')
             ->first();
 
         $sppBelumLunas = $anggota_kelas
-            ? $anggota_kelas->getSpp
+            ? $anggota_kelas->spp
                 ->where('status', 'B')
                 ->sortBy(fn($s) => \Carbon\Carbon::parse($s->tanggal)->timestamp)
                 ->values()
             : collect();
 
         $sppLunas = $anggota_kelas
-            ? $anggota_kelas->getSpp
+            ? $anggota_kelas->spp
                 ->where('status', 'L')
                 ->sortBy(fn($s) => \Carbon\Carbon::parse($s->tanggal)->timestamp)
                 ->values()
@@ -772,8 +786,8 @@ $anggota_kelas = AnggotaKelas::where('id_siswa', $id)
     public function pembayaranSPPPrintAll($id)
     {
         $siswa = Siswa::with([
-            'getKelas',
-            'getTransaksi' => function ($q) {
+            'kelas',
+            'transaksi' => function ($q) {
                 $q->whereNull('deleted_at')
                     ->orderByDesc('id')
                     ->with('spp');
@@ -951,7 +965,7 @@ $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-kartu-spp', $data)
         $sopPas = (int) ($profil->cetak_pas ?? 3);
 
         $bulanLunas = $anggotaAktif
-            ? (int) $anggotaAktif->getSpp()->where('status', 'L')->count()
+            ? (int) $anggotaAktif->spp()->where('status', 'L')->count()
             : Spp::bulanLunasBySiswa((int) $siswa->id);
 
         $syarat = $periode === '1' ? $sopPts : $sopPas;

@@ -44,7 +44,7 @@ class Profil extends Model
 
     protected static function defaultLogo(): string
     {
-        return asset('assets/img/apple-icon.png');
+        return global_asset('assets/img/apple-icon.png');
     }
 
     public static function logoUrl(): string

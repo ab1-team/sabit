@@ -35,7 +35,7 @@
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree@3.3.12/dist/themes/default/style.min.css">
-    <link rel="stylesheet" href="{{ asset('vendor/quill/quill.snow.css') }}">
+    <link rel="stylesheet" href="{{ global_asset('vendor/quill/quill.snow.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/orgchart@3.7.0/dist/css/jquery.orgchart.min.css">
@@ -815,7 +815,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jstree@3.3.12/dist/jstree.min.js"></script>
-    <script src="{{ asset('vendor/quill/quill.min.js') }}"></script>
+    <script src="{{ global_asset('vendor/quill/quill.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.3/typeahead.jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/orgchart@3.7.0/dist/js/jquery.orgchart.min.js"></script>
     <script src="/assets/js/core/popper.min.js"></script>

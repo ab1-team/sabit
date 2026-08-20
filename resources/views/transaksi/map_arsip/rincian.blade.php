@@ -19,7 +19,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($siswa->getTransaksi as $item)
+                            @forelse ($siswa->transaksi as $item)
                                 <tr>
                                     <td align="center">{{ $item->id }}</td>
                                     <td align="center">
@@ -67,7 +67,7 @@
                             <tr class="fw-bold">
                                 <td colspan="4" class="text-end">Jumlah</td>
                                 <td class="text-end">
-                                    {{ \App\Utils\Angka::format($siswa->getTransaksi->sum(fn($t) => $t->getRawOriginal('jumlah')), 0) }}
+                                    {{ \App\Utils\Angka::format($siswa->transaksi->sum(fn($t) => $t->getRawOriginal('jumlah')), 0) }}
                                 </td>
                                 <td></td>
                             </tr>

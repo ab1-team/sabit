@@ -88,7 +88,7 @@ $tahun_angkatan = '';
         } else {
             $akQuery = AnggotaKelas::where('id_siswa', $id)
                 ->with([
-                    'siswa:id,nama,nisn,kode_kelas',
+                    'siswa:id,nama,nisn,kode_kelas,ruang',
                     'spp',
                 ])->where('status', 'aktif');
 
