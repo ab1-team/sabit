@@ -1869,6 +1869,20 @@
         $path = $parsed !== null ? $parsed : $url;
         return trim($path, '/');
     };
+
+    // Deteksi apakah menu dinamis sudah punya link 'Berita' (path 'berita').
+    // Kalau belum, kita sisipkan link hardcoded agar selalu tersedia,
+    // sekaligus menghindari duplikat jika menu sudah menyediakannya.
+    $headerMenus = $menus['header'] ?? collect();
+    $hasBeritaMenu = $headerMenus->contains(function ($m) use ($lpMenuPath) {
+        $p = $lpMenuPath($m->url);
+        return $p === 'berita';
+    }) || $headerMenus->contains(function ($m) use ($lpMenuPath) {
+        return $m->child_items->contains(function ($c) use ($lpMenuPath) {
+            return $lpMenuPath($c->url) === 'berita';
+        });
+    });
+    $beritaActive = $currentPath === 'berita' || str_starts_with($currentPath, 'berita/');
 @endphp
 
 {{-- Drawer mobile: dirender terpisah di akhir navbar-wrap agar tidak
@@ -1885,6 +1899,13 @@
             </a>
 
             <div class="lp-nav-desktop-menu">
+                @if (! $hasBeritaMenu)
+                    <div class="lp-nav-item">
+                        <a class="lp-nav-link {{ $beritaActive ? 'active' : '' }}" href="{{ route('halaman-publik.daftar-artikel') }}">
+                            <span>Berita</span>
+                        </a>
+                    </div>
+                @endif
                 @foreach ($menus['header'] ?? [] as $item)
                     @php
                         $itemPath = $lpMenuPath($item->url);
@@ -1978,6 +1999,7 @@
                 <h6>Tautan Cepat</h6>
                 <ul class="list-unstyled m-0">
                     <li class="mb-2"><a href="#tentang">Tentang Kami</a></li>
+                    <li class="mb-2"><a href="{{ route('halaman-publik.daftar-artikel') }}">Berita</a></li>
                     <li class="mb-2"><a href="#daftar">FAQ PPDB</a></li>
                     <li class="mb-2"><a href="{{ route('halaman-publik.pengumuman') }}">Pengumuman</a></li>
                     <li class="mb-2"><a href="{{ route('halaman-publik.galeri') }}">Galeri</a></li>
@@ -2020,6 +2042,13 @@
     </div>
 
     <div class="lp-nav-menu-body">
+        @if (! $hasBeritaMenu)
+            <div class="lp-nav-item">
+                <a class="lp-nav-link {{ $beritaActive ? 'active' : '' }}" href="{{ route('halaman-publik.daftar-artikel') }}">
+                    <span>Berita</span>
+                </a>
+            </div>
+        @endif
         @foreach ($menus['header'] ?? [] as $item)
             @php
                 $itemPath = $lpMenuPath($item->url);

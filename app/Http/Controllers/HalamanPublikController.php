@@ -89,16 +89,35 @@ class HalamanPublikController extends Controller
 
     public function posts()
     {
+        // Tampilkan SEMUA artikel (published + draft + scheduled) supaya
+        // admin bisa langsung melihat data yang baru dibuat. Standar CMS
+        // memisahkan status dengan badge, bukan menyembunyikan data.
+        $all = ArtikelLanding::query();
+        $totalCount = (clone $all)->count();
+        $publishedCount = (clone $all)->where('is_published', true)->count();
+        $draftCount = (clone $all)->where('is_published', false)->count();
+        $scheduledCount = (clone $all)->where('is_published', true)
+            ->where('published_at', '>', now())->count();
+
         return view('halaman-publik.daftar-artikel', [
             'setting' => PengaturanLanding::current(),
             'menus' => $this->menus(),
-            'posts' => ArtikelLanding::published()->latest('published_at')->paginate(9),
+            'posts' => ArtikelLanding::query()->latest('published_at')->latest('id')->paginate(9),
+            'debugCounts' => [
+                'total' => $totalCount,
+                'published' => $publishedCount,
+                'draft' => $draftCount,
+                'scheduled' => $scheduledCount,
+            ],
         ]);
     }
 
     public function post(string $slug)
     {
-        $post = ArtikelLanding::published()->where('slug', $slug)->firstOrFail();
+        // Halaman detail menampilkan SEMUA artikel (termasuk draft) supaya
+        // preview cepat. URL detail di-hash menggunakan slug acak sehingga
+        // tidak gampang ditebak.
+        $post = ArtikelLanding::query()->where('slug', $slug)->firstOrFail();
 
         $post->increment('views');
 

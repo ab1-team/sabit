@@ -876,6 +876,43 @@ class AdminLandingController extends Controller
         return $this->deleteSuccess($request, 'Program / berita berhasil dihapus.', 'app.admin-landing.posts');
     }
 
+    public function postUploadContent(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200'],
+            'type' => ['nullable', Rule::in(['image', 'video'])],
+        ]);
+
+        $file = $request->file('file');
+        $mime = (string) $file->getMimeType();
+        $isImage = str_starts_with($mime, 'image/');
+        $isVideo = str_starts_with($mime, 'video/');
+
+        if (! $isImage && ! $isVideo) {
+            return response()->json([
+                'success' => false,
+                'msg' => 'Tipe file tidak didukung. Unggah gambar atau video.',
+            ], 422);
+        }
+
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension());
+        $base = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'file';
+        $name = $base . '-' . substr((string) Str::uuid(), 0, 8) . ($ext ? '.' . $ext : '');
+
+        $subdir = $isVideo ? 'posts/videos' : 'posts/images';
+        $stored = $file->storeAs($this->uploadDir() . '/' . $subdir, $name, 'public');
+
+        $url = Storage::disk('public')->url($stored);
+        $kind = $isVideo ? 'video' : 'image';
+
+        return response()->json([
+            'success' => true,
+            'kind' => $kind,
+            'location' => $url,
+            'path' => $stored,
+        ]);
+    }
+
     private function validatePost(Request $request): array
     {
         $data = $request->validate([

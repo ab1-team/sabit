@@ -228,6 +228,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::get('/posts/{post}/edit', [AdminLandingController::class, 'postEdit'])->name('posts.edit');
         Route::put('/posts/{post}', [AdminLandingController::class, 'postUpdate'])->name('posts.update');
         Route::delete('/posts/{post}', [AdminLandingController::class, 'postDestroy'])->name('posts.destroy');
+        Route::post('/posts/upload-content', [AdminLandingController::class, 'postUploadContent'])->name('posts.upload-content');
 
         Route::get('/announcements', [AdminLandingController::class, 'announcements'])->name('announcements');
         Route::get('/announcements/data', [AdminLandingController::class, 'announcementsData'])->name('announcements.data');

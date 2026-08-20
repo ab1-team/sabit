@@ -18,9 +18,18 @@
         @if ($posts->isEmpty())
             <div class="text-center text-muted py-5 lp-reveal" data-from="zoom">
                 <i class="bi bi-inbox" style="font-size:3rem; opacity:.3;"></i>
-                <p class="mt-3 mb-0">Belum ada berita.</p>
+                <p class="mt-3 mb-0">Belum ada berita yang dipublikasikan.</p>
+                <p class="mt-3 mb-0 small text-muted">
+                    Total di DB: {{ $debugCounts['total'] ?? 0 }} —
+                    Published: {{ $debugCounts['published'] ?? 0 }} —
+                    Draft: {{ $debugCounts['draft'] ?? 0 }} —
+                    Terjadwal: {{ $debugCounts['scheduled'] ?? 0 }}.
+                </p>
             </div>
         @else
+            <p class="text-muted small mb-3">
+                Menampilkan {{ $posts->count() }} dari {{ $posts->total() }} artikel.
+            </p>
             <div class="row g-3 g-lg-4">
                 @foreach ($posts as $i => $post)
                     <div class="col-md-6 col-lg-4 d-flex">
@@ -40,6 +49,13 @@
                                 <p class="lp-post-meta text-muted small mb-2">
                                     <i class="bi bi-calendar3 me-1"></i>
                                     {{ $post->published_at?->translatedFormat('d F Y') }}
+                                    @if (! $post->is_published)
+                                        <span class="badge text-bg-secondary ms-2">Draft</span>
+                                    @elseif ($post->published_at && $post->published_at->isFuture())
+                                        <span class="badge text-bg-warning ms-2">Terjadwal</span>
+                                    @else
+                                        <span class="badge text-bg-success ms-2">Published</span>
+                                    @endif
                                 </p>
                                 <p class="flex-grow-1 mb-0">{{ Str::limit(strip_tags($post->excerpt ?: $post->content), 110) }}</p>
                                 <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-link-soft mt-2">
