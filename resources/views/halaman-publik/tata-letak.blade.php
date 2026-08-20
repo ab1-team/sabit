@@ -2247,6 +2247,47 @@
     });
 })();
 </script>
+
+<button id="lpScrollTopBtn" type="button" aria-label="Kembali ke atas" title="Kembali ke atas"
+    style="position:fixed;right:20px;bottom:20px;z-index:1080;width:48px;height:48px;border-radius:9999px;border:0;background:linear-gradient(135deg,var(--lp-primary),var(--lp-accent-2));color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 24px rgba(var(--lp-primary-rgb),.4);transition:transform .2s ease,opacity .2s ease,box-shadow .2s ease;">
+    <i class="bi bi-arrow-up" style="font-size:1.25rem;line-height:1;"></i>
+</button>
+
+<script>
+(function () {
+    var btn = document.getElementById('lpScrollTopBtn');
+    if (!btn) return;
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function updateBtn() {
+        if (window.scrollY > 300) {
+            btn.style.display = 'flex';
+            btn.style.opacity = '1';
+        } else {
+            btn.style.opacity = '0';
+            setTimeout(function () {
+                if (window.scrollY <= 300) btn.style.display = 'none';
+            }, 200);
+        }
+    }
+
+    window.addEventListener('scroll', updateBtn, { passive: true });
+    updateBtn();
+
+    btn.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    });
+
+    btn.addEventListener('mouseenter', function () {
+        btn.style.transform = 'translateY(-3px)';
+        btn.style.boxShadow = '0 14px 30px rgba(var(--lp-primary-rgb),.55)';
+    });
+    btn.addEventListener('mouseleave', function () {
+        btn.style.transform = 'translateY(0)';
+        btn.style.boxShadow = '0 10px 24px rgba(var(--lp-primary-rgb),.4)';
+    });
+})();
+</script>
 @yield('script')
 </body>
 </html>
