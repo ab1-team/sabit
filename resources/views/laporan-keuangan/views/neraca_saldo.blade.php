@@ -61,8 +61,11 @@
                     $debit = $rek->total_debit;
                     $kredit = $rek->total_kredit;
 
+                    $normal = strtolower(substr((string) $rek->jenis_mutasi, 0, 1));
+                    $isDebetNormal = ($normal === 'd');
+
                     // pindahkan sisi jika negatif
-                    if ($rek->normal_saldo == 'D') {
+                    if ($isDebetNormal) {
                         $selisih = $debit - $kredit;
                         $saldo_debit = $selisih >= 0 ? $selisih : 0;
                         $saldo_kredit = $selisih < 0 ? abs($selisih) : 0;
@@ -87,10 +90,10 @@
                         $total_rl_kredit += $rl_kredit;
 
                         if ($rek->lev1 == 4) {
-                            $total_pendapatan += $rek->normal_saldo == 'K' ? $saldo_kredit : $saldo_debit;
+                            $total_pendapatan += $isDebetNormal ? $saldo_debit : $saldo_kredit;
                         }
                         if ($rek->lev1 == 5) {
-                            $total_beban += $rek->normal_saldo == 'K' ? $saldo_kredit : $saldo_debit;
+                            $total_beban += $isDebetNormal ? $saldo_debit : $saldo_kredit;
                         }
                     } else {
                         $n_debit = $saldo_debit;

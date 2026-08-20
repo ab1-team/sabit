@@ -174,16 +174,16 @@ $rows = DB::table('spp')
             ->where(function ($q) use ($tahunIni, $bulanIni) {
                 $q->whereYear('spp.tanggal', '<', $tahunIni)
                     ->orWhere(function ($q2) use ($tahunIni, $bulanIni) {
-                        $q2->whereYear('spp.tanggal', $tahunIni)
+                        $q2->whereYear('spp.tanggal', '=', $tahunIni)
                             ->whereMonth('spp.tanggal', '<', $bulanIni);
                     });
             })
-            ->groupBy('ak.id_siswa', 'siswa.nisn', 'siswa.nama', 'siswa.kode_kelas', 'ak.spp_nominal')
+            ->groupBy('ak.id_siswa', 'siswa.nisn', 'siswa.nama', 'ak.kode_kelas', 'ak.spp_nominal')
             ->selectRaw('
                 ak.id_siswa,
                 siswa.nisn,
                 siswa.nama,
-                siswa.kode_kelas,
+                ak.kode_kelas,
                 ak.spp_nominal,
                 COUNT(*) AS jumlah_bulan
             ')

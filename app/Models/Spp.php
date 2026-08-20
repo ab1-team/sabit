@@ -46,7 +46,7 @@ class Spp extends Model
             ->where('spp.status', 'L')
             ->groupBy('anggota_kelas.id_siswa')
             ->selectRaw('anggota_kelas.id_siswa, COUNT(*) as total')
-            ->pluck('total', 'id_siswa')
+            ->pluck('total', 'anggota_kelas.id_siswa')
             ->all();
         return array_map('intval', $rows);
     }

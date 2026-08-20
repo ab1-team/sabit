@@ -25,7 +25,7 @@ return new class extends Migration
             DB::statement("
                 UPDATE transaksi t
                 LEFT JOIN (
-                    SELECT id_siswa, kode_kelas
+                    SELECT id_siswa, MAX(kode_kelas) AS kode_kelas
                     FROM anggota_kelas
                     WHERE status = 'aktif'
                     GROUP BY id_siswa

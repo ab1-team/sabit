@@ -49,7 +49,7 @@ class RuanganSeeder extends Seeder
                 'kapasitas_belajar' => $r[3],
                 'kapasitas_ujian' => $r[4],
                 'keterangan' => $r[5],
-                'status' => $r[6],
+                'status' => 'aktif',
                 'created_at' => '2026-07-20 04:51:56',
                 'updated_at' => '2026-07-20 04:51:56',
             ];

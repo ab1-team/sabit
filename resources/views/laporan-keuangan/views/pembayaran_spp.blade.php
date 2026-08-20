@@ -63,8 +63,8 @@
             @forelse ($anggotaKelas as $i => $row)
                 <tr>
                     <td style="border:1px solid #000; text-align:center;">{{ $i + 1 }}</td>
-                    <td style="border:1px solid #000; text-align:center;">{{ $row->getSiswa->nisn ?? '-' }}</td>
-                    <td style="border:1px solid #000;">{{ $row->getSiswa->nama ?? '-' }}</td>
+                    <td style="border:1px solid #000; text-align:center;">{{ $row->siswa->nisn ?? '-' }}</td>
+                    <td style="border:1px solid #000;">{{ $row->siswa->nama ?? '-' }}</td>
                     <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->per_bulan, 2) }}</td>
                     <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->target_sd_saat_ini, 2) }}</td>
                     <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->sd_periode_ini, 2) }}</td>

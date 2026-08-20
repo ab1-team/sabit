@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->string('kapasitas_belajar');
                 $table->string('kapasitas_ujian');
                 $table->string('keterangan');
-                $table->enum('status', ['aktif', 'non_aktif']);
+                $table->enum('status', ['aktif', 'non_aktif'])->default('aktif');
                 $table->timestamps();
             });
 

@@ -41,11 +41,11 @@
                     <td style="border:1px solid #000; text-align:center;">{{ $i + 1 }}</td>
 
                     <td style="border:1px solid #000; text-align:center;">
-                        {{ $row->getSiswa->nisn ?? '-' }}
+                        {{ $row->siswa->nisn ?? '-' }}
                     </td>
 
                     <td style="border:1px solid #000;">
-                        {{ $row->getSiswa->nama ?? '-' }}
+                        {{ $row->siswa->nama ?? '-' }}
                     </td>
 
                     <td style="border:1px solid #000; text-align:center;">

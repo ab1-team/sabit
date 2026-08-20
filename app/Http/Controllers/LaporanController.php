@@ -565,7 +565,7 @@ class LaporanController extends Controller
             : 'Neraca Saldo (Tahun ' . $thn . ')';
 
         $kodeList = Rekening::whereNull('tgl_nonaktif')->pluck('kode_akun')->all();
-        $rekenings = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun')->get(['kode_akun', 'nama_akun']);
+        $rekenings = Rekening::whereNull('tgl_nonaktif')->orderBy('kode_akun')->get(['kode_akun', 'nama_akun', 'jenis_mutasi', 'lev1']);
 
         $debits = DB::table('transaksi')
             ->whereNull('deleted_at')
@@ -714,10 +714,10 @@ $request->validate([
             }
 
             $sppAggregate = DB::table('spp')
-                ->whereIn('anggota_kelas', $akIds)
-                ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
-                ->groupBy('anggota_kelas', 'status')
-                ->selectRaw('anggota_kelas, status, SUM(nominal) as total')
+                ->whereIn('spp.anggota_kelas', $akIds)
+                ->whereBetween('spp.tanggal', [$tglAwal, $tglAkhir])
+                ->groupBy('spp.anggota_kelas', 'spp.status')
+                ->selectRaw('spp.anggota_kelas, spp.status, SUM(spp.nominal) as total')
                 ->get();
         } else {
             $sppAggregate = collect();

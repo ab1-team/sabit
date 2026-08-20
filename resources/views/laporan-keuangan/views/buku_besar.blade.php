@@ -71,7 +71,7 @@
             @php
                 $debit = $trx->rekening_debit == $rek->kode_akun ? floatval($trx->jumlah) : 0;
                 $kredit = $trx->rekening_kredit == $rek->kode_akun ? floatval($trx->jumlah) : 0;
-                $saldo_mutasi = $rek->jenis_mutasi == 'debet' ? $debit - $kredit : $kredit - $debit;
+                $saldo_mutasi = strtolower($rek->jenis_mutasi ?? '') === 'debet' ? $debit - $kredit : $kredit - $debit;
 
                 $total_saldo += $saldo_mutasi;
                 $total_debit += $debit;
