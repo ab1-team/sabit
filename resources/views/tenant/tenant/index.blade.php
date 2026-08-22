@@ -211,10 +211,11 @@
         }
 
         function buildPreviewHref(domain) {
-            if (domain && domain !== '—' && !/^https?:\/\//i.test(domain)) {
-                return 'http://' + domain;
-            }
-            return domain || '#';
+            if (!domain || domain === '—') return '#';
+            if (/^https?:\/\//i.test(domain)) return domain;
+            const base = @json(config('tenancy.tenant_base_domain'));
+            const sep = domain.includes('.') ? '' : (base ? '.' + base : '');
+            return 'http://' + domain + sep;
         }
 
         function openDetailModal(btn) {

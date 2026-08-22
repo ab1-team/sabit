@@ -124,7 +124,7 @@
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             <span>Tambah User</span>
                         </button>
-                        <a href="http://{{ $domain }}" target="_blank" class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold" title="Buka {{ $domain }}" aria-label="Buka {{ $domain }}">
+                        <a href="http://{{ $domain }}{{ str_contains($domain, '.') ? '' : (config('tenancy.tenant_base_domain') ? '.' . config('tenancy.tenant_base_domain') : '') }}" target="_blank" class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold" title="Buka {{ $domain }}" aria-label="Buka {{ $domain }}">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 015.656 0l1.415 1.415a4 4 0 010 5.656l-3 3a4 4 0 01-5.656 0M10.172 13.828a4 4 0 01-5.656 0l-1.415-1.415a4 4 0 010-5.656l3-3a4 4 0 015.656 0"/></svg>
                             <span class="hidden sm:inline">Buka</span>
                         </a>
