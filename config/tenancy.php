@@ -18,8 +18,10 @@ return [
      */
     'central_domains' => [
         env('CENTRAL_DOMAIN', 'pusat.sabit.test'),
-        'sabit.test',
+        env('CENTRAL_BASE_DOMAIN', 'sabit.test'),
     ],
+
+    'tenant_base_domain' => env('TENANT_BASE_DOMAIN', env('CENTRAL_BASE_DOMAIN', 'sabit.test')),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.

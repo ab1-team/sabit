@@ -228,7 +228,7 @@ tbody td{
 
 <b>{{ $tenantNama }}</b><br>
 @if($tenantDomain)
-    {{ $tenantDomain }}.sabit.test<br>
+    {{ $tenantDomain }}.{{ config('tenancy.tenant_base_domain') }}<br>
 @endif
 Owner: {{ $invoice->user->nama_lengkap ?? '-' }}<br>
 Email: {{ $invoice->user->email ?? '-' }}
