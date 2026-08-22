@@ -18,7 +18,7 @@ jobs:
           script: |
             cd /var/www/sim-akademik
             git pull origin main
-            composer install
+            composer install --no-dev --optimize-autoloader
 
             php artisan config:clear
             php artisan cache:clear
