@@ -16,6 +16,9 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            cd /var/www/sabit.siupk.com
+            cd /var/www/sim-akademik
             git pull origin main
             composer install
+
+            php artisan config:clear
+            php artisan cache:clear
