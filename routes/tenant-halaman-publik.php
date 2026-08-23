@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Route;
 |
 | Route website publik per sekolah. Didaftarkan oleh TenancyServiceProvider
 | dengan middleware domain.type:landing sehingga hanya bisa diakses dari
-| domain bertipe 'landing' (mis. sma1.sabit.test).
+| domain bertipe 'landing' (mis. sma1.example.test).
 |
-| Domain admin (mis. admin-sma1.sabit.test) memuat routes/tenant.php.
+| Domain admin (mis. admin-sma1.example.test) memuat routes/tenant.php.
 |
 | PERINGATAN: seluruh route di file ini TIDAK memerlukan autentikasi, tetapi
 | koneksi database sudah menunjuk ke database tenant. Hanya query tabel lp_*.

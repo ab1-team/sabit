@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Route;
 | Routes untuk tenant (per sekolah). Loaded by TenancyServiceProvider
 | setelah tenancy diinisialisasi. Semua route /app/* milik sekolah.
 |
-| Default: subdomain (misal: sma1.sabit.test).
+| Default: subdomain (misal: sma1.example.test).
 | Opsional untuk development tanpa DNS: path-based /tenant/{id}/...
 |
 */

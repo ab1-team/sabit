@@ -17,11 +17,11 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        env('CENTRAL_DOMAIN', 'pusat.sabit.test'),
-        env('CENTRAL_BASE_DOMAIN', 'sabit.test'),
+        env('CENTRAL_DOMAIN', 'pusat.example.test'),
+        env('CENTRAL_BASE_DOMAIN', 'example.test'),
     ],
 
-    'tenant_base_domain' => env('TENANT_BASE_DOMAIN', env('CENTRAL_BASE_DOMAIN', 'sabit.test')),
+    'tenant_base_domain' => env('TENANT_BASE_DOMAIN', env('CENTRAL_BASE_DOMAIN', 'example.test')),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.

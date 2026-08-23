@@ -25,10 +25,11 @@ use App\Http\Controllers\Tenant\UserOperatorController;
 | TENANT (Master Console / Pusat) Routes
 |--------------------------------------------------------------------------
 |
-| Domain pusat: env('CENTRAL_DOMAIN') => pusat.sabit.test
+| Domain pusat: env('CENTRAL_DOMAIN') => pusat.example.test (atau value kosong jika single-domain).
 | Mengelola sekolah (subdomain tenant) dari pusat.
 | Login pusat di /login (sebelumnya /master/login).
-| Sekolah diakses via subdomain, mis: demo.sabit.test
+| Sekolah diakses via subdomain, mis: demo.example.test
+| (atau tanpa subdomain jika deploy single-domain).
 |
 */
 
