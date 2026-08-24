@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\HostContext;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
 
@@ -9,7 +10,7 @@ class Authenticate extends Middleware
 {
     protected function redirectTo(Request $request): ?string
     {
-        if ($request->routeIs('tenant.*') || $request->getHost() === config('tenancy.central_domains')[0] ?? false) {
+        if (HostContext::isCentral($request->getHost())) {
             return route('tenant.login');
         }
 

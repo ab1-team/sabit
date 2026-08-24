@@ -38,6 +38,10 @@ $centralRoutes = function () {
         return redirect('/login');
     });
 
+    // Login pusat. Hanya untuk host central — host tenant akan ditolak
+    // oleh HostContext::isCentral() check di Tenant\AuthController.
+    // Tidak dibungkus Route::domain() agar tidak ada duplikat route name
+    // (lihat helper HostContext::centralHosts() untuk daftar host central).
     Route::get('/login', [AuthController::class, 'index'])->name('tenant.login');
     Route::post('/login', [AuthController::class, 'login'])->name('tenant.auth');
     Route::post('/logout', [AuthController::class, 'logout'])->name('tenant.logout');
@@ -197,10 +201,26 @@ $centralRoutes = function () {
     });
 };
 
-$centralHosts = array_values(array_filter(array_unique(
-    (array) config('tenancy.central_domains', [])
-)));
+// Route central didaftarkan tanpa Route::domain() wrapper untuk menghindari
+// duplikat route name. Host detection menggunakan HostContext::centralHosts().
+//
+// File ini di-load oleh RouteServiceProvider sebelum request tersedia.
+// Kita deteksi host dari $_SERVER['HTTP_HOST'] saat runtime web (bukan CLI).
+//
+// PENTING: Skip registrasi route central kalau host yang request adalah
+// subdomain tenant (mis. demo.sabit.test). Tanpa ini, URI '/login' pusat
+// akan override '/login' sekolah di tenant-admin.php, sehingga sekolah
+// tidak bisa login (route central match duluan karena web.php load duluan).
+if (PHP_SAPI === 'cli') {
+    // Saat CLI, selalu daftarkan (untuk route:list, tinker, dll).
+    Route::group([], $centralRoutes);
+} else {
+    $requestHost = $_SERVER['HTTP_HOST'] ?? '';
+    // Strip port kalau ada (mis. localhost:8000)
+    $host = preg_replace('/:\d+$/', '', $requestHost);
 
-foreach ($centralHosts as $host) {
-    Route::domain($host)->group($centralRoutes);
+    if (App\Support\HostContext::isCentral($host)) {
+        Route::group([], $centralRoutes);
+    }
+    // else: skip — biar tenant route yang handle request di host ini.
 }
