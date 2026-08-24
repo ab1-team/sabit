@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Domain;
+use App\Support\HostContext;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -15,6 +16,11 @@ class EnsureDomainType
     public function handle(Request $request, Closure $next, string $type): Response
     {
         $host = $request->getHost();
+
+        if (HostContext::isCentral($host)) {
+            abort(404);
+        }
+
         $cacheKey = "domain:type:{$host}";
 
         $typeActual = Cache::remember($cacheKey, 7200, function () use ($host) {
