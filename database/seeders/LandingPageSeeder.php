@@ -45,12 +45,36 @@ class LandingPageSeeder extends Seeder
             return;
         }
 
+        $profil = \App\Models\Profil::query()->first();
+
+        $themeKeys = array_column(PengaturanLanding::themeBackgroundDefaults(), 'key');
+        $buttonKeys = array_column(PengaturanLanding::themeButtonColorDefaults(), 'key');
+        $textKeys = array_column(PengaturanLanding::themeTextColorDefaults(), 'key');
+
+        $hashed = crc32(mb_strtolower($namaSekolah));
+        $bgKey = $themeKeys[$hashed % count($themeKeys)];
+        $btnKey = $buttonKeys[($hashed >> 4) % count($buttonKeys)];
+        $txtKey = $textKeys[($hashed >> 8) % count($textKeys)];
+
         PengaturanLanding::create([
             'school_name' => $namaSekolah,
             'tagline' => 'Website Resmi ' . $namaSekolah,
+            'logo' => null,
+            'favicon' => null,
             'email' => $email,
+            'phone' => $profil?->telpon,
+            'whatsapp' => null,
+            'address' => $profil?->alamat,
+            'google_maps_url' => null,
+            'facebook' => null,
+            'instagram' => null,
+            'youtube' => null,
+            'tiktok' => null,
             'meta_description' => 'Informasi resmi, berita, kegiatan, dan pengumuman ' . $namaSekolah . '.',
             'meta_keywords' => 'sekolah, pendidikan, ' . strtolower($namaSekolah),
+            'hero_background' => $bgKey,
+            'theme_button_color' => $btnKey,
+            'theme_text_color' => $txtKey,
             'welcome' => PengaturanLanding::welcomeDefaults(),
         ]);
     }

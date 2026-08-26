@@ -5,9 +5,9 @@
 @php
     $hero = $slides->first();
 
-    $heroTitle = $hero->title ?? 'Mendidik dengan Hati, Meraih Prestasi';
-    $heroSubtitle = $hero->subtitle ?? 'Membangun generasi yang berkarakter, cerdas, dan siap menghadapi tantangan masa depan melalui pembelajaran yang inspiratif dan bermakna.';
-    $heroButtonText = $hero->button_text ?? 'Daftar PPDB';
+    $heroTitle = $hero->title ?? ($setting->school_name ?? 'Sekolah');
+    $heroSubtitle = $hero->subtitle ?? '';
+    $heroButtonText = $hero->button_text ?? 'Profil Sekolah';
     $heroButtonUrl = $hero->button_url ?? null;
 
     if ($setting->hasThemeBackground()) {
@@ -23,6 +23,25 @@
     // Sambutan Kepala Sekolah
     $welcome = $setting->welcomeData();
 
+    // Hero badges: array of {icon, text} dari lp_pengaturan.hero_badges JSON.
+    // Filter item yang punya text tidak kosong.
+    $rawBadges = $setting->hero_badges;
+    if (!is_array($rawBadges)) { $rawBadges = []; }
+    $heroBadges = array_values(array_filter($rawBadges, function ($b) {
+        return is_array($b) && trim((string) ($b['text'] ?? '')) !== '';
+    }));
+
+    // Stats: array of {icon, color, value, label}. Hanya tampilkan yang punya
+    // value & label tidak kosong, max 3.
+    $rawStats = $setting->stats;
+    if (!is_array($rawStats)) { $rawStats = []; }
+    $stats = array_values(array_filter($rawStats, function ($s) {
+        return is_array($s)
+            && trim((string) ($s['value'] ?? '')) !== ''
+            && trim((string) ($s['label'] ?? '')) !== '';
+    }));
+    if (count($stats) > 3) { $stats = array_slice($stats, 0, 3); }
+
     // CTA PPDB section data
     $ppdbCta = $setting->ppdbCtaData();
     $ppdbCtaActive = $ppdbCta['is_active'] ?? true;
@@ -30,7 +49,7 @@
     $nextYear = $year + 1;
     $ppdbTitle = str_replace(['{{year}}'], [$year . '/' . $nextYear], $ppdbCta['title'] ?? '');
     $ppdbParagraph = str_replace(['{{school}}'], $setting->school_name ?? 'sekolah kami', $ppdbCta['paragraph'] ?? '');
-    $ppdbRegistration = $ppdbCta['registration'] ?? "Pendaftaran Peserta Didik Baru demo Tahun Ajaran 2026/2027 telah dibuka. Silakan pilih gelombang pendaftaran yang tersedia dan lengkapi dokumen sesuai persyaratan.\n\nKlik tombol \"Formulir Pendaftaran Online\" di atas untuk memulai pendaftaran, atau hubungi panitia PPDB untuk konsultasi terlebih dahulu.";
+    $ppdbRegistration = $ppdbCta['registration'] ?? '';
 @endphp
 
 @section('content')
@@ -44,17 +63,21 @@
             {{ $heroSubtitle }}
         </p>
         <div class="lp-hero-actions lp-reveal" data-delay="3">
-            @if ($heroButtonUrl && $heroButtonUrl !== '#daftar')
+            @if ($heroButtonUrl)
                 <a href="{{ $heroButtonUrl }}" class="lp-btn-light">{{ $heroButtonText }} <i class="bi bi-arrow-right"></i></a>
-            @else
-                <a href="{{ route('halaman-publik.ppdb') }}" class="lp-btn-light">Daftar PPDB 2026/2027 <i class="bi bi-arrow-right"></i></a>
             @endif
-            <a href="{{ route('halaman-publik.ppdb') }}" class="lp-btn-outline-light">Daftar PPDB</a>
+            <a href="{{ route('halaman-publik.profil') }}" class="lp-btn-outline-light">Profil Sekolah</a>
         </div>
-        <div class="lp-reveal mt-4 d-flex flex-wrap justify-content-center gap-2" data-delay="4">
-            <span class="lp-badge"><i class="bi bi-patch-check-fill"></i> Terakreditasi A</span>
-            <span class="lp-badge"><i class="bi bi-trophy-fill"></i> 50+ Prestasi 2025</span>
-        </div>
+        @if (!empty($heroBadges))
+            <div class="lp-reveal mt-4 d-flex flex-wrap justify-content-center gap-2" data-delay="4">
+                @foreach ($heroBadges as $b)
+                    <span class="lp-badge">
+                        <i class="bi {{ $b['icon'] ?? 'bi-patch-check-fill' }}"></i>
+                        {{ $b['text'] }}
+                    </span>
+                @endforeach
+            </div>
+        @endif
     </div>
 </section>
 
@@ -98,84 +121,82 @@
     </div>
 </section>
 
-{{-- ===== Program Unggulan ===== --}}
+{{-- ===== Statistik (data tenant dari lp_pengaturan.stats) ===== --}}
+@if (!empty($stats))
+<section class="lp-section lp-bg-soft" id="statistik">
+    <div class="container">
+        <div class="row g-3 g-lg-4">
+            @foreach ($stats as $i => $s)
+                @php
+                    $color = in_array($s['color'] ?? '', ['blue','green','amber','pink','purple','cyan'], true)
+                        ? $s['color']
+                        : 'blue';
+                    $icon = $s['icon'] ?? 'bi-people-fill';
+                @endphp
+                <div class="col-md-4">
+                    <div class="lp-glass lp-stat-card lp-reveal h-100" data-from="zoom" data-delay="{{ $i + 1 }}">
+                        <div class="lp-stat-icon is-{{ $color }}">
+                            <i class="bi {{ $icon }}"></i>
+                        </div>
+                        <div>
+                            <div class="lp-stat-value">{{ $s['value'] }}</div>
+                            <div class="lp-stat-label">{{ $s['label'] }}</div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- ===== Program Unggulan (Berita terbaru dipromosikan) ===== --}}
+@if ($programs->isNotEmpty())
 <section class="lp-section lp-bg-soft" id="program">
     <div class="container">
         <div class="d-flex flex-wrap justify-content-between align-items-end lp-section-head lp-section-head-sm">
             <div class="lp-reveal" data-from="left">
                 <span class="lp-section-eyebrow">Program</span>
-                <h2 class="lp-section-title mb-2">Program Unggulan</h2>
-                <p class="text-muted mb-0">Mengembangkan minat dan bakat siswa di luar akademik formal.</p>
+                <h2 class="lp-section-title mb-2">Berita &amp; Program Unggulan</h2>
+                <p class="text-muted mb-0">Informasi kegiatan dan program terbaru dari sekolah kami.</p>
             </div>
-            <a href="{{ route('halaman-publik.daftar-artikel') }}" class="lp-link-soft lp-reveal" data-from="right">Lihat Semua Program <i class="bi bi-arrow-right"></i></a>
+            <a href="{{ route('halaman-publik.daftar-artikel') }}" class="lp-link-soft lp-reveal" data-from="right">Lihat Semua <i class="bi bi-arrow-right"></i></a>
         </div>
 
         <div class="row g-3 g-lg-4">
-            @forelse ($programs as $i => $post)
+            @foreach ($programs as $i => $post)
                 @php
-                    $cats = ['STEM','Seni','Teknologi'];
-                    $titles = ['Klub Eksplorasi Sains','Studio Seni Kreatif','Coding untuk Anak'];
-                    $descs = [
-                        'Eksperimen interaktif dan proyek sains sederhana untuk menumbuhkan rasa ingin tahu.',
-                        'Pengembangan bakat seni rupa, musik, dan teater dalam fasilitas yang modern.',
-                        'Pengenalan logika pemrograman dasar melalui permainan dan visual interaktif.',
-                    ];
-                    $imgs = [
-                        'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=900&q=80',
-                        'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80',
-                        'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=80',
-                    ];
-                    $cat = $post->category ?? $cats[$i % 3];
-                    $title = $post->title ?? $titles[$i % 3];
-                    $desc = \Illuminate\Support\Str::limit(strip_tags($post->excerpt ?: $post->content), 110) ?: $descs[$i % 3];
-                    $img = $post->image
-                        ? Storage::disk('public')->url('landing/' . $post->image)
-                        : $imgs[$i % 3];
+                    $title = $post->title;
+                    $cat = $post->category;
+                    $desc = \Illuminate\Support\Str::limit(strip_tags($post->excerpt ?: $post->content), 110);
+                    $img = $post->image ? Storage::disk('public')->url('landing/' . $post->image) : null;
                 @endphp
                 <div class="col-md-6 col-lg-4 d-flex">
                     <div class="lp-program-card lp-reveal h-100 w-100 d-flex flex-column" data-from="zoom" data-delay="{{ $i + 1 }}">
-                        <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-thumb">
-                            <img src="{{ $img }}" alt="{{ $title }}" loading="lazy">
-                        </a>
+                        @if ($img)
+                            <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-thumb">
+                                <img src="{{ $img }}" alt="{{ $title }}" loading="lazy">
+                            </a>
+                        @endif
                         <div class="lp-body d-flex flex-column flex-grow-1">
-                            <span class="lp-tag">{{ $cat }}</span>
+                            @if ($cat)
+                                <span class="lp-tag">{{ $cat }}</span>
+                            @endif
                             <h5><a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="text-dark">{{ $title }}</a></h5>
-                            <p class="flex-grow-1">{{ $desc }}</p>
+                            @if ($desc)
+                                <p class="flex-grow-1">{{ $desc }}</p>
+                            @endif
                             <a href="{{ route('halaman-publik.artikel', $post->slug) }}" class="lp-link-soft mt-2">
                                 Baca selengkapnya <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </div>
                 </div>
-            @empty
-                @php
-                    $fallback = [
-                        ['cat'=>'STEM','title'=>'Klub Eksplorasi Sains','desc'=>'Eksperimen interaktif dan proyek sains sederhana untuk menumbuhkan rasa ingin tahu.','img'=>'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=900&q=80'],
-                        ['cat'=>'Seni','title'=>'Studio Seni Kreatif','desc'=>'Pengembangan bakat seni rupa, musik, dan teater dalam fasilitas yang modern.','img'=>'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80'],
-                        ['cat'=>'Teknologi','title'=>'Coding untuk Anak','desc'=>'Pengenalan logika pemrograman dasar melalui permainan dan visual interaktif.','img'=>'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=80'],
-                    ];
-                @endphp
-                @foreach ($fallback as $i => $f)
-                    <div class="col-md-6 col-lg-4 d-flex">
-                        <div class="lp-program-card lp-reveal h-100 w-100 d-flex flex-column" data-from="zoom" data-delay="{{ $i + 1 }}">
-                            <div class="lp-thumb">
-                                <img src="{{ $f['img'] }}" alt="{{ $f['title'] }}" loading="lazy">
-                            </div>
-                            <div class="lp-body d-flex flex-column flex-grow-1">
-                                <span class="lp-tag">{{ $f['cat'] }}</span>
-                                <h5>{{ $f['title'] }}</h5>
-                                <p class="flex-grow-1">{{ $f['desc'] }}</p>
-                                <a href="{{ route('halaman-publik.daftar-artikel') }}" class="lp-link-soft mt-2">
-                                    Baca selengkapnya <i class="bi bi-arrow-right"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            @endforelse
+            @endforeach
         </div>
     </div>
 </section>
+@endif
 
 {{-- ===== Events ===== --}}
 @if ($events->isNotEmpty())

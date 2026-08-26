@@ -2021,9 +2021,8 @@
             <div class="col-lg-3 col-sm-4">
                 <h6>Tautan Cepat</h6>
                 <ul class="list-unstyled m-0">
-                    <li class="mb-2"><a href="#tentang">Tentang Kami</a></li>
+                    <li class="mb-2"><a href="{{ route('halaman-publik.profil') }}">Tentang Kami</a></li>
                     <li class="mb-2"><a href="{{ route('halaman-publik.daftar-artikel') }}">Berita</a></li>
-                    <li class="mb-2"><a href="#daftar">FAQ PPDB</a></li>
                     <li class="mb-2"><a href="{{ route('halaman-publik.pengumuman') }}">Pengumuman</a></li>
                     <li class="mb-2"><a href="{{ route('halaman-publik.galeri') }}">Galeri</a></li>
                     <li class="mb-2"><a href="{{ route('halaman-publik.ppdb') }}">PPDB</a></li>
@@ -2041,7 +2040,7 @@
         </div>
 
         <div class="lp-footer-bottom d-flex flex-wrap justify-content-between gap-2">
-            <span>&copy; {{ date('Y') }}, dibuat dengan <i class="bi bi-heart-fill text-danger"></i> oleh Asta Brata untuk web yang lebih baik.</span>
+            <span>&copy; {{ date('Y') }} {{ $setting->school_name ?? '' }}. Hak cipta dilindungi.</span>
             @if ($adminUrl = tenant()?->adminUrl())
                 <a href="{{ $adminUrl }}">Masuk Admin</a>
             @endif
