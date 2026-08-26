@@ -63,7 +63,9 @@
             -webkit-font-smoothing: antialiased;
             overflow-x: clip;
             overflow-wrap: break-word;
+            max-width: 100vw;
         }
+        html { max-width: 100vw; overflow-x: clip; }
         img, video, svg { max-width: 100%; }
         img { height: auto; }
         iframe { max-width: 100%; }
@@ -94,6 +96,12 @@
             transform: translateY(28px);
             transition: opacity 0.7s var(--lp-ease), transform 0.7s var(--lp-ease);
             will-change: opacity, transform;
+        }
+        /* Cegah translateX reveal menimbulkan horizontal overflow di HP */
+        .lp-reveal[data-from="left"],
+        .lp-reveal[data-from="right"] {
+            overflow: hidden;
+            max-width: 100%;
         }
         .lp-reveal.is-visible {
             opacity: 1;
@@ -1694,6 +1702,15 @@
             .lp-stat-value { font-size: 1.55rem; }
             .lp-welcome-img { aspect-ratio: 4 / 3; max-width: 380px; margin: 0 auto; }
             .lp-section-head { margin-bottom: 2rem; }
+            /* Cegah nama sekolah panjang melebar di HP/tablet */
+            .lp-brand span {
+                max-width: 50vw;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            /* Pastikan container tidak pernah lebih lebar dari viewport */
+            .container { max-width: 100%; }
             .lp-cta-strip { padding: 2.5rem 1.75rem; border-radius: 24px; text-align: center; }
             .lp-cta-strip h3 { font-size: 1.6rem; }
             .lp-cta-strip p,
@@ -1804,6 +1821,7 @@
                 min-height: 100dvh;
                 min-height: 110lvh;
                 width: 100%;
+                max-width: 100vw;
             }
             .lp-hero-bg {
                 position: absolute;
@@ -1817,6 +1835,10 @@
                 background-position: center center;
                 background-repeat: no-repeat;
             }
+            /* Lock container Bootstrap ke viewport HP agar tidak overflow */
+            .container { max-width: 100vw; }
+            /* Pastikan section tidak melebar di luar viewport */
+            section.lp-section { max-width: 100vw; overflow: hidden; }
         }
 
         /* ===== Orientasi landscape HP (tinggi <600): hero tidak 100vh ===== */
