@@ -1776,19 +1776,20 @@
             .lp-hero-content { padding: clamp(3.5rem, 8vh, 5.75rem) 0 clamp(1.5rem, 4vh, 2.75rem); }
             .lp-hero h1 { font-size: 1.75rem; margin-bottom: 1rem; }
             .lp-hero p.lead { font-size: 0.92rem; margin-bottom: 1.5rem; }
-            .lp-hero-actions { flex-direction: column; width: 100%; max-width: 280px; margin: 0 auto; }
-            .lp-btn-light, .lp-btn-outline-light {
+            .lp-hero-actions { flex-direction: column; align-items: center; width: auto; max-width: 270px; margin: 0 auto; gap: 0.5rem; }
+            .lp-hero-actions .lp-btn-light,
+            .lp-hero-actions .lp-btn-outline-light {
                 width: 100%;
-                padding: 0.75rem 1.25rem;
+                padding: 0.6rem 1.25rem;
+                font-size: 0.88rem;
             }
             .lp-badge { font-size: 0.72rem; padding: 0.35rem 0.7rem; }
             .lp-section-title { font-size: 1.4rem; }
             .lp-section-eyebrow { font-size: 0.72rem; }
             .lp-cta-strip { padding: 1.75rem 1.15rem; border-radius: 18px; }
             .lp-cta-strip h3 { font-size: 1.25rem; }
-            .lp-cta-btn, .lp-cta-btn-outline { padding: 0.8rem 1.5rem; font-size: 0.95rem; white-space: normal; }
+            .lp-cta-btn, .lp-cta-btn-outline { padding: 0.65rem 1.15rem; font-size: 0.88rem; white-space: normal; max-width: 240px; margin-left: auto; margin-right: auto; }
             .lp-cta-registration { font-size: 0.85rem; }
-            .lp-hero-actions { max-width: 100%; }
             .lp-program-card h5 { min-height: 0; }
             .lp-welcome-quote { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
             .lp-cta-points { grid-template-columns: 1fr; }
