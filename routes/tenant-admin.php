@@ -223,6 +223,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
 
         Route::get('/posts', [AdminLandingController::class, 'posts'])->name('posts');
         Route::get('/posts/data', [AdminLandingController::class, 'postsData'])->name('posts.data');
+        Route::get('/posts/cards', [AdminLandingController::class, 'postsCards'])->name('posts.cards');
         Route::get('/posts/create', [AdminLandingController::class, 'postCreate'])->name('posts.create');
         Route::post('/posts', [AdminLandingController::class, 'postStore'])->name('posts.store');
         Route::get('/posts/{post}/edit', [AdminLandingController::class, 'postEdit'])->name('posts.edit');

@@ -751,6 +751,99 @@ class AdminLandingController extends Controller
         ]);
     }
 
+    /**
+     * Endpoint AJAX untuk mode "1 data 1 kotak" (card list + load more).
+     * GET /app/admin-landing/posts/cards?page=1&per_page=12&q=...
+     */
+    public function postsCards(Request $request)
+    {
+        $perPage = max(4, min(48, (int) $request->query('per_page', 12)));
+        $page    = max(1, (int) $request->query('page', 1));
+        $q       = trim((string) $request->query('q', ''));
+
+        $query = ArtikelLanding::query()
+            ->orderByDesc('published_at')
+            ->orderByDesc('id');
+
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $query->where(function ($w) use ($like) {
+                $w->where('title', 'like', $like)
+                  ->orWhere('slug', 'like', $like)
+                  ->orWhere('category', 'like', $like)
+                  ->orWhere('excerpt', 'like', $like);
+            });
+        }
+
+        $total      = (clone $query)->count();
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $rows       = $query->forPage($page, $perPage)->get();
+
+        $html = '';
+        foreach ($rows as $row) {
+            $html .= $this->renderPostCard($row);
+        }
+
+        return response()->json([
+            'html'        => $html,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'total'       => $total,
+            'total_pages' => $totalPages,
+            'has_more'    => $page < $totalPages,
+            'empty'       => $rows->isEmpty(),
+        ]);
+    }
+
+    /**
+     * Render satu kartu HTML untuk artikel.
+     */
+    protected function renderPostCard(ArtikelLanding $row): string
+    {
+        $imgUrl = $row->image
+            ? \Illuminate\Support\Facades\Storage::disk('public')->url('landing/'.$row->image)
+            : null;
+        $title   = e($row->title);
+        $slug    = e($row->slug);
+        $excerpt = $row->excerpt ? e(\Illuminate\Support\Str::limit(strip_tags($row->excerpt), 160)) : '';
+        $category = $row->category ? '<span class="lp-cat-chip">'.e($row->category).'</span>' : '';
+        $featured = $row->is_featured
+            ? '<span class="lp-status-badge is-featured" title="Unggulan"><span class="material-symbols-rounded" style="font-size:14px;">star</span></span>'
+            : '';
+        $statusBadge = $row->is_published
+            ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
+            : '<span class="lp-status-badge is-draft">Draft</span>';
+        $date = $row->published_at ? $row->published_at->format('d M Y') : '—';
+
+        $cover = $imgUrl
+            ? '<img src="'.$imgUrl.'" class="lp-card-img" alt="">'
+            : '<div class="lp-card-img lp-card-img--empty d-inline-flex align-items-center justify-content-center"><span class="material-symbols-rounded">image</span></div>';
+
+        $editUrl = route('app.admin-landing.posts.edit', $row->id);
+        $delUrl  = route('app.admin-landing.posts.destroy', $row->id);
+
+        $actions = '<div class="lp-card-actions pb-0">'
+            .'<a href="'.$editUrl.'" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">'
+            .'<span class="material-symbols-rounded" style="font-size:16px;">edit</span> Edit</a>'
+            .'<form action="'.$delUrl.'" method="POST" class="d-inline lp-card-delete" data-confirm="Hapus artikel &quot;'.$title.'&quot;?" style="display:inline">'
+            .csrf_field().method_field('DELETE')
+            .'<button type="submit" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">'
+            .'<span class="material-symbols-rounded" style="font-size:16px;">delete</span> Hapus</button>'
+            .'</form>'
+            .'</div>';
+
+        return '<article class="lp-card" data-id="'.$row->id.'">'
+            .'<div class="lp-card-cover">'.$cover.'</div>'
+            .'<div class="lp-card-body">'
+            .'<div class="lp-card-meta-top">'.$category.$featured.$statusBadge.'</div>'
+            .'<h3 class="lp-card-title">'.$title.'</h3>'
+            .($excerpt !== '' ? '<p class="lp-card-excerpt">'.$excerpt.'</p>' : '')
+            .'<div class="lp-card-meta-bottom"><span class="material-symbols-rounded" style="font-size:14px;">link</span> /'.$slug.' · '.$date.' · <span class="material-symbols-rounded" style="font-size:14px;">visibility</span> '.(int)($row->views ?? 0).'x</div>'
+            .$actions
+            .'</div>'
+            .'</article>';
+    }
+
     public function postsData(Request $request)
     {
         $query = ArtikelLanding::query()
@@ -793,12 +886,30 @@ class AdminLandingController extends Controller
                     : '<span class="lp-status-badge is-draft">Draft</span>';
             })
             ->addColumn('action', function ($row) {
-                $edit = '<a href="'.route('app.admin-landing.posts.edit', $row->id).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit artikel"><span class="material-symbols-rounded">edit</span></a>';
-                $del = '<form action="'.route('app.admin-landing.posts.destroy', $row->id).'" method="POST" class="d-inline" data-confirm="Hapus artikel &quot;'.e($row->title).'&quot;?" style="display:inline">'
+                $detailData = [
+                    'id' => $row->id,
+                    'title' => $row->title,
+                    'slug' => $row->slug,
+                    'excerpt' => $row->excerpt,
+                    'category' => $row->category,
+                    'published_at' => $row->published_at ? $row->published_at->format('d M Y H:i') : null,
+                    'is_published' => (bool) $row->is_published,
+                    'is_featured' => (bool) $row->is_featured,
+                    'views' => (int) ($row->views ?? 0),
+                    'image' => $row->image ? \Illuminate\Support\Facades\Storage::disk('public')->url('landing/'.$row->image) : null,
+                ];
+                $json = e(json_encode($detailData, JSON_UNESCAPED_UNICODE));
+                $editUrl = e(route('app.admin-landing.posts.edit', $row->id));
+                $delUrl  = e(route('app.admin-landing.posts.destroy', $row->id));
+                return '<div class="lp-table-actions">'
+                    .'<button type="button" class="btn btn-sm btn-outline-secondary btn-icon lp-row-detail" '
+                    .'data-detail=\''.$json.'\' title="Lihat detail"><span class="material-symbols-rounded">more_horiz</span></button>'
+                    .'<a href="'.$editUrl.'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit artikel"><span class="material-symbols-rounded">edit</span></a>'
+                    .'<form action="'.$delUrl.'" method="POST" class="d-inline lp-row-delete" data-confirm="Hapus artikel &quot;'.e($row->title).'&quot;?" style="display:inline">'
                     .csrf_field().method_field('DELETE')
                     .'<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus artikel"><span class="material-symbols-rounded">delete</span></button>'
-                    .'</form>';
-                return '<div class="lp-table-actions">'.$edit.$del.'</div>';
+                    .'</form>'
+                    .'</div>';
             })
             ->rawColumns(['title', 'image', 'category', 'published_at', 'is_published', 'action'])
             ->toJson();

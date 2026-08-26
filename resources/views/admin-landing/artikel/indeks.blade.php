@@ -2,142 +2,174 @@
 
 @section('style')
     @include('admin-landing._gaya')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
     <style>
-        #lpPostTable {
-            width: 100% !important;
-            table-layout: auto;
-        }
-        .lp-post-table-scroll {
-            overflow-x: auto;
-        }
-        /* Pastikan sel-sel konten panjang tidak ter-truncate oleh
-           aturan table-nowrap global dari material-dashboard. */
-        #lpPostTable.table.table-nowrap td,
-        #lpPostTable.table.table-nowrap th {
-            white-space: normal !important;
-            overflow: visible !important;
-            text-overflow: clip !important;
-        }
-        #lpPostTable thead th {
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-            border-bottom: 1px solid #e2e8f0;
-            color: #475569;
-            font-weight: 600;
-            font-size: .72rem;
-            letter-spacing: .04em;
-            text-transform: uppercase;
-            padding: .85rem 1rem;
-            white-space: nowrap;
-        }
-        #lpPostTable tbody td {
-            padding: .85rem 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: top;
-        }
-        #lpPostTable tbody tr:last-child td { border-bottom: 0; }
-        #lpPostTable tbody tr { transition: background-color .15s ease; }
-        #lpPostTable tbody tr:hover { background-color: #f8fafc; }
-
-        /* Sel judul: pastikan HTML (star + judul + excerpt + slug) stack vertikal rapi */
-        #lpPostTable .lp-row-title-cell {
-            min-width: 260px;
-        }
-        #lpPostTable .lp-row-title-cell .lp-row-title {
-            font-size: .92rem;
-            line-height: 1.35;
-            word-break: break-word;
-        }
-
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            color: #475569;
-            font-size: .8125rem;
-        }
-        .dataTables_wrapper .dataTables_length label,
-        .dataTables_wrapper .dataTables_filter label {
-            display: inline-flex;
+        /* ===== Layout: Toolbar ===== */
+        .lp-posts-toolbar {
+            display: flex;
             align-items: center;
-            gap: .5rem;
+            gap: .75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .lp-posts-toolbar .lp-posts-search {
+            flex: 1 1 220px;
+            position: relative;
+            max-width: 380px;
+        }
+        .lp-posts-toolbar .lp-posts-search input {
+            width: 100%;
+            padding: .55rem .95rem .55rem 2.2rem;
+            border: 1px solid #d4d8dd;
+            border-radius: .65rem;
+            font-size: .875rem;
+            background: #fff;
+            color: #1f2937;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .lp-posts-toolbar .lp-posts-search input:focus {
+            outline: none;
+            border-color: #1d4ed8;
+            box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+        }
+        .lp-posts-toolbar .lp-posts-search .lp-search-icon {
+            position: absolute;
+            left: .75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .lp-posts-stats {
+            color: #64748b;
+            font-size: .8125rem;
             font-weight: 500;
         }
-        .dataTables_wrapper .dataTables_length select,
-        .dataTables_wrapper .dataTables_filter input {
-            border: 1px solid #d4d8dd !important;
-            border-radius: .5rem !important;
-            padding: .4rem .65rem !important;
-            font-size: .875rem !important;
-            color: #1f2937;
+
+        /* ===== Layout: Grid Kartu ===== */
+        .lp-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.1rem;
+        }
+        .lp-card {
             background: #fff;
-            box-shadow: none !important;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 2px rgba(15,23,42,.04);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
         }
-        .dataTables_wrapper .dataTables_length select { min-width: 72px; }
-        .dataTables_wrapper .dataTables_filter input { min-width: 220px; }
-        .dataTables_wrapper .dataTables_length select:focus,
-        .dataTables_wrapper .dataTables_filter input:focus {
-            border-color: #1d4ed8 !important;
-            outline: none !important;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
+        .lp-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -16px rgba(15,23,42,.18);
+            border-color: #cbd5e1;
         }
-        .dataTables_wrapper .dataTables_info { padding-top: 1rem; color: #64748b !important; }
-        .dataTables_wrapper .dataTables_paginate { padding-top: 1rem; }
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            box-sizing: border-box;
+
+        /* Cover */
+        .lp-card-cover { position: relative; aspect-ratio: 16 / 9; background: #f1f5f9; overflow: hidden; }
+        .lp-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .lp-card-img--empty { color: #cbd5e1; font-size: 2.25rem; }
+        .lp-card-cover .lp-card-featured-corner {
+            position: absolute;
+            top: .65rem;
+            left: .65rem;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: #fff;
+            width: 30px; height: 30px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 2.25rem;
-            height: 2.25rem;
-            padding: 0 .65rem !important;
-            margin: 0 2px !important;
-            border-radius: .5rem !important;
-            border: 1px solid #e2e8f0 !important;
-            background: #fff !important;
-            color: #475569 !important;
-            font-weight: 600;
-            font-size: .8125rem;
-            cursor: pointer;
-            transition: all .15s ease;
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
-            background: #eff6ff !important;
-            border-color: #bfdbfe !important;
-            color: #1d4ed8 !important;
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background: #1d4ed8 !important;
-            border-color: #1d4ed8 !important;
-            color: #fff !important;
-            box-shadow: 0 1px 2px rgba(29,78,216,.25);
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-            color: #cbd5e1 !important;
-            background: #f8fafc !important;
-            border-color: #f1f5f9 !important;
-            cursor: not-allowed;
-        }
-        .dataTables_empty {
-            padding: 3rem 1rem !important;
-            color: #94a3b8 !important;
+            border-radius: .5rem;
+            box-shadow: 0 6px 14px -6px rgba(245,158,11,.6);
         }
 
+        /* Body */
+        .lp-card-body {
+            padding: 1rem .75rem .75rem;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            flex: 1 1 auto;
+        }
+        .lp-card-meta-top { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+        .lp-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.35;
+            margin: 0;
+            word-break: break-word;
+        }
+        .lp-card-excerpt {
+            margin: 0;
+            color: #475569;
+            font-size: .85rem;
+            line-height: 1.55;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .lp-card-meta-bottom {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .25rem .5rem;
+            color: #64748b;
+            font-size: .78rem;
+        }
+        .lp-card-meta-bottom .material-symbols-rounded { color: #94a3b8; }
+        .lp-card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: auto;
+            padding: .35rem 0 .15rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+        .lp-card-actions .btn {
+            padding: .3rem .65rem;
+            font-size: .8rem;
+        }
+
+        /* ===== Empty state & Load-more ===== */
+        .lp-card-empty {
+            grid-column: 1 / -1;
+            padding: 4rem 1rem;
+            text-align: center;
+            color: #94a3b8;
+        }
+        .lp-card-empty .material-symbols-rounded {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: .65rem;
+        }
+        .lp-load-more-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0 .5rem;
+        }
+        .lp-load-more-wrap .btn { min-width: 180px; }
+
+        .lp-card-skeleton {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .lp-card-skeleton .lp-skel-cover { aspect-ratio: 16 / 9; background: linear-gradient(90deg,#f1f5f9 0%,#e2e8f0 50%,#f1f5f9 100%); background-size: 200% 100%; animation: lpSkel 1.2s ease-in-out infinite; }
+        .lp-card-skeleton .lp-skel-line { height: 12px; margin: .65rem 1.1rem; border-radius: 6px; background: linear-gradient(90deg,#f1f5f9 0%,#e2e8f0 50%,#f1f5f9 100%); background-size: 200% 100%; animation: lpSkel 1.2s ease-in-out infinite; }
+        @keyframes lpSkel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
         @media (max-width: 640px) {
-            .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
-            .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
-            .dataTables_wrapper .dataTables_filter input {
-                width: 100%;
-                min-width: 0;
-                margin-left: 0 !important;
-            }
-            .dataTables_wrapper .dataTables_paginate .paginate_button {
-                min-width: 2rem;
-                height: 2rem;
-                font-size: .75rem;
-                padding: 0 .5rem !important;
-                margin: 0 1px !important;
-            }
+            .lp-posts-toolbar { gap: .55rem; }
+            .lp-posts-toolbar .lp-posts-search { max-width: none; flex-basis: 100%; }
+            .lp-card-grid { grid-template-columns: 1fr; gap: .85rem; }
         }
     </style>
 @endsection
@@ -153,112 +185,201 @@
             .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>'
             .'<span class="align-middle">Tambah Program / Berita</span></a>';
     @endphp
-    <div class="d-flex justify-content-end mb-3">
+
+    <div class="lp-posts-toolbar">
+        <div class="lp-posts-search">
+            <span class="material-symbols-rounded lp-search-icon">search</span>
+            <input type="search" id="lp-posts-q" placeholder="Cari judul, slug, kategori…" autocomplete="off">
+        </div>
+        <div class="lp-posts-stats ms-auto" id="lp-posts-stats">Memuat…</div>
         {!! $addBtn !!}
     </div>
 
-    <div class="card my-3">
-        <div class="card-body px-3 py-3">
-            @if (session('msg'))
-                <div class="alert alert-info py-2 small mb-3">{{ session('msg') }}</div>
-            @endif
-            @if ($errors->any())
-                <div class="alert alert-danger py-2 small mb-3">
-                    <ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-                </div>
-            @endif
-            <div class="lp-post-table-scroll">
-                <table id="lpPostTable" class="table table-striped table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width:90px;min-width:90px">Gambar</th>
-                            <th style="min-width:280px">Judul</th>
-                            <th style="width:140px;min-width:140px">Kategori</th>
-                            <th style="width:130px;min-width:130px">Tanggal</th>
-                            <th style="width:140px;min-width:140px">Status</th>
-                            <th class="text-center" style="width:100px;min-width:100px">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+    <div id="lp-card-grid" class="lp-card-grid"></div>
+
+    <div class="lp-load-more-wrap">
+        <button type="button" id="lp-load-more" class="btn btn-light d-none">
+            <span class="material-symbols-rounded align-middle" style="font-size:18px;">expand_more</span>
+            <span class="align-middle">Muat lagi</span>
+        </button>
     </div>
 </div>
 @endsection
 
 @section('script')
 <script>
-    $(document).ready(function() {
-        $('#lpPostTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: '{{ route('app.admin-landing.posts.data') }}',
-            paging: true,
-            pageLength: 10,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            searching: true,
-            info: true,
-            autoWidth: false,
-            scrollX: true,
-            responsive: false,
-            order: [[3, 'desc']],
-            language: {
-                lengthMenu: 'Tampilkan _MENU_ data',
-                search: 'Cari:',
-                info: 'Menampilkan _START_–_END_ dari _TOTAL_ data',
-                infoEmpty: 'Tidak ada artikel.',
-                infoFiltered: '(difilter dari _MAX_ total)',
-                zeroRecords: 'Tidak ada artikel yang cocok.',
-                emptyTable: 'Belum ada artikel.',
-                loadingRecords: 'Memuat…',
-                processing: 'Memproses…',
-                paginate: { first: '«', last: '»', next: '›', previous: '‹' },
-            },
-            columns: [
-                { data: 'image', name: 'image', orderable: false, searchable: false },
-                { data: 'title', name: 'title', className: 'lp-row-title-cell' },
-                { data: 'category', name: 'category', orderable: false, searchable: true },
-                { data: 'published_at', name: 'published_at' },
-                { data: 'is_published', name: 'is_published', orderable: false, searchable: false },
-                { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' },
-            ],
-        });
+(function () {
+    var grid      = document.getElementById('lp-card-grid');
+    var btnMore   = document.getElementById('lp-load-more');
+    var statsEl   = document.getElementById('lp-posts-stats');
+    var searchEl  = document.getElementById('lp-posts-q');
+    var dataUrl   = @json(route('app.admin-landing.posts.cards'));
+    var csrfMeta  = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
-        // Konfirmasi hapus untuk form yang di-render oleh DataTables (di luar DOM awal)
-        $(document).on('submit', 'form[data-confirm]', function(e) {
-            var $form = $(this);
-            if ($form.data('confirm-bound')) return;
-            $form.data('confirm-bound', true);
-            e.preventDefault();
-            var msg = $form.attr('data-confirm') || 'Yakin ingin menghapus data ini?';
-            Swal.fire({
-                title: 'Hapus data?',
-                text: msg,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, hapus',
-                cancelButtonText: 'Batal',
-                reverseButtons: true,
-            }).then(function(r) {
-                if (r.isConfirmed) {
-                    $.ajax({
-                        url: $form.attr('action'),
-                        method: 'POST',
-                        data: $form.serialize(),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    }).done(function() {
-                        Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
-                        $('#lpPostTable').DataTable().ajax.reload(null, false);
-                    }).fail(function() {
-                        Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
-                    });
+    var state = {
+        page: 0,
+        per_page: 12,
+        total_pages: 1,
+        total: 0,
+        q: '',
+        busy: false,
+    };
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function renderEmpty(after) {
+        if (state.page > 1) return; // bukan halaman pertama
+        grid.innerHTML = '<div class="lp-card-empty">'
+            + '<div class="material-symbols-rounded">article</div>'
+            + '<div class="fw-semibold mb-1">Belum ada artikel</div>'
+            + '<div class="small">Tambahkan program / berita melalui tombol di atas.</div>'
+            + '</div>';
+    }
+
+    function renderSkeleton(after) {
+        if (!after) return '';
+        var html = '';
+        for (var i = 0; i < 3; i++) {
+            html += '<div class="lp-card-skeleton">'
+                + '<div class="lp-skel-cover"></div>'
+                + '<div class="lp-skel-line" style="width:60%"></div>'
+                + '<div class="lp-skel-line" style="width:90%"></div>'
+                + '<div class="lp-skel-line" style="width:75%"></div>'
+                + '</div>';
+        }
+        return html;
+    }
+
+    function fetchPage(append) {
+        if (state.busy) return;
+        state.busy = true;
+        btnMore.disabled = true;
+        btnMore.querySelector('span.align-middle').textContent = append ? 'Memuat…' : 'Memuat…';
+
+        if (!append) {
+            grid.insertAdjacentHTML('beforeend', renderSkeleton(true));
+        }
+
+        var url = dataUrl
+            + '?page=' + (state.page + 1)
+            + '&per_page=' + state.per_page
+            + '&q=' + encodeURIComponent(state.q);
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                // Hapus skeleton yang baru ditambahkan
+                document.querySelectorAll('.lp-card-skeleton').forEach(function (n) { n.remove(); });
+
+                state.page         = j.page;
+                state.total_pages  = j.total_pages;
+                state.total        = j.total;
+
+                if (j.empty) {
+                    if (!append) renderEmpty(false);
+                } else if (j.html) {
+                    grid.insertAdjacentHTML('beforeend', j.html);
+                }
+
+                if (j.has_more) {
+                    btnMore.classList.remove('d-none');
+                    btnMore.querySelector('span.align-middle').textContent = 'Muat lagi';
+                } else {
+                    btnMore.classList.add('d-none');
+                }
+
+                statsEl.textContent = 'Menampilkan ' + grid.querySelectorAll('.lp-card').length
+                    + ' dari ' + state.total + ' artikel';
+            })
+            .catch(function () {
+                document.querySelectorAll('.lp-card-skeleton').forEach(function (n) { n.remove(); });
+                if (!append) renderEmpty(false);
+                statsEl.textContent = 'Gagal memuat data.';
+            })
+            .then(function () {
+                state.busy = false;
+                btnMore.disabled = false;
+            });
+    }
+
+    // Reset & muat ulang
+    function resetAndFetch() {
+        state.page = 0;
+        grid.innerHTML = '';
+        btnMore.classList.add('d-none');
+        fetchPage(false);
+    }
+
+    // Pasang handler: tombol muat lagi
+    btnMore.addEventListener('click', function () { fetchPage(true); });
+
+    // Pasang handler: search dengan debounce 300ms
+    var searchDebounce;
+    searchEl.addEventListener('input', function () {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function () {
+            state.q = searchEl.value.trim();
+            resetAndFetch();
+        }, 300);
+    });
+
+    // Konfirmasi hapus (event delegation untuk form di kartu)
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.lp-card-delete[data-confirm]');
+        if (!form) return;
+        if (form.dataset.bound) return;
+        form.dataset.bound = '1';
+        e.preventDefault();
+        var msg = form.getAttribute('data-confirm') || 'Yakin ingin menghapus data ini?';
+        if (typeof Swal === 'undefined' || !Swal.fire) {
+            if (window.confirm(msg)) form.submit();
+            return;
+        }
+        Swal.fire({
+            title: 'Hapus data?',
+            text: msg,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, hapus',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+        }).then(function (r) {
+            if (!r.isConfirmed) return;
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: new URLSearchParams(new FormData(form)),
+            }).then(function (resp) {
+                if (resp.ok || resp.status === 204 || resp.redirected) {
+                    Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1100, showConfirmButton: false });
+                    var card = form.closest('.lp-card');
+                    if (card) card.remove();
+                    state.total = Math.max(0, state.total - 1);
+                    var shown = grid.querySelectorAll('.lp-card').length;
+                    statsEl.textContent = 'Menampilkan ' + shown + ' dari ' + state.total + ' artikel';
+                    if (shown === 0 && state.page === 1) renderEmpty(false);
+                    if (shown === 0 && state.page < state.total_pages) fetchPage(true);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
                 }
             });
         });
     });
+
+    // Muat halaman pertama
+    resetAndFetch();
+})();
 </script>
 @include('admin-landing._skrip')
 @endsection
