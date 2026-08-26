@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use App\Models\Landing\PengumumanLanding;
 use App\Models\Landing\PesanKontakLanding;
 use App\Models\Landing\GaleriLanding;
@@ -478,6 +479,12 @@ class AdminLandingController extends Controller
         $sectionKey = (string) $request->input('section', '');
         $sections = $this->pengaturanSections();
 
+        Log::info('[pengaturanStore] section=' . $sectionKey, [
+            'tenant' => tenant('id'),
+            'host'   => $request->getHost(),
+            'all'    => $request->all(),
+        ]);
+
         if (!array_key_exists($sectionKey, $sections)) {
             $msg = 'Section pengaturan tidak dikenali.';
             if ($this->wantsJsonResponse($request)) {
@@ -508,6 +515,19 @@ class AdminLandingController extends Controller
 
         // Background tema — HANYA diproses di section 'background'.
         if ($sectionKey === 'background') {
+            Log::info('[pengaturanStore:bg] BEFORE', [
+                'hero_background_db' => $setting->hero_background,
+                'bgChoice'           => $request->input('hero_background_choice'),
+                'hasFile'            => $request->hasFile('hero_background_custom'),
+                'fileMeta'           => $request->hasFile('hero_background_custom')
+                    ? [
+                        'original' => $request->file('hero_background_custom')->getClientOriginalName(),
+                        'mime'     => $request->file('hero_background_custom')->getMimeType(),
+                        'size'     => $request->file('hero_background_custom')->getSize(),
+                    ]
+                    : null,
+            ]);
+
             $bgChoice = $request->input('hero_background_choice');
             if ($request->hasFile('hero_background_custom')) {
                 if ($setting->hero_background && str_starts_with($setting->hero_background, 'custom:')) {
@@ -655,7 +675,19 @@ class AdminLandingController extends Controller
         $allowedFields = $section['fields'];
         $payload = array_intersect_key($data, array_flip($allowedFields));
 
+        Log::info('[pengaturanStore:after-filter] section=' . $sectionKey, [
+            'payload' => $payload,
+            'data_all' => $data,
+        ]);
+
         $setting->fill($payload)->save();
+        $setting->refresh();
+
+        Log::info('[pengaturanStore:after-save] section=' . $sectionKey, [
+            'hero_background_db' => $setting->hero_background,
+            'theme_button_color' => $setting->theme_button_color,
+            'school_name'        => $setting->school_name,
+        ]);
 
         // Kumpulkan metadata file baru (untuk konfirmasi 'tersimpan' di modal post-save).
         $newFileMeta = null;
