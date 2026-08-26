@@ -289,16 +289,38 @@
 
     $parseVisiMisiHtml = function (string $html) use (&$visi, &$misi, $visiFallback, $misiFallback) {
         $raw = strip_tags($html, '<p><br><strong><em><h3><ul><ol><li>');
-        $parts = preg_split('/<h3[^>]*>\s*Misi\s*<\/h3>/i', $raw, 2);
-        $visiHtml = $parts[0] ?? '';
-        $misiHtml = $parts[1] ?? '';
-        $visiHtml = preg_replace('/<h3[^>]*>.*?<\/h3>/i', '', $visiHtml, 1);
-        $visi = trim(strip_tags($visiHtml)) ?: $visiFallback;
 
-        if (preg_match_all('/<li[^>]*>(.*?)<\/li>/is', $misiHtml, $m)) {
-            $parsed = array_map(fn($x) => trim(strip_tags($x)), $m[1]);
-            if (!empty($parsed)) $misi = $parsed;
+        // 1) Pisahkan blok Visi vs Misi jika ada heading <h3>Misi</h3>.
+        //    Visi = semua sebelum heading itu (heading Visi dihapus).
+        //    Misi = semua setelahnya.
+        if (preg_split('/<h3[^>]*>\s*Misi\s*<\/h3>/i', $raw, 2, PREG_SPLIT_NO_EMPTY) !== false) {
+            $parts = preg_split('/<h3[^>]*>\s*Misi\s*<\/h3>/i', $raw, 2);
+            if (count($parts) === 2) {
+                $visiHtml = preg_replace('/<h3[^>]*>.*?<\/h3>/i', '', $parts[0], 1);
+                $visiText = trim(preg_replace('/\s+/', ' ', strip_tags($visiHtml)));
+                if ($visiText !== '') $visi = $visiText;
+                $misiHtml = $parts[1];
+            }
         }
+
+        // 2) Ambil item misi dari <li> / <ol> / <ul>.
+        $parsedMisi = [];
+        if (!empty($misiHtml) && preg_match_all('/<li[^>]*>(.*?)<\/li>/is', $misiHtml, $m)) {
+            foreach ($m[1] as $li) {
+                $txt = trim(preg_replace('/\s+/', ' ', strip_tags($li)));
+                if ($txt !== '') $parsedMisi[] = $txt;
+            }
+        }
+
+        // 3) Fallback: jika tidak ada <li>, ambil paragraf bernomor "1.", "2.", dst di dalam blok misi.
+        if (empty($parsedMisi) && !empty($misiHtml)) {
+            foreach (preg_split('/<br\s*\/?>|\<\/p\>\s*\<p[^>]*\>/i', strip_tags($misiHtml, '<br><p>')) as $line) {
+                $line = trim(preg_replace('/\s+/', ' ', $line));
+                if ($line !== '') $parsedMisi[] = $line;
+            }
+        }
+
+        if (!empty($parsedMisi)) $misi = array_values(array_unique($parsedMisi));
     };
 
     if ($visiMisiSection && $visiMisiSection->is_active && $visiMisiSection->content) {
