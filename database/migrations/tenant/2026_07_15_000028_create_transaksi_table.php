@@ -15,7 +15,7 @@ return new class extends Migration
                 $table->date('tanggal_transaksi');
                 $table->string('rekening_debit');
                 $table->string('rekening_kredit');
-                $table->string('kode_spp', 255);
+                $table->string('kode_spp', 255)->nullable();
                 $table->integer('siswa_id');
                 $table->string('idtp')->nullable();
                 $table->string('keterangan');
@@ -25,8 +25,7 @@ return new class extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->foreign('kode_spp', 'transaksi_kode_spp_foreign')
-                    ->references('kode')->on('spp');
+                $table->index('kode_spp', 'transaksi_kode_spp_index');
             });
 
             DB::statement('ALTER TABLE `transaksi` AUTO_INCREMENT = 59775');
