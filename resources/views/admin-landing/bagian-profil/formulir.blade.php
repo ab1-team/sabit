@@ -322,6 +322,11 @@ document.addEventListener('DOMContentLoaded', function () {
         statusbar: true,
         elementpath: false,
         promotion: false,
+        forced_root_block: 'p',
+        force_p_newlines: true,
+        force_br_newlines: false,
+        convert_newlines_to_brs: false,
+        remove_trailing_brs: true,
         setup: function (editor) {
             editor.on('input keyup paste', function () {
                 const content = editor.getContent();

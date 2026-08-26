@@ -161,6 +161,12 @@
         line-height: 1.7;
         max-width: 720px;
     }
+    .lp-hero-card .lp-hero-body p { margin: 0 0 .85rem; }
+    .lp-hero-card .lp-hero-body p:last-child { margin-bottom: 0; }
+    .lp-hero-card .lp-hero-body ul,
+    .lp-hero-card .lp-hero-body ol { margin: .35rem 0 .85rem; padding-left: 1.25rem; }
+    .lp-hero-card .lp-hero-body li { margin-bottom: .35rem; }
+    .lp-hero-card .lp-hero-body strong { font-weight: 700; color: #0f172a; }
     .lp-hero-badges {
         display: flex;
         flex-wrap: wrap;
@@ -394,8 +400,15 @@
                                 </div>
                             @endif
                             @if ($overviewSection->content)
+                                @php
+                                    $rawContent = $overviewSection->content;
+                                    $hasBlockTags = (bool) preg_match('/<(p|br|div|ul|ol|h[1-6])\b/i', $rawContent);
+                                    $renderedContent = $hasBlockTags
+                                        ? $rawContent
+                                        : '<p>' . nl2br(e($rawContent)) . '</p>';
+                                @endphp
                                 <div class="lp-hero-body">
-                                    {!! $overviewSection->content !!}
+                                    {!! $renderedContent !!}
                                 </div>
                             @endif
                             @if ($overviewSection->badge_text || $overviewSection->badge_extra)
