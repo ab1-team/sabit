@@ -1066,9 +1066,13 @@
                             @if ($help)
                                 <div class="lp-ps-field-help">{!! $help !!}</div>
                             @endif
+                            @php
+                                $useWysiwyg = in_array($k, ['visi_misi', 'akreditasi', 'sejarah', 'overview']);
+                                $contentRows = $k === 'visi_misi' ? 5 : ($k === 'akreditasi' ? 4 : ($k === 'sejarah' ? 4 : ($k === 'overview' ? 4 : 3)));
+                            @endphp
                             <textarea name="content"
-                                      rows="{{ $k === 'visi_misi' ? 5 : ($k === 'overview' ? 4 : 3) }}"
-                                      class="form-control {{ $k === 'visi_misi' ? 'lp-tinymce' : 'lp-plain' }}"
+                                      rows="{{ $contentRows }}"
+                                      class="form-control {{ $useWysiwyg ? 'lp-tinymce' : 'lp-plain' }}"
                                       placeholder="Tulis konten di sini...">{{ old('content', $row->content) }}</textarea>
                         </div>
                     </div>

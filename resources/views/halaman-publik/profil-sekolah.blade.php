@@ -472,7 +472,14 @@
 
                     <div class="lp-hero-card" style="padding: 1.5rem 1.85rem;">
                         @if ($sejarahSection && $sejarahSection->is_active && $sejarahSection->content)
-                            <div class="lp-vm-text">{!! $sejarahSection->content !!}</div>
+                            @php
+                                $rawSejarah = $sejarahSection->content;
+                                $hasBlockTagsSejarah = (bool) preg_match('/<(p|br|div|ul|ol|h[1-6])\b/i', $rawSejarah);
+                                $renderedSejarah = $hasBlockTagsSejarah
+                                    ? $rawSejarah
+                                    : '<p>' . nl2br(e($rawSejarah)) . '</p>';
+                            @endphp
+                            <div class="lp-vm-text">{!! $renderedSejarah !!}</div>
                         @else
                             <p class="lp-text-muted-soft" style="margin:0; font-size:0.96rem;">
                                 Didirikan sejak tahun 1995, {{ $schoolName }} telah berkembang menjadi lembaga
@@ -495,7 +502,14 @@
                         <div class="lp-vm-icon"><i class="bi bi-award-fill"></i></div>
                         <h3>{{ $akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->badge_text ? $akreditasiSection->badge_text : 'Terakreditasi A' }}</h3>
                         @if ($akreditasiSection && $akreditasiSection->is_active && $akreditasiSection->content)
-                            <div class="lp-vm-text">{!! $akreditasiSection->content !!}</div>
+                            @php
+                                $rawAkred = $akreditasiSection->content;
+                                $hasBlockTagsAkred = (bool) preg_match('/<(p|br|div|ul|ol|h[1-6])\b/i', $rawAkred);
+                                $renderedAkred = $hasBlockTagsAkred
+                                    ? $rawAkred
+                                    : '<p>' . nl2br(e($rawAkred)) . '</p>';
+                            @endphp
+                            <div class="lp-vm-text">{!! $renderedAkred !!}</div>
                         @else
                             <p class="lp-text-muted-soft" style="margin:0; font-size:0.94rem;">
                                 Status akreditasi A (Sangat Baik) diberikan oleh BAN-SM, mencerminkan
