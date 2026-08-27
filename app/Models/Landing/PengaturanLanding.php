@@ -287,6 +287,7 @@ class PengaturanLanding extends Model
             'quote' => 'Mendidik dengan Hati, Membentuk dengan Karakter.',
             'paragraph_1' => 'Selamat datang di {{school}}. Kami berkomitmen untuk memberikan pengalaman belajar terbaik bagi putra-putri Anda. Di era digital ini, kami memadukan kurikulum nasional dengan standar internasional untuk membentuk karakter yang kuat dan pemikiran yang kritis.',
             'paragraph_2' => 'Lingkungan belajar kami dirancang untuk menumbuhkan kreativitas, kolaborasi, dan kemandirian. Bersama-sama, mari kita wujudkan potensi maksimal setiap anak.',
+            'paragraphs' => [],
             'head_name' => 'Dr. Budi Santoso, M.Pd.',
             'head_role' => 'Kepala Sekolah, {{school}}',
         ];
@@ -314,8 +315,38 @@ class PengaturanLanding extends Model
 
         // Resolve placeholder {{school}} agar admin tidak perlu edit semua section
         $schoolName = $this->school_name ?: 'Sekolah';
-        $data['paragraph_1'] = str_replace('{{school}}', $schoolName, $data['paragraph_1']);
-        $data['paragraph_2'] = str_replace('{{school}}', $schoolName, $data['paragraph_2']);
+
+        // Bangun 'paragraphs' (array) dari 'paragraphs' tersimpan atau fallback ke
+        // paragraph_1 + paragraph_2. Mendukung paragraf panjang yang dipisah baris kosong.
+        $rawParagraphs = $data['paragraphs'] ?? [];
+        if (!is_array($rawParagraphs) || count($rawParagraphs) === 0) {
+            $rawParagraphs = array_filter([
+                $data['paragraph_1'] ?? null,
+                $data['paragraph_2'] ?? null,
+            ], static fn($p) => is_string($p) && trim($p) !== '');
+            $rawParagraphs = array_values($rawParagraphs);
+        } else {
+            // Bersihkan & split lagi untuk konsistensi
+            $clean = [];
+            foreach ($rawParagraphs as $p) {
+                if (!is_string($p)) continue;
+                $chunks = preg_split('/\R{2,}/u', trim($p));
+                foreach ($chunks as $c) {
+                    $c = trim($c);
+                    if ($c !== '') $clean[] = $c;
+                }
+            }
+            $rawParagraphs = $clean;
+        }
+
+        // Resolve placeholder {{school}} per paragraf
+        $data['paragraphs'] = array_map(
+            static fn($p) => str_replace('{{school}}', $schoolName, $p),
+            $rawParagraphs
+        );
+        // Pertahankan paragraph_1 & paragraph_2 untuk backward-compat (admin form)
+        $data['paragraph_1'] = $data['paragraphs'][0] ?? '';
+        $data['paragraph_2'] = $data['paragraphs'][1] ?? '';
         $data['head_role'] = str_replace('{{school}}', $schoolName, $data['head_role']);
 
         return $data;

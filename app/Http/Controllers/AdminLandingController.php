@@ -361,11 +361,25 @@ class AdminLandingController extends Controller
             return $v !== null ? trim((string) $v) : null;
         };
 
+        // Pecah paragraf panjang berdasarkan baris kosong. Mendukung admin yang
+        // menulis banyak paragraf di satu textarea dengan newline kosong sebagai
+        // pemisah.
+        $p1 = $strip('paragraph_1') ?: ($current['paragraph_1'] ?? '');
+        $p2 = $strip('paragraph_2') ?: ($current['paragraph_2'] ?? '');
+        $combined = trim($p1 . "\n\n" . $p2);
+        $chunks = $combined === '' ? [] : preg_split('/\R{2,}/u', $combined);
+        $paragraphs = [];
+        foreach ($chunks as $c) {
+            $c = trim((string) $c);
+            if ($c !== '') $paragraphs[] = $c;
+        }
+
         return [
             'photo' => $photo,
             'quote' => $strip('quote') ?: ($current['quote'] ?? null),
-            'paragraph_1' => $strip('paragraph_1') ?: ($current['paragraph_1'] ?? null),
-            'paragraph_2' => $strip('paragraph_2') ?: ($current['paragraph_2'] ?? null),
+            'paragraph_1' => $paragraphs[0] ?? null,
+            'paragraph_2' => $paragraphs[1] ?? null,
+            'paragraphs' => $paragraphs,
             'head_name' => $strip('head_name') ?: ($current['head_name'] ?? null),
             'head_role' => $strip('head_role') ?: ($current['head_role'] ?? null),
         ];

@@ -152,6 +152,36 @@
             width: 100%;
             pointer-events: none;
         }
+        /* Saat modal sambutan dibuka, blur navbar seperti konten lain di belakang backdrop.
+           ::before adalah pill background; di-blur juga agar konsisten. */
+        body.lp-welcome-modal-open .lp-navbar-inner,
+        body.lp-welcome-modal-open .lp-navbar-inner::before {
+            filter: blur(6px) saturate(120%);
+            opacity: 0.55;
+        }
+        body.lp-welcome-modal-open .lp-navbar-inner,
+        body.lp-welcome-modal-open .lp-navbar-inner * {
+            pointer-events: none !important;
+        }
+        body.lp-welcome-modal-open #lpScrollTopBtn {
+            filter: blur(6px) saturate(120%);
+            opacity: 0.45;
+            pointer-events: none !important;
+        }
+        /* Body-scroll-lock + visual lock konten di belakang modal sambutan.
+           Konten diblur, non-interaktif (no scroll, no click) supaya fokus penuh ke modal. */
+        html.lp-welcome-modal-open,
+        body.lp-welcome-modal-open {
+            overflow: hidden !important;
+            overscroll-behavior: contain;
+            touch-action: none;
+        }
+        body.lp-welcome-modal-open > *:not(.modal):not(.modal-backdrop):not(.lp-navbar-wrap):not(.lp-scroll-top-wrap) {
+            filter: blur(6px) saturate(120%);
+            opacity: 0.6;
+            pointer-events: none !important;
+            user-select: none;
+        }
         .lp-navbar-inner > .lp-navbar,
         .lp-navbar-inner > .lp-cta-desktop,
         .lp-navbar-wrap > .lp-nav-menu > .lp-nav-menu-body { pointer-events: auto; }
@@ -1066,6 +1096,150 @@
             margin-bottom: 1.25rem;
         }
         .lp-text-muted-soft { color: var(--lp-muted); line-height: 1.75; font-size: 0.98rem; }
+
+        /* ============= Sambutan: actions + tombol Baca Lengkap ============= */
+        .lp-welcome-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .lp-welcome-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .lp-welcome-readmore {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.15rem;
+            border: 0;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, var(--lp-primary), var(--lp-accent-2));
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.92rem;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            box-shadow: 0 12px 26px rgba(var(--lp-primary-rgb), 0.32);
+            transition: transform 0.25s var(--lp-ease, cubic-bezier(0.4, 0, 0.2, 1)),
+                        box-shadow 0.25s var(--lp-ease, cubic-bezier(0.4, 0, 0.2, 1));
+        }
+        .lp-welcome-readmore:hover,
+        .lp-welcome-readmore:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px rgba(var(--lp-primary-rgb), 0.42);
+            outline: 0;
+        }
+        .lp-welcome-readmore i { transition: transform 0.25s var(--lp-ease, cubic-bezier(0.4, 0, 0.2, 1)); }
+        .lp-welcome-readmore:hover i { transform: translateX(3px); }
+        .lp-welcome-readmore-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 0.45rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        /* ============= Sambutan: modal popup ============= */
+        .lp-welcome-modal .modal-content {
+            border: 0;
+            border-radius: var(--lp-radius-xl, 20px);
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+        }
+        .lp-welcome-modal-head {
+            position: relative;
+            padding: 1.5rem 4.75rem 1rem 1.5rem;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+            background: linear-gradient(135deg, rgba(var(--lp-primary-rgb), 0.06), rgba(255, 255, 255, 0));
+        }
+        .lp-welcome-modal-head-text { display: flex; flex-direction: column; gap: 0.25rem; }
+        .lp-welcome-modal-title {
+            font-weight: 700;
+            color: var(--lp-text, #0f172a);
+            margin: 0;
+        }
+        .lp-welcome-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 38px;
+            height: 38px;
+            border-radius: 9999px;
+            border: 0;
+            background: #f1f5f9;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.25s ease, color 0.2s ease;
+            z-index: 5;
+        }
+        .lp-welcome-modal-close:hover,
+        .lp-welcome-modal-close:focus-visible {
+            background: #e2e8f0;
+            color: #0f172a;
+            outline: 0;
+        }
+        .lp-welcome-modal-close:hover { transform: rotate(90deg); }
+        .lp-welcome-modal-body {
+            padding: 1.5rem;
+            background: #fff;
+            color: var(--lp-text, #0f172a);
+        }
+        .lp-welcome-modal-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 9999px;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);
+        }
+        .lp-welcome-modal-quote {
+            margin: 1.25rem 0 0;
+            padding: 1rem 1.25rem;
+            background: rgba(var(--lp-primary-rgb), 0.06);
+            border-left: 4px solid var(--lp-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            font-style: italic;
+            color: var(--lp-text, #0f172a);
+        }
+        .lp-welcome-modal-quote .bi { font-size: 1.4rem; color: var(--lp-primary); flex-shrink: 0; }
+        .lp-welcome-modal-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.12), transparent);
+            margin: 1.25rem 0;
+        }
+        .lp-welcome-modal-paragraphs p {
+            color: var(--lp-muted, #475569);
+            line-height: 1.8;
+            font-size: 0.98rem;
+            margin-bottom: 1rem;
+        }
+        .lp-welcome-modal-paragraphs p:last-child { margin-bottom: 0; }
+
+        @media (max-width: 575.98px) {
+            .lp-welcome-modal-head { padding-right: 4rem; }
+            .lp-welcome-modal-close { top: 12px; right: 12px; }
+            .lp-welcome-modal-body { padding: 1.15rem; }
+            .lp-welcome-actions { gap: 0.75rem; }
+        }
 
         /* ============= Keunggulan ============= */
         .lp-feature-card {

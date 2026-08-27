@@ -82,6 +82,11 @@
 </section>
 
 {{-- ===== Sambutan Kepala Sekolah ===== --}}
+@php
+    $welcomeParagraphs = $welcome['paragraphs'] ?? [];
+    $welcomePreview = array_slice($welcomeParagraphs, 0, 2);
+    $welcomeHasMore = count($welcomeParagraphs) > count($welcomePreview);
+@endphp
 <section class="lp-section" id="profil">
     <div class="container">
         <div class="row align-items-center g-4 g-lg-5">
@@ -101,25 +106,76 @@
                 <span class="lp-section-eyebrow">Sambutan</span>
                 <h2 class="lp-section-title">Sambutan Kepala Sekolah</h2>
                 <div class="lp-divider"></div>
-                @if (!empty($welcome['paragraph_1']))
-                    <p class="lp-text-muted-soft">{{ $welcome['paragraph_1'] }}</p>
-                @endif
-                @if (!empty($welcome['paragraph_2']))
-                    <p class="lp-text-muted-soft">{{ $welcome['paragraph_2'] }}</p>
-                @endif
-                <div class="mt-4 d-flex align-items-center gap-3">
-                    <div class="lp-stat-icon is-blue" style="width:48px; height:48px; font-size:1.1rem;">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark">{{ $welcome['head_name'] }}</div>
-                        <div class="text-muted small">{{ $welcome['head_role'] }}</div>
+                @forelse ($welcomePreview as $p)
+                    <p class="lp-text-muted-soft">{{ $p }}</p>
+                @empty
+                    <p class="lp-text-muted-soft">Belum ada teks sambutan.</p>
+                @endforelse
+
+                <div class="lp-welcome-actions">
+                    @if ($welcomeHasMore)
+                        <button type="button" class="lp-welcome-readmore" data-bs-toggle="modal" data-bs-target="#lpWelcomeModal">
+                            <span>Baca Sambutan Lengkap</span>
+                            @if (count($welcomeParagraphs) > 2)
+                                <span class="lp-welcome-readmore-badge">+{{ count($welcomeParagraphs) - 2 }}</span>
+                            @endif
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    @endif
+                    <div class="lp-welcome-meta">
+                        <div class="lp-stat-icon is-blue" style="width:48px; height:48px; font-size:1.1rem;">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">{{ $welcome['head_name'] }}</div>
+                            <div class="text-muted small">{{ $welcome['head_role'] }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+{{-- Modal popup Sambutan Lengkap --}}
+@if ($welcomeHasMore)
+<div class="modal fade lp-welcome-modal" id="lpWelcomeModal" tabindex="-1" aria-hidden="true" aria-labelledby="lpWelcomeModalTitle">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content lp-welcome-modal-content">
+            <button type="button" class="lp-welcome-modal-close" data-bs-dismiss="modal" aria-label="Tutup">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="modal-header lp-welcome-modal-head">
+                <div class="lp-welcome-modal-head-text">
+                    <span class="lp-section-eyebrow">Sambutan</span>
+                    <h5 class="modal-title lp-welcome-modal-title" id="lpWelcomeModalTitle">Sambutan Kepala Sekolah</h5>
+                </div>
+            </div>
+            <div class="modal-body lp-welcome-modal-body">
+                <div class="lp-welcome-modal-profile d-flex align-items-center gap-3">
+                    <img src="{{ $welcome['photo'] }}" alt="{{ $welcome['head_name'] }}" class="lp-welcome-modal-avatar">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-dark">{{ $welcome['head_name'] }}</div>
+                        <div class="text-muted small">{{ $welcome['head_role'] }}</div>
+                    </div>
+                </div>
+                @if (!empty($welcome['quote']))
+                    <blockquote class="lp-welcome-modal-quote">
+                        <i class="bi bi-quote"></i>
+                        <span>{{ $welcome['quote'] }}</span>
+                    </blockquote>
+                @endif
+                <div class="lp-welcome-modal-divider"></div>
+                <div class="lp-welcome-modal-paragraphs">
+                    @foreach ($welcomeParagraphs as $p)
+                        <p>{{ $p }}</p>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- ===== Statistik (data tenant dari lp_pengaturan.stats) ===== --}}
 @if (!empty($stats))
@@ -341,4 +397,36 @@
 </section>
 @endif
 
+@endsection
+
+@section('script')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modalEl = document.getElementById('lpWelcomeModal');
+    if (!modalEl || typeof bootstrap === 'undefined') return;
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // Simpan posisi scroll supaya tidak lompat saat body di-lock.
+    var scrollY = 0;
+
+    function lockBody() {
+        scrollY = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('lp-welcome-modal-open');
+        document.body.classList.add('lp-welcome-modal-open');
+    }
+    function unlockBody() {
+        document.documentElement.classList.remove('lp-welcome-modal-open');
+        document.body.classList.remove('lp-welcome-modal-open');
+        // Kembalikan posisi scroll setelah lock dilepas
+        window.scrollTo(0, scrollY);
+    }
+
+    modalEl.addEventListener('show.bs.modal', lockBody);
+    modalEl.addEventListener('shown.bs.modal', lockBody);
+    modalEl.addEventListener('hide.bs.modal', function () {
+        // Cegah scroll restoration bawaan Bootstrap yang kadang konflik.
+    });
+    modalEl.addEventListener('hidden.bs.modal', unlockBody);
+});
+</script>
 @endsection
