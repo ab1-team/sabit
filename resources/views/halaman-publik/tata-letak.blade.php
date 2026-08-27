@@ -471,8 +471,20 @@
             pointer-events: auto;
         }
         body.lp-nav-open {
-            overflow: hidden;
+            overflow: hidden !important;
             overscroll-behavior: contain;
+            touch-action: none;
+        }
+        /* Kunci <html> juga untuk konsistensi & cegah scroll bounce di mobile */
+        html.lp-nav-open {
+            overflow: hidden !important;
+            overscroll-behavior: contain;
+            touch-action: none;
+        }
+        /* Konten di belakang drawer mobile: non-interaktif supaya tidak bisa di-tap/diklik */
+        body.lp-nav-open > *:not(.lp-navbar-wrap):not(.lp-nav-menu):not(.lp-nav-backdrop) {
+            pointer-events: none !important;
+            user-select: none;
         }
 
         /* Drawer mobile: default hidden, hanya muncul di mobile via media query */
@@ -2347,8 +2359,12 @@
     var navBackdrop = document.getElementById('lpNavBackdrop');
     var navClose = document.getElementById('lpNavClose');
 
+    // Simpan posisi scroll supaya tidak lompat ke atas saat body di-lock.
+    var drawerScrollY = 0;
+
     function openDrawer() {
         if (!navMenu) return;
+        drawerScrollY = window.scrollY || window.pageYOffset || 0;
         navMenu.classList.add('is-open');
         navMenu.setAttribute('aria-hidden', 'false');
         if (navBackdrop) navBackdrop.classList.add('is-open');
@@ -2358,6 +2374,7 @@
             var inner = navbarWrap.querySelector('.lp-navbar-inner');
             if (inner) inner.classList.add('is-drawer-open');
         }
+        document.documentElement.classList.add('lp-nav-open');
         document.body.classList.add('lp-nav-open');
     }
     function closeDrawer() {
@@ -2371,7 +2388,10 @@
             var inner = navbarWrap.querySelector('.lp-navbar-inner');
             if (inner) inner.classList.remove('is-drawer-open');
         }
+        document.documentElement.classList.remove('lp-nav-open');
         document.body.classList.remove('lp-nav-open');
+        // Kembalikan posisi scroll setelah lock dilepas
+        window.scrollTo(0, drawerScrollY);
     }
     function isMobileViewport() {
         return window.matchMedia && window.matchMedia('(max-width: 991.98px)').matches;
