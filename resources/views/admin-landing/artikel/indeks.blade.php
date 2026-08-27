@@ -222,10 +222,29 @@
         .lp-switch-input:checked ~ .lp-switch-label .material-symbols-rounded { color: #059669; }
         .lp-switch:has(.lp-toggle-featured:checked) .lp-switch-label .material-symbols-rounded { color: #b45309; }
         .lp-switch.is-busy { opacity: .55; pointer-events: none; }
+        /* HP kecil: sembunyikan teks label toggle, sisakan icon + track ringkas.
+           Tooltip title="" tetap ada sehingga info tidak hilang. */
+        .lp-switch-text { display: inline; }
+        .lp-switch-icon { display: none; }
         @media (max-width: 575.98px) {
-            .lp-card-actions { gap: .25rem; }
-            .lp-card-toggles { gap: .2rem .4rem; }
-            .lp-card-action-buttons { flex: 0 0 auto; }
+            .lp-card { border-radius: .85rem; }
+            .lp-card-body { padding: .85rem .65rem .6rem; gap: .45rem; }
+            .lp-card-actions {
+                gap: .35rem;
+                padding: .45rem 0 .1rem;
+            }
+            .lp-card-toggles { gap: .25rem; flex: 1 1 auto; min-width: 0; }
+            .lp-card-action-buttons { flex: 0 0 auto; gap: .25rem; }
+            .lp-card-action-buttons .btn { width: 28px; height: 28px; }
+            .lp-switch {
+                font-size: 0;
+                gap: 0;
+            }
+            .lp-switch-text { display: none; }
+            .lp-switch-icon { display: inline-flex; }
+            .lp-switch-track { width: 30px; height: 16px; }
+            .lp-switch-thumb { width: 12px; height: 12px; }
+            .lp-switch-input:checked + .lp-switch-track .lp-switch-thumb { transform: translateX(14px); }
         }
 
         /* ===== Empty state & Load-more ===== */
@@ -261,6 +280,19 @@
             .lp-posts-toolbar { gap: .55rem; }
             .lp-posts-toolbar .lp-posts-search { max-width: none; flex-basis: 100%; }
             .lp-card-grid { grid-template-columns: 1fr; gap: .85rem; }
+            .lp-add-btn-text { display: none; }
+            .lp-add-btn { padding-left: .55rem; padding-right: .55rem; }
+            .lp-add-btn .material-symbols-rounded { font-size: 18px; }
+            .lp-posts-stats { display: none; }
+        }
+        @media (max-width: 380px) {
+            .lp-card-actions { padding: .4rem 0 .05rem; gap: .3rem; }
+            .lp-card-toggles { gap: .25rem; }
+            .lp-card-action-buttons .btn { width: 26px; height: 26px; }
+            .lp-card-action-buttons .btn .material-symbols-rounded { font-size: 15px; }
+            .lp-switch-track { width: 28px; height: 15px; }
+            .lp-switch-thumb { width: 11px; height: 11px; }
+            .lp-switch-input:checked + .lp-switch-track .lp-switch-thumb { transform: translateX(13px); }
         }
     </style>
 @endsection
@@ -272,9 +304,9 @@
     @endif
 
     @php
-        $addBtn = '<a href="'.e(route('app.admin-landing.posts.create')).'" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1">'
+        $addBtn = '<a href="'.e(route('app.admin-landing.posts.create')).'" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 lp-add-btn">'
             .'<span class="material-symbols-rounded align-middle" style="font-size:16px;">add</span>'
-            .'<span class="align-middle">Tambah Program / Berita</span></a>';
+            .'<span class="align-middle lp-add-btn-text">Tambah Program / Berita</span></a>';
     @endphp
 
     <div class="lp-posts-toolbar">
