@@ -8,6 +8,20 @@
 
 @section('style')
 <style>
+    .lp-album-bar {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.5rem;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        padding: 0.25rem 0.25rem 0.5rem;
+        margin: 0 -0.25rem 1rem;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+    }
+    .lp-album-bar::-webkit-scrollbar { height: 4px; }
+    .lp-album-bar::-webkit-scrollbar-thumb { background: rgba(15,23,42,.15); border-radius: 999px; }
     .lp-album-pill {
         padding: 0.5rem 1.1rem;
         border-radius: 999px;
@@ -19,6 +33,9 @@
         transition: all 0.2s ease;
         text-decoration: none;
         display: inline-block;
+        white-space: nowrap;
+        flex: 0 0 auto;
+        scroll-snap-align: center;
     }
     .lp-album-pill:hover {
         transform: translateY(-2px);
@@ -30,6 +47,14 @@
         color: #fff;
         border-color: transparent;
         box-shadow: 0 8px 20px rgba(var(--lp-primary-rgb), 0.3);
+    }
+    @media (min-width: 768px) {
+        .lp-album-bar {
+            flex-wrap: wrap;
+            justify-content: center;
+            overflow-x: visible;
+            margin-bottom: 1.5rem;
+        }
     }
     @media (max-width: 767.98px) {
         .lp-album-pill { padding: 0.4rem 0.85rem; font-size: 0.82rem; }
@@ -173,7 +198,7 @@
         </div>
 
         @if ($albums->isNotEmpty())
-            <div class="text-center mb-4 d-flex flex-wrap justify-content-center gap-2 lp-reveal" data-from="zoom">
+            <div class="lp-album-bar lp-reveal" data-from="zoom">
                 <a href="{{ route('halaman-publik.galeri') }}"
                    class="lp-album-pill {{ $album ? '' : 'active' }}">Semua</a>
                 @foreach ($albums as $item)
