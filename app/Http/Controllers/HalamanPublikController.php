@@ -39,7 +39,7 @@ class HalamanPublikController extends Controller
             'setting' => PengaturanLanding::current(),
             'slides' => SlideHeroLanding::active()->orderBy('sort_order')->get(),
             'menus' => $this->menus(),
-            'posts' => ArtikelLanding::published()->latest('published_at')->limit(6)->get(),
+            'posts' => ArtikelLanding::published()->featured()->latest('published_at')->limit(6)->get(),
             'events' => AcaraLanding::published()->upcoming()->orderBy('start_date')->limit(4)->get(),
             'announcements' => PengumumanLanding::published()->latest('published_at')->limit(5)->get(),
             'galleries' => GaleriLanding::published()->orderBy('sort_order')->limit(8)->get(),
