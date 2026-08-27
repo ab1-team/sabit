@@ -197,86 +197,118 @@
         }
 
         @media (max-width: 768px) {
-            /* Sembunyikan scroll horizontal tabel di mobile,
-               ganti jadi card list vertikal supaya kolom Aksi tetap kelihatan. */
-            .lp-msg-table-scroll { overflow-x: visible; }
+            /* === Mobile: ubah tabel jadi card list vertikal === */
+            .lp-msg-table-scroll { overflow-x: visible !important; }
 
-            #lpMsgTable,
-            #lpMsgTable thead,
+            /* Override aturan global .table dari layout agar layout bertumpu
+               pada lebar kontainer, bukan lebar kolom fixed. */
+            #lpMsgTable {
+                table-layout: auto !important;
+                width: 100% !important;
+            }
+
+            /* Sembunyikan header & buat setiap elemen jadi block */
+            #lpMsgTable thead { display: none !important; }
             #lpMsgTable tbody,
-            #lpMsgTable tr,
-            #lpMsgTable th,
-            #lpMsgTable td {
-                display: block;
+            #lpMsgTable tbody tr,
+            #lpMsgTable tbody td {
+                display: block !important;
+                float: none !important;
+            }
+            #lpMsgTable tbody tr {
+                background: transparent;
+                border: 0;
+                box-shadow: none;
+                padding: .55rem 0;
+                margin: 0 0 .65rem 0;
                 width: 100% !important;
                 min-width: 0 !important;
                 max-width: none !important;
-            }
-            #lpMsgTable thead { display: none; }
-            #lpMsgTable tbody tr {
-                background: #fff;
-                border: 1px solid #e2e8f0;
-                border-radius: .65rem;
-                padding: .55rem .65rem;
-                margin-bottom: .65rem;
-                box-shadow: 0 1px 2px rgba(15,23,42,.04);
-                overflow: hidden; /* pastikan isi tidak meluber keluar card */
+                height: auto !important;
+                overflow: hidden;
                 word-break: break-word;
             }
-            #lpMsgTable tbody tr:hover { background-color: #f8fafc; }
+            #lpMsgTable tbody tr:hover { background-color: transparent; }
+
             #lpMsgTable tbody td {
                 border: 0 !important;
-                padding: .25rem 0 !important;
-                display: flex;
-                align-items: center;
+                padding: .35rem 0 !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                display: flex !important;
+                align-items: flex-start;
                 justify-content: space-between;
                 gap: .65rem;
                 font-size: .85rem;
+                line-height: 1.35;
             }
             #lpMsgTable tbody td::before {
                 content: attr(data-label);
-                flex: 0 0 auto;
-                font-size: .7rem;
+                flex: 0 0 5.5rem;
+                max-width: 5.5rem;
+                font-size: .68rem;
                 font-weight: 600;
-                letter-spacing: .03em;
+                letter-spacing: .04em;
                 text-transform: uppercase;
                 color: #64748b;
+                padding-top: .15rem;
             }
-            /* Sel yang hanya berisi kontrol/ikon → label di-hide, justify end */
+
+            /* Sel-sel yang tidak butuh label (kontrol murni): sembunyikan
+               pseudo-label, dan tampilkan konten di sisi kanan/sendiri. */
             #lpMsgTable td.lp-col-check,
             #lpMsgTable td.lp-col-action {
-                justify-content: flex-end;
-                padding-top: .5rem !important;
+                justify-content: flex-end !important;
+                padding-top: .6rem !important;
                 border-top: 1px dashed #e2e8f0 !important;
                 margin-top: .35rem;
             }
             #lpMsgTable td.lp-col-check::before,
-            #lpMsgTable td.lp-col-action::before { content: none; }
+            #lpMsgTable td.lp-col-action::before { content: none !important; }
 
-            /* Sel sender/subject: biarkan teks wrap agar tidak overflow */
+            /* === Sel Pengirim & Subjek (KRUSIAL) ===
+               Server render menumpuk 2 baris di dalam <div class="text-truncate">.
+               .text-truncate memaksakan overflow:hidden + white-space:nowrap
+               + ellipsis. Pada mobile kita override total supaya nama/email/
+               subjek/preview pesan benar-benar tampil (bukan ellipsis). */
             #lpMsgTable td.lp-col-sender,
             #lpMsgTable td.lp-col-subject {
-                flex-direction: column;
-                align-items: stretch;
-                gap: .15rem;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: .3rem;
             }
             #lpMsgTable td.lp-col-sender > div,
             #lpMsgTable td.lp-col-subject > div {
-                text-align: right;
-                max-width: 100%;
-                white-space: normal;
+                text-align: left !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
                 overflow-wrap: anywhere;
+                word-break: break-word;
             }
 
-            /* Sembunyikan info sekunder di mobile supaya tetap ringkas */
+            /* Badge status: span inline, tetap terlihat full */
+            #lpMsgTable td.lp-col-sender > .badge,
+            #lpMsgTable td.lp-col-subject > .badge {
+                display: inline-block;
+                width: auto;
+                max-width: 100%;
+            }
+
+            /* Status & tanggal: ringkas, label disembunyikan agar hemat baris */
             #lpMsgTable td.lp-col-date::before,
-            #lpMsgTable td.lp-col-status::before { content: none; }
+            #lpMsgTable td.lp-col-status::before { content: none !important; }
             #lpMsgTable td.lp-col-date,
             #lpMsgTable td.lp-col-status {
-                justify-content: flex-end;
-                font-size: .72rem;
-                color: #64748b;
+                justify-content: space-between !important;
+                font-size: .78rem;
+                color: #475569;
+                padding-top: .25rem !important;
             }
+            #lpMsgTable td.lp-col-status { font-weight: 500; }
 
             /* Wrapper DataTables */
             .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
@@ -300,7 +332,7 @@
         @media (max-width: 576px) {
             .px-2.py-2 { padding-left: .65rem !important; padding-right: .65rem !important; }
             .card.my-3 { margin-left: -.25rem; margin-right: -.25rem; }
-            .card-body.px-3.py-3 { padding: .65rem !important; }
+            .card-body.px-3.py-3 { padding: .75rem !important; }
 
             /* Toolbar: stack ke bawah */
             .d-flex.justify-content-between.align-items-center.mb-3 {
@@ -317,15 +349,18 @@
 
             /* Tabel card lebih ringkas */
             #lpMsgTable tbody tr {
-                padding: .5rem .55rem;
-                margin-bottom: .55rem;
+                padding: .4rem 0;
+                margin-bottom: .25rem;
             }
             #lpMsgTable tbody td {
-                font-size: .82rem;
+                font-size: .85rem;
                 gap: .5rem;
+                padding: .2rem 0 !important;
             }
             #lpMsgTable tbody td::before {
                 font-size: .65rem;
+                flex-basis: 4.5rem;
+                max-width: 4.5rem;
             }
 
             /* Tombol aksi: perkecil sedikit tapi tetap tap-friendly */
@@ -343,6 +378,7 @@
             .lp-table-actions {
                 flex-wrap: wrap;
                 gap: .25rem !important;
+                justify-content: flex-end !important;
             }
 
             /* DataTables filter & length: full-width */
@@ -363,7 +399,8 @@
 
         /* HP sangat kecil (≤380px): kompres lebih lanjut */
         @media (max-width: 380px) {
-            #lpMsgTable tbody tr { padding: .45rem .5rem; }
+            #lpMsgTable tbody tr { padding: .35rem 0; margin-bottom: .2rem; }
+            #lpMsgTable tbody td { padding: .15rem 0 !important; }
             .lp-table-actions .btn.btn-icon {
                 width: 1.95rem;
                 height: 1.95rem;
@@ -400,7 +437,7 @@
                 </div>
             @endif
             <div class="lp-msg-table-scroll">
-                <table id="lpMsgTable" class="table table-striped table-hover align-middle mb-0">
+                <table id="lpMsgTable" class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th style="width:36px;min-width:36px" class="text-center">
