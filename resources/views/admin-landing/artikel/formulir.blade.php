@@ -494,6 +494,13 @@ document.addEventListener('DOMContentLoaded', function () {
         toolbar: 'undo redo | bold italic underline | bullist numlist | link image media lpfileopen lpyt table | code',
         branding: false,
         promotion: false,
+        // PENTING: simpan URL absolut (tidak dikonversi jadi path relatif
+        // terhadap URL halaman admin). Kalau diaktifkan (default true),
+        // TinyMCE akan menulis "src=../../../storage/..." ke <img>, dan
+        // gambar/video tidak akan muncul lagi saat edit artikel.
+        relative_urls: false,
+        remove_script_host: false,
+        convert_urls: true,
         file_picker_types: 'image media',
         image_caption: true,
         image_dimensions: true,

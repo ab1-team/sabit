@@ -124,17 +124,108 @@
         .lp-card-meta-bottom .material-symbols-rounded { color: #94a3b8; }
         .lp-card-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: .45rem;
+            flex-wrap: nowrap;
+            gap: .35rem;
             align-items: center;
-            justify-content: flex-end;
             margin-top: auto;
-            padding: .35rem 0 .15rem;
+            padding: .5rem 0 .15rem;
             border-top: 1px dashed #e2e8f0;
         }
+        .lp-card-toggles {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: .25rem .55rem;
+            align-items: center;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .lp-card-action-buttons {
+            display: inline-flex;
+            flex-wrap: nowrap;
+            gap: .35rem;
+            align-items: center;
+        }
+        .lp-card-action-buttons .btn {
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .lp-card-action-buttons .btn .material-symbols-rounded {
+            font-size: 14px;
+        }
+        .lp-card-action-buttons form { display: inline-flex; }
         .lp-card-actions .btn {
             padding: .3rem .65rem;
             font-size: .8rem;
+            margin-bottom: 0;
+        }
+
+        /* ===== iOS-style switch toggle (kecil) ===== */
+        .lp-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            cursor: pointer;
+            user-select: none;
+            font-size: .7rem;
+            color: #475569;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .lp-switch-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+        .lp-switch-track {
+            position: relative;
+            display: inline-block;
+            width: 26px;
+            height: 14px;
+            background: #cbd5e1;
+            border-radius: 999px;
+            transition: background .18s ease;
+            flex: 0 0 auto;
+        }
+        .lp-switch-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(15,23,42,.25);
+            transition: transform .18s ease;
+        }
+        .lp-switch-input:checked + .lp-switch-track {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .lp-switch-input:checked + .lp-switch-track .lp-switch-thumb {
+            transform: translateX(12px);
+        }
+        .lp-switch-input:focus-visible + .lp-switch-track {
+            box-shadow: 0 0 0 3px rgba(16,185,129,.25);
+        }
+        .lp-switch-label {
+            display: inline-flex;
+            align-items: center;
+            gap: .2rem;
+        }
+        .lp-switch-label .material-symbols-rounded { color: #94a3b8; font-size: 13px; }
+        .lp-switch-input:checked ~ .lp-switch-label .material-symbols-rounded { color: #059669; }
+        .lp-switch:has(.lp-toggle-featured:checked) .lp-switch-label .material-symbols-rounded { color: #b45309; }
+        .lp-switch.is-busy { opacity: .55; pointer-events: none; }
+        @media (max-width: 575.98px) {
+            .lp-card-actions { gap: .25rem; }
+            .lp-card-toggles { gap: .2rem .4rem; }
+            .lp-card-action-buttons { flex: 0 0 auto; }
         }
 
         /* ===== Empty state & Load-more ===== */
@@ -375,6 +466,81 @@
                 }
             });
         });
+    });
+
+    // Toast helper pojok kanan atas (SweetAlert2 toast, konsisten dengan helper lain).
+    var lpPostToast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 1600,
+        timerProgressBar: true,
+    });
+
+    // Helper: update badge status di meta-top sesuai state terbaru.
+    function lpUpdateStatusBadges(card, isPublished) {
+        var metaTop = card.querySelector('.lp-card-meta-top');
+        if (!metaTop) return;
+        // Hapus badge status (published/draft), sisakan category + featured.
+        metaTop.querySelectorAll('.lp-status-badge.is-published, .lp-status-badge.is-draft').forEach(function (b) { b.remove(); });
+        var badge = document.createElement('span');
+        badge.className = isPublished ? 'lp-status-badge is-published' : 'lp-status-badge is-draft';
+        badge.textContent = isPublished ? 'Dipublikasikan' : 'Draft';
+        metaTop.appendChild(badge);
+    }
+
+    // Handler universal untuk toggle publish/featured dari halaman indeks.
+    function lpPostToggle(inputEl, type) {
+        var card  = inputEl.closest('.lp-card');
+        var wrap  = inputEl.closest('.lp-switch');
+        var url   = inputEl.getAttribute('data-url');
+        if (!url || !card || !wrap) return;
+        if (wrap.classList.contains('is-busy')) return;
+        wrap.classList.add('is-busy');
+        var willBe = !inputEl.checked; // server membalik, jadi state "akan-dikirim" = !current
+        var fd = new FormData();
+        fd.append('_token', csrfToken);
+        fd.append('_method', 'PATCH');
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+            },
+            body: new URLSearchParams(fd),
+        }).then(function (resp) {
+            if (!resp.ok) throw new Error('http ' + resp.status);
+            return resp.json();
+        }).then(function (data) {
+            // Sinkronkan UI dengan state dari server.
+            if (type === 'publish') {
+                inputEl.checked = !!data.is_published;
+                lpUpdateStatusBadges(card, !!data.is_published);
+            } else if (type === 'featured') {
+                inputEl.checked = !!data.is_featured;
+            }
+            lpPostToast.fire({
+                icon: 'success',
+                title: (data.label || (type === 'publish' ? 'Publish' : 'Beranda')) + ' · Tersimpan',
+            });
+        }).catch(function () {
+            // Revert UI ke state sebelumnya.
+            inputEl.checked = !inputEl.checked;
+            lpPostToast.fire({
+                icon: 'error',
+                title: (type === 'publish' ? 'Publish' : 'Beranda') + ' · Gagal menyimpan',
+            });
+        }).then(function () {
+            wrap.classList.remove('is-busy');
+        });
+    }
+
+    document.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!(t instanceof HTMLElement)) return;
+        if (t.classList.contains('lp-toggle-publish'))  { lpPostToggle(t, 'publish');  }
+        if (t.classList.contains('lp-toggle-featured')) { lpPostToggle(t, 'featured'); }
     });
 
     // Muat halaman pertama

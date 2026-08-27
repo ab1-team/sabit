@@ -867,15 +867,34 @@ class AdminLandingController extends Controller
 
         $editUrl = route('app.admin-landing.posts.edit', $row->id);
         $delUrl  = route('app.admin-landing.posts.destroy', $row->id);
+        $publishUrl = route('app.admin-landing.posts.toggle-publish', $row->id);
+        $featuredUrl = route('app.admin-landing.posts.toggle-featured', $row->id);
+
+        $pubCheck  = $row->is_published ? 'checked' : '';
+        $featCheck = $row->is_featured ? 'checked' : '';
 
         $actions = '<div class="lp-card-actions pb-0">'
-            .'<a href="'.$editUrl.'" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">'
-            .'<span class="material-symbols-rounded" style="font-size:16px;">edit</span> Edit</a>'
+            .'<div class="lp-card-toggles">'
+            .'<label class="lp-switch" title="Publish — tampilkan di halaman publik">'
+            .'<input type="checkbox" class="lp-switch-input lp-toggle-publish" data-url="'.$publishUrl.'" '.$pubCheck.'>'
+            .'<span class="lp-switch-track"><span class="lp-switch-thumb"></span></span>'
+            .'<span class="lp-switch-label"><span class="material-symbols-rounded" style="font-size:13px;">publish</span> Publish</span>'
+            .'</label>'
+            .'<label class="lp-switch" title="Tampilkan di Beranda — sematkan sebagai artikel pilihan">'
+            .'<input type="checkbox" class="lp-switch-input lp-toggle-featured" data-url="'.$featuredUrl.'" '.$featCheck.'>'
+            .'<span class="lp-switch-track"><span class="lp-switch-thumb"></span></span>'
+            .'<span class="lp-switch-label"><span class="material-symbols-rounded" style="font-size:13px;">star</span> Beranda</span>'
+            .'</label>'
+            .'</div>'
+            .'<div class="lp-card-action-buttons">'
+            .'<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-outline-primary" title="Edit artikel" aria-label="Edit">'
+            .'<span class="material-symbols-rounded" style="font-size:16px;">edit</span></a>'
             .'<form action="'.$delUrl.'" method="POST" class="d-inline lp-card-delete" data-confirm="Hapus artikel &quot;'.$title.'&quot;?" style="display:inline">'
             .csrf_field().method_field('DELETE')
-            .'<button type="submit" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">'
-            .'<span class="material-symbols-rounded" style="font-size:16px;">delete</span> Hapus</button>'
+            .'<button type="submit" class="btn btn-sm btn-icon btn-outline-danger" title="Hapus artikel" aria-label="Hapus">'
+            .'<span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>'
             .'</form>'
+            .'</div>'
             .'</div>';
 
         return '<article class="lp-card" data-id="'.$row->id.'">'
@@ -1031,6 +1050,50 @@ class AdminLandingController extends Controller
         $model->delete();
 
         return $this->deleteSuccess($request, 'Program / berita berhasil dihapus.', 'app.admin-landing.posts');
+    }
+
+    /**
+     * Toggle publish/unpublish dari halaman indeks (tanpa buka form edit).
+     * PATCH /app/admin-landing/posts/{post}/toggle-publish
+     */
+    public function postTogglePublish(Request $request, $post)
+    {
+        $model = ArtikelLanding::findOrFail($post);
+        $model->is_published = ! $model->is_published;
+        // Saat dipublikasikan pertama kali & belum ada tanggal → set tanggal publish.
+        if ($model->is_published && empty($model->published_at)) {
+            $model->published_at = now();
+        }
+        $model->save();
+
+        return response()->json([
+            'ok'           => true,
+            'is_published' => (bool) $model->is_published,
+            'label'        => 'Publish',
+            'msg'          => $model->is_published
+                ? 'Artikel ditampilkan di halaman publik.'
+                : 'Artikel disembunyikan dari halaman publik.',
+        ]);
+    }
+
+    /**
+     * Toggle featured/unfeatured (sematkan sebagai pilihan) dari halaman indeks.
+     * PATCH /app/admin-landing/posts/{post}/toggle-featured
+     */
+    public function postToggleFeatured(Request $request, $post)
+    {
+        $model = ArtikelLanding::findOrFail($post);
+        $model->is_featured = ! $model->is_featured;
+        $model->save();
+
+        return response()->json([
+            'ok'           => true,
+            'is_featured'  => (bool) $model->is_featured,
+            'label'        => 'Beranda',
+            'msg'          => $model->is_featured
+                ? 'Artikel disematkan sebagai pilihan.'
+                : 'Artikel dilepas dari sematan pilihan.',
+        ]);
     }
 
     public function postUploadContent(Request $request)
