@@ -27,13 +27,20 @@
             font-size: .72rem;
             letter-spacing: .04em;
             text-transform: uppercase;
-            padding: .85rem 1rem;
+            padding: .65rem .6rem;
             white-space: nowrap;
         }
         #lpMsgTable tbody td {
-            padding: .85rem 1rem;
+            padding: .6rem .6rem;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
+            font-size: .85rem;
+        }
+        /* Pengirim & subjek: ellipsis agar tidak memanjang */
+        #lpMsgTable td.lp-cell-truncate {
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         #lpMsgTable tbody tr:last-child td { border-bottom: 0; }
         #lpMsgTable tbody tr { transition: background-color .15s ease; }
@@ -126,7 +133,152 @@
             color: #94a3b8 !important;
         }
 
-        @media (max-width: 640px) {
+        /* Checkbox selection – dengan icon check SVG (Material-style) */
+        #lpMsgTable input[type="checkbox"].form-check-input,
+        #lpSelectAll.form-check-input {
+            cursor: pointer;
+            background-color: #fff;
+            border: 2px solid #94a3b8;
+            box-shadow: none !important;
+            /* checkmark: SVG centang putih (inline) */
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 0% 0%; /* sembunyi saat unchecked */
+            transition: background-size .15s ease, border-color .15s ease, background-color .15s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        #lpMsgTable input[type="checkbox"].form-check-input:hover,
+        #lpSelectAll.form-check-input:hover {
+            border-color: #1d4ed8;
+        }
+        #lpMsgTable input[type="checkbox"].form-check-input:focus,
+        #lpSelectAll.form-check-input:focus {
+            border-color: #1d4ed8;
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, .18) !important;
+        }
+        #lpMsgTable input[type="checkbox"].form-check-input:checked,
+        #lpSelectAll.form-check-input:checked {
+            background-color: #1d4ed8;
+            border-color: #1d4ed8;
+            background-size: 65% 65%; /* icon check muncul */
+        }
+        #lpMsgTable input[type="checkbox"].form-check-input:indeterminate,
+        #lpSelectAll.form-check-input:indeterminate {
+            background-color: #1d4ed8;
+            border-color: #1d4ed8;
+            /* indeterminate: garis horizontal putih (dash) */
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M6 12 H18'/%3E%3C/svg%3E");
+            background-size: 70% 70%;
+        }
+        #lpMsgTable input[type="checkbox"].form-check-input {
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+        #lpSelectAll.form-check-input {
+            width: 1.15rem;
+            height: 1.15rem;
+        }
+
+        /* Counter badge di dalam tombol Hapus Terpilih */
+        #lpBulkDeleteBtn #lpSelectedCount {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.1rem;
+            height: 1.1rem;
+            padding: 0 .35rem;
+            font-size: .72rem;
+            font-weight: 700;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            /* Sembunyikan scroll horizontal tabel di mobile,
+               ganti jadi card list vertikal supaya kolom Aksi tetap kelihatan. */
+            .lp-msg-table-scroll { overflow-x: visible; }
+
+            #lpMsgTable,
+            #lpMsgTable thead,
+            #lpMsgTable tbody,
+            #lpMsgTable tr,
+            #lpMsgTable th,
+            #lpMsgTable td {
+                display: block;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: none !important;
+            }
+            #lpMsgTable thead { display: none; }
+            #lpMsgTable tbody tr {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: .65rem;
+                padding: .55rem .65rem;
+                margin-bottom: .65rem;
+                box-shadow: 0 1px 2px rgba(15,23,42,.04);
+                overflow: hidden; /* pastikan isi tidak meluber keluar card */
+                word-break: break-word;
+            }
+            #lpMsgTable tbody tr:hover { background-color: #f8fafc; }
+            #lpMsgTable tbody td {
+                border: 0 !important;
+                padding: .25rem 0 !important;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: .65rem;
+                font-size: .85rem;
+            }
+            #lpMsgTable tbody td::before {
+                content: attr(data-label);
+                flex: 0 0 auto;
+                font-size: .7rem;
+                font-weight: 600;
+                letter-spacing: .03em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+            /* Sel yang hanya berisi kontrol/ikon → label di-hide, justify end */
+            #lpMsgTable td.lp-col-check,
+            #lpMsgTable td.lp-col-action {
+                justify-content: flex-end;
+                padding-top: .5rem !important;
+                border-top: 1px dashed #e2e8f0 !important;
+                margin-top: .35rem;
+            }
+            #lpMsgTable td.lp-col-check::before,
+            #lpMsgTable td.lp-col-action::before { content: none; }
+
+            /* Sel sender/subject: biarkan teks wrap agar tidak overflow */
+            #lpMsgTable td.lp-col-sender,
+            #lpMsgTable td.lp-col-subject {
+                flex-direction: column;
+                align-items: stretch;
+                gap: .15rem;
+            }
+            #lpMsgTable td.lp-col-sender > div,
+            #lpMsgTable td.lp-col-subject > div {
+                text-align: right;
+                max-width: 100%;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            /* Sembunyikan info sekunder di mobile supaya tetap ringkas */
+            #lpMsgTable td.lp-col-date::before,
+            #lpMsgTable td.lp-col-status::before { content: none; }
+            #lpMsgTable td.lp-col-date,
+            #lpMsgTable td.lp-col-status {
+                justify-content: flex-end;
+                font-size: .72rem;
+                color: #64748b;
+            }
+
+            /* Wrapper DataTables */
             .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
             .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
             .dataTables_wrapper .dataTables_filter input {
@@ -140,6 +292,81 @@
                 font-size: .75rem;
                 padding: 0 .5rem !important;
                 margin: 0 1px !important;
+            }
+        }
+
+        /* HP kecil (≤576px): padding lebih ketat, toolbar stack vertikal,
+           tombol aksi tetap ukuran cukup untuk tap (touch target ≥44px). */
+        @media (max-width: 576px) {
+            .px-2.py-2 { padding-left: .65rem !important; padding-right: .65rem !important; }
+            .card.my-3 { margin-left: -.25rem; margin-right: -.25rem; }
+            .card-body.px-3.py-3 { padding: .65rem !important; }
+
+            /* Toolbar: stack ke bawah */
+            .d-flex.justify-content-between.align-items-center.mb-3 {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: .65rem !important;
+            }
+            .d-flex.justify-content-between.align-items-center.mb-3 > div:first-child {
+                text-align: center;
+            }
+            .d-flex.align-items-center.gap-2 {
+                justify-content: center;
+            }
+
+            /* Tabel card lebih ringkas */
+            #lpMsgTable tbody tr {
+                padding: .5rem .55rem;
+                margin-bottom: .55rem;
+            }
+            #lpMsgTable tbody td {
+                font-size: .82rem;
+                gap: .5rem;
+            }
+            #lpMsgTable tbody td::before {
+                font-size: .65rem;
+            }
+
+            /* Tombol aksi: perkecil sedikit tapi tetap tap-friendly */
+            .lp-table-actions .btn.btn-icon {
+                width: 2.1rem;
+                height: 2.1rem;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .lp-table-actions .btn.btn-icon .material-symbols-rounded {
+                font-size: 1.05rem;
+            }
+            .lp-table-actions {
+                flex-wrap: wrap;
+                gap: .25rem !important;
+            }
+
+            /* DataTables filter & length: full-width */
+            .dataTables_wrapper .dataTables_length,
+            .dataTables_wrapper .dataTables_filter,
+            .dataTables_wrapper .dataTables_info {
+                text-align: center !important;
+            }
+            .dataTables_wrapper .dataTables_filter input {
+                margin-top: .35rem;
+            }
+
+            /* Pagination: ukuran tetap proporsional */
+            .dataTables_wrapper .dataTables_paginate {
+                text-align: center !important;
+            }
+        }
+
+        /* HP sangat kecil (≤380px): kompres lebih lanjut */
+        @media (max-width: 380px) {
+            #lpMsgTable tbody tr { padding: .45rem .5rem; }
+            .lp-table-actions .btn.btn-icon {
+                width: 1.95rem;
+                height: 1.95rem;
             }
         }
     </style>
@@ -156,6 +383,13 @@
             Pesan dari formulir kontak di halaman landing publik
             <span class="text-muted">/kontak</span>.
         </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" id="lpBulkDeleteBtn" class="btn btn-sm btn-outline-danger d-none" disabled>
+                <span class="material-symbols-rounded">delete_sweep</span>
+                <span class="d-none d-sm-inline ms-1">Hapus Terpilih</span>
+                <span id="lpSelectedCount" class="badge rounded-pill bg-danger text-white ms-1 d-none">0</span>
+            </button>
+        </div>
     </div>
 
     <div class="card my-3">
@@ -169,11 +403,14 @@
                 <table id="lpMsgTable" class="table table-striped table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="min-width:230px">Pengirim</th>
-                            <th style="min-width:280px">Subjek</th>
-                            <th style="width:140px;min-width:140px">Status</th>
-                            <th style="width:130px;min-width:130px">Tanggal</th>
-                            <th class="text-center" style="width:90px;min-width:90px">Aksi</th>
+                            <th style="width:36px;min-width:36px" class="text-center">
+                                <input type="checkbox" id="lpSelectAll" class="form-check-input" aria-label="Pilih semua">
+                            </th>
+                            <th style="min-width:140px">Pengirim</th>
+                            <th style="min-width:170px">Subjek</th>
+                            <th style="width:110px;min-width:110px">Status</th>
+                            <th style="width:110px;min-width:110px">Tanggal</th>
+                            <th class="text-center" style="width:80px;min-width:80px">Aksi</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -183,8 +420,8 @@
     </div>
 </div>
 
-<div class="modal fade modal-fullscreen" id="lpMessageModal" tabindex="-1" aria-labelledby="lpMessageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
+<div class="modal fade" id="lpMessageModal" tabindex="-1" aria-labelledby="lpMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="lpMessageModalLabel">Detail Pesan</h5>
@@ -212,6 +449,37 @@
 @section('script')
 <script>
 $(document).ready(function() {
+    // ====== Bulk selection state (dideklarasikan SEBELUM DataTables,
+    //       supaya rowCallback/drawCallback bisa langsung merujuk) ======
+    var selectedIds = new Set();
+    var $selectAll   = $('#lpSelectAll');
+    var $countBadge  = $('#lpSelectedCount');
+    var $bulkBtn     = $('#lpBulkDeleteBtn');
+
+    function syncSelectionUi() {
+        var n = selectedIds.size;
+        if (n > 0) {
+            $countBadge.text(n).removeClass('d-none');
+            $bulkBtn.removeClass('d-none').prop('disabled', false);
+        } else {
+            $countBadge.addClass('d-none');
+            $bulkBtn.addClass('d-none').prop('disabled', true);
+        }
+        // Supaya badge counter proporsional di dalam tombol
+        var minWidth = (n > 99) ? '1.75rem' : '1.1rem';
+        $countBadge.css('min-width', minWidth);
+        var visibleChecks = $('#lpMsgTable tbody input.lp-row-check').toArray()
+            .filter(function(cb) { return $(cb).is(':visible'); });
+        var checkedVisible = visibleChecks.filter(function(cb) { return cb.checked; }).length;
+        if (visibleChecks.length > 0 && checkedVisible === visibleChecks.length) {
+            $selectAll.prop('checked', true).prop('indeterminate', false);
+        } else if (checkedVisible > 0) {
+            $selectAll.prop('checked', false).prop('indeterminate', true);
+        } else {
+            $selectAll.prop('checked', false).prop('indeterminate', false);
+        }
+    }
+
     const table = $('#lpMsgTable').DataTable({
         processing: true,
         serverSide: true,
@@ -222,7 +490,7 @@ $(document).ready(function() {
         searching: true,
         info: true,
         autoWidth: false,
-        scrollX: true,
+        scrollX: false,
         responsive: false,
         order: [[3, 'desc']],
         language: {
@@ -238,18 +506,114 @@ $(document).ready(function() {
             paginate: { first: '«', last: '»', next: '›', previous: '‹' },
         },
         columns: [
-            { data: 'sender',      name: 'name',    orderable: true,  searchable: true },
-            { data: 'subject_col', name: 'subject', orderable: true,  searchable: true },
-            { data: 'status_col',  name: 'status',  orderable: true,  searchable: false },
-            { data: 'created_at',  name: 'created_at', orderable: true, searchable: false },
-            { data: 'action',      name: 'action',  orderable: false, searchable: false, className: 'text-center' },
+            { data: 'checkbox',    name: 'id',      orderable: false, searchable: false, className: 'text-center align-middle lp-col-check',
+              createdCell: function(td) { td.setAttribute('data-label', ''); } },
+            { data: 'sender',      name: 'name',    orderable: true,  searchable: true,  className: 'lp-col-sender',
+              createdCell: function(td) { td.setAttribute('data-label', 'Pengirim'); } },
+            { data: 'subject_col', name: 'subject', orderable: true,  searchable: true,  className: 'lp-col-subject',
+              createdCell: function(td) { td.setAttribute('data-label', 'Subjek'); } },
+            { data: 'status_col',  name: 'status',  orderable: true,  searchable: false, className: 'lp-col-status',
+              createdCell: function(td) { td.setAttribute('data-label', 'Status'); } },
+            { data: 'created_at',  name: 'created_at', orderable: true, searchable: false, className: 'lp-col-date',
+              createdCell: function(td) { td.setAttribute('data-label', 'Tanggal'); } },
+            { data: 'action',      name: 'action',  orderable: false, searchable: false, className: 'text-center lp-col-action',
+              createdCell: function(td) { td.setAttribute('data-label', 'Aksi'); } },
         ],
         rowCallback: function(row, data) {
-            // Highlight baris dengan status 'baru' (default)
             if (data && data.status === 'baru') {
                 row.classList.add('lp-msg-new');
             }
+            var cb = row.querySelector('.lp-row-check');
+            if (cb) {
+                cb.checked = selectedIds.has(String(data.id));
+                cb.addEventListener('change', function() {
+                    if (cb.checked) selectedIds.add(String(data.id));
+                    else selectedIds.delete(String(data.id));
+                    syncSelectionUi();
+                });
+            }
         },
+        drawCallback: function() {
+            syncSelectionUi();
+        },
+    });
+
+    $selectAll.on('change', function() {
+        var checked = this.checked;
+        $('#lpMsgTable tbody input.lp-row-check').each(function() {
+            this.checked = checked;
+            var id = String(this.dataset.id || '');
+            if (checked && id) selectedIds.add(id);
+            else if (id) selectedIds.delete(id);
+        });
+        syncSelectionUi();
+    });
+
+    $bulkBtn.on('click', function() {
+        if (selectedIds.size === 0) return;
+        var ids = Array.from(selectedIds);
+        Swal.fire({
+            title: 'Hapus ' + ids.length + ' pesan?',
+            text: 'Pesan yang dipilih akan dihapus permanen.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, hapus semua',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+        }).then(function(r) {
+            if (!r.isConfirmed) return;
+            var fd = new FormData();
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+            ids.forEach(function(id) { fd.append('ids[]', id); });
+
+            $bulkBtn.prop('disabled', true);
+            fetch('{{ route('app.admin-landing.contact-messages.bulk-destroy') }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: fd,
+            }).then(function(resp) {
+                var ct = resp.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    return resp.json().then(function(d) { return { status: resp.status, data: d }; });
+                }
+                return { status: resp.status, data: null };
+            }).then(function(out) {
+                if (out.data && out.data.success) {
+                    selectedIds.clear();
+                    Swal.fire({
+                        icon: 'success',
+                        title: out.data.msg || 'Pesan dihapus',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 1400,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                    });
+                    table.ajax.reload(null, false);
+                } else {
+                    Swal.fire({ icon: 'error', title: (out.data && out.data.msg) || 'Gagal menghapus' });
+                    $bulkBtn.prop('disabled', false);
+                }
+            }).catch(function() {
+                Swal.fire({ icon: 'error', title: 'Cek koneksi Anda.' });
+                $bulkBtn.prop('disabled', false);
+            });
+        });
+    });
+
+    // Reset pilihan saat tabel di-reload (mis. setelah toggle status / delete per baris)
+    table.on('draw', function() {
+        // Sinkronkan ulang checkbox dengan selectedIds yang masih ada
+        $('#lpMsgTable tbody input.lp-row-check').each(function() {
+            var id = String(this.dataset.id || '');
+            this.checked = selectedIds.has(id);
+        });
+        syncSelectionUi();
     });
 
     // Tombol toggle status: maju ke status berikutnya via fetch
@@ -353,5 +717,39 @@ $(document).ready(function() {
         });
     });
 });
+</script>
+
+<style>
+    /* Pastikan modal pesan-kontak tampil solid & di atas sidenav (z-index 9999).
+       Stacking context .main-content (position:relative + z-index:1) bisa
+       membatasi modal position:fixed di dalamnya. Pindahkan via JS ke <body>. */
+    #lpMessageModal {
+        z-index: 12050 !important;
+    }
+    #lpMessageModal + .modal-backdrop,
+    body > .modal-backdrop.show {
+        z-index: 12049 !important;
+    }
+    #lpMessageModal .modal-content {
+        background-color: #ffffff !important;
+        opacity: 1 !important;
+        box-shadow: 0 24px 64px -12px rgba(15, 23, 42, .35) !important;
+    }
+    #lpMessageModal .modal-header,
+    #lpMessageModal .modal-footer,
+    #lpMessageModal .modal-body {
+        background-color: #ffffff !important;
+    }
+</style>
+
+<script>
+    // Pindahkan modal ke <body> agar tidak terjebak stacking context
+    // .main-content yang membatasi position:fixed + z-index.
+    (function() {
+        var m = document.getElementById('lpMessageModal');
+        if (m && m.parentNode !== document.body) {
+            document.body.appendChild(m);
+        }
+    })();
 </script>
 @endsection

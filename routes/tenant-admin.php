@@ -289,6 +289,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::post('/contact-messages/{message}/status', [AdminLandingController::class, 'contactMessageStatus'])->name('contact-messages.status');
         Route::post('/contact-messages/{message}/mark', [AdminLandingController::class, 'contactMessageMark'])->name('contact-messages.mark');
         Route::delete('/contact-messages/{message}', [AdminLandingController::class, 'contactMessageDestroy'])->name('contact-messages.destroy');
+        Route::post('/contact-messages/bulk-destroy', [AdminLandingController::class, 'contactMessagesBulkDestroy'])->name('contact-messages.bulk-destroy');
 
         // PPDB: sub-CRUD (persyaratan, tahapan, jadwal, FAQ).
         Route::get('/ppdb/persyaratan', [AdminLandingController::class, 'ppdbRequirements'])->name('ppdb.requirements');

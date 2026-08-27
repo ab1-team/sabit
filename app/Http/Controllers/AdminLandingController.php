@@ -2485,19 +2485,23 @@ class AdminLandingController extends Controller
         $query = PesanKontakLanding::query();
 
         return DataTables::eloquent($query)
+            ->addColumn('checkbox', function ($m) {
+                return '<input type="checkbox" class="form-check-input lp-row-check" '
+                    .'data-id="'.e((string) $m->id).'" aria-label="Pilih pesan">';
+            })
             ->addColumn('sender', function ($m) {
                 $name = $m->name ?: 'Anonim';
                 $email = $m->email ?: '—';
                 $bold = $m->status === PesanKontakLanding::STATUS_BARU ? ' fw-semibold' : '';
-                return '<div class="'.$bold.'">'.e($name).'</div>'
-                    .'<div class="text-muted small fw-normal">'.e($email).'</div>';
+                return '<div class="'.$bold.' text-truncate" title="'.e($name).'">'.e($name).'</div>'
+                    .'<div class="text-muted small fw-normal text-truncate" title="'.e($email).'">'.e($email).'</div>';
             })
             ->addColumn('subject_col', function ($m) {
                 $subj = $m->subject ?: '(tanpa subjek)';
-                $excerpt = \Illuminate\Support\Str::limit(strip_tags($m->message), 90);
+                $excerpt = \Illuminate\Support\Str::limit(strip_tags($m->message), 50);
                 $bold = $m->status === PesanKontakLanding::STATUS_BARU ? ' fw-semibold' : '';
-                return '<div class="'.$bold.'">'.e($subj).'</div>'
-                    .'<div class="text-muted small fw-normal text-truncate" style="max-width:380px;">'.e($excerpt).'</div>';
+                return '<div class="'.$bold.' text-truncate" title="'.e($subj).'">'.e($subj).'</div>'
+                    .'<div class="text-muted small fw-normal text-truncate" title="'.e($excerpt).'">'.e($excerpt).'</div>';
             })
             ->addColumn('status_col', function ($m) {
                 // Badge read-only untuk menampilkan status (default: 'baru')
@@ -2564,7 +2568,7 @@ class AdminLandingController extends Controller
             ->editColumn('created_at', function ($m) {
                 return $m->created_at ? $m->created_at->format('Y-m-d H:i:s') : '';
             })
-            ->rawColumns(['sender', 'subject_col', 'status_col', 'action'])
+            ->rawColumns(['checkbox', 'sender', 'subject_col', 'status_col', 'action'])
             ->orderColumn('created_at', 'created_at $1')
             ->make(true);
     }
@@ -2615,6 +2619,33 @@ class AdminLandingController extends Controller
         $model->delete();
 
         return $this->deleteSuccess($request, 'Pesan berhasil dihapus.', 'app.admin-landing.contact-messages');
+    }
+
+    public function contactMessagesBulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (!is_array($ids)) {
+            $ids = [$ids];
+        }
+        $ids = array_values(array_filter(array_map(function ($v) {
+            return is_numeric($v) ? (int) $v : null;
+        }, $ids)));
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'msg'     => 'Tidak ada pesan yang dipilih.',
+            ], 422);
+        }
+        $deleted = PesanKontakLanding::whereIn('id', $ids)->delete();
+        $msg = $deleted > 1
+            ? $deleted.' pesan berhasil dihapus.'
+            : 'Pesan berhasil dihapus.';
+
+        return response()->json([
+            'success' => true,
+            'msg'     => $msg,
+            'deleted' => $deleted,
+        ]);
     }
 
     // -----------------------------------------------------------------
