@@ -1247,7 +1247,16 @@
         .lp-welcome-modal-paragraphs p:last-child { margin-bottom: 0; }
 
         @media (max-width: 575.98px) {
-            .lp-welcome-modal-head { padding-right: 4rem; }
+            /* Saat modal-fullscreen-sm-down aktif: hilangkan lengkung pojok & shadow
+               supaya benar-benar full-screen kotak. */
+            .lp-welcome-modal .modal-content {
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+            .lp-welcome-modal-head {
+                padding: 1.15rem 4rem 0.85rem 1.15rem;
+                border-radius: 0;
+            }
             .lp-welcome-modal-close { top: 12px; right: 12px; }
             .lp-welcome-modal-body { padding: 1.15rem; }
             .lp-welcome-actions { gap: 0.75rem; }
