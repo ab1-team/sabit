@@ -134,8 +134,7 @@
     }
     .lp-gallery-item--video > img {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
+        height: auto;
         display: block;
         transition: transform .25s ease, filter .2s ease;
     }
@@ -190,39 +189,35 @@
                 <p class="mt-3 mb-0">Belum ada dokumentasi.</p>
             </div>
         @else
-            <div class="row g-3">
+            <div class="lp-gallery-grid">
                 @foreach (($items ?? collect()) as $i => $item)
                     @if ($item->media_type === 'video')
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <button type="button"
-                                    class="lp-gallery-item lp-gallery-item--video lp-reveal lp-video-trigger border-0 p-0 d-block"
-                                    data-from="zoom"
-                                    data-delay="{{ (($i % 4) + 1) }}"
-                                    data-yt-id="{{ $item->youtube_id ?? '' }}"
-                                    data-local-src="{{ $item->local_src ?? '' }}"
-                                    data-poster="{{ $item->poster_url ?? '' }}"
-                                    data-title="{{ $item->title }}"
-                                    data-description="{{ strip_tags($item->description ?? '') }}"
-                                    aria-label="Putar video: {{ $item->title }}">
-                                <img src="{{ $item->poster_url ?: 'https://i.ytimg.com/vi/'.($item->youtube_id ?? '').'/hqdefault.jpg' }}" alt="{{ $item->title }}" loading="lazy">
-                                <span class="lp-gallery-play" aria-hidden="true">
-                                    <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="32" cy="32" r="30" fill="rgba(15,23,42,.6)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
-                                        <polygon points="26,20 26,44 46,32" fill="#fff"/>
-                                    </svg>
-                                </span>
-                                <div class="lp-gallery-overlay">{{ $item->title }}</div>
-                            </button>
-                        </div>
+                        <button type="button"
+                                class="lp-gallery-item lp-gallery-item--video lp-reveal lp-video-trigger border-0 p-0"
+                                data-from="zoom"
+                                data-delay="{{ (($i % 4) + 1) }}"
+                                data-yt-id="{{ $item->youtube_id ?? '' }}"
+                                data-local-src="{{ $item->local_src ?? '' }}"
+                                data-poster="{{ $item->poster_url ?? '' }}"
+                                data-title="{{ $item->title }}"
+                                data-description="{{ strip_tags($item->description ?? '') }}"
+                                aria-label="Putar video: {{ $item->title }}">
+                            <img src="{{ $item->poster_url ?: 'https://i.ytimg.com/vi/'.($item->youtube_id ?? '').'/hqdefault.jpg' }}" alt="{{ $item->title }}" loading="lazy">
+                            <span class="lp-gallery-play" aria-hidden="true">
+                                <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="32" cy="32" r="30" fill="rgba(15,23,42,.6)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+                                    <polygon points="26,20 26,44 46,32" fill="#fff"/>
+                                </svg>
+                            </span>
+                            <div class="lp-gallery-overlay">{{ $item->title }}</div>
+                        </button>
                     @else
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <a href="{{ $item->image_path ? Storage::disk('public')->url('landing/' . $item->image_path) : '#' }}" target="_blank" class="lp-gallery-item lp-reveal d-block" data-from="zoom" data-delay="{{ (($i % 4) + 1) }}">
-                                @if ($item->image_path)
-                                    <img src="{{ Storage::disk('public')->url('landing/' . $item->image_path) }}" alt="{{ $item->title }}" loading="lazy">
-                                    <div class="lp-gallery-overlay">{{ $item->title }}</div>
-                                @endif
-                            </a>
-                        </div>
+                        <a href="{{ $item->image_path ? Storage::disk('public')->url('landing/' . $item->image_path) : '#' }}" target="_blank" class="lp-gallery-item lp-reveal d-block" data-from="zoom" data-delay="{{ (($i % 4) + 1) }}">
+                            @if ($item->image_path)
+                                <img src="{{ Storage::disk('public')->url('landing/' . $item->image_path) }}" alt="{{ $item->title }}" loading="lazy">
+                                <div class="lp-gallery-overlay">{{ $item->title }}</div>
+                            @endif
+                        </a>
                     @endif
                 @endforeach
             </div>
