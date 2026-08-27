@@ -194,7 +194,7 @@
 
                             <div class="lp-req-full input-group input-group-outline mb-0 @if ($itemsText !== '') is-filled @endif">
                                 <label class="form-label">Daftar item (satu item per baris)</label>
-                                <textarea name="rows[{{ $rowIndex }}][items]" class="form-control lp-req-items" rows="6" placeholder="Fotokopi ijazah&#10;Akta kelahiran&#10;Kartu keluarga">{{ $itemsText }}</textarea>
+                                <textarea name="rows[{{ $rowIndex }}][items]" class="form-control lp-req-items" rows="6">{{ $itemsText }}</textarea>
                                 <input type="hidden" name="rows[{{ $rowIndex }}][sort_order]" value="{{ $sortVal }}">
                             </div>
                         </div>
@@ -293,7 +293,7 @@
 
                         <div class="lp-req-full input-group input-group-outline mb-0">
                             <label class="form-label">Daftar item (satu item per baris)</label>
-                            <textarea name="rows[__INDEX__][items]" class="form-control lp-req-items" rows="6" placeholder="Fotokopi ijazah&#10;Akta kelahiran&#10;Kartu keluarga"></textarea>
+                            <textarea name="rows[__INDEX__][items]" class="form-control lp-req-items" rows="6"></textarea>
                             <input type="hidden" name="rows[__INDEX__][sort_order]" value="__SORT__">
                         </div>
                     </div>

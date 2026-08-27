@@ -40,7 +40,6 @@
                     ])
                     @include('admin-landing._komponen.input-teks', [
                         'name' => 'icon', 'label' => 'Icon (class Bootstrap)',
-                        'placeholder' => 'bi-easel',
                         'value' => old('icon', $item->icon), 'colClass' => 'col-md-3',
                     ])
                     @include('admin-landing._komponen.input-teks', [

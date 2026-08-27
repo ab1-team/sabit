@@ -284,11 +284,11 @@
                             <div class="lp-jad-half-row">
                                 <div class="input-group input-group-outline mb-0 @if ($startVal) is-filled @endif">
                                     <label class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
-                                    <input type="text" name="rows[{{ $rowIndex }}][start_date]" class="form-control lp-date-only" required value="{{ $startVal }}" placeholder="Pilih tanggal…" autocomplete="off">
+                                    <input type="text" name="rows[{{ $rowIndex }}][start_date]" class="form-control lp-date-only" required value="{{ $startVal }}" autocomplete="off">
                                 </div>
                                 <div class="input-group input-group-outline mb-0 @if ($endVal) is-filled @endif">
                                     <label class="form-label">Tanggal Selesai</label>
-                                    <input type="text" name="rows[{{ $rowIndex }}][end_date]" class="form-control lp-date-only" value="{{ $endVal }}" placeholder="Pilih tanggal…" autocomplete="off">
+                                    <input type="text" name="rows[{{ $rowIndex }}][end_date]" class="form-control lp-date-only" value="{{ $endVal }}" autocomplete="off">
                                 </div>
                             </div>
 
@@ -396,16 +396,16 @@
                             </div>
                         </div>
 
-                        <div class="lp-jad-half-row">
-                            <div class="input-group input-group-outline mb-0">
-                                <label class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
-                                <input type="text" name="rows[__INDEX__][start_date]" class="form-control lp-date-only" required value="" placeholder="Pilih tanggal…" autocomplete="off">
+                            <div class="lp-jad-half-row">
+                                <div class="input-group input-group-outline mb-0">
+                                    <label class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
+                                    <input type="text" name="rows[__INDEX__][start_date]" class="form-control lp-date-only" required value="" autocomplete="off">
+                                </div>
+                                <div class="input-group input-group-outline mb-0">
+                                    <label class="form-label">Tanggal Selesai</label>
+                                    <input type="text" name="rows[__INDEX__][end_date]" class="form-control lp-date-only" value="" autocomplete="off">
+                                </div>
                             </div>
-                            <div class="input-group input-group-outline mb-0">
-                                <label class="form-label">Tanggal Selesai</label>
-                                <input type="text" name="rows[__INDEX__][end_date]" class="form-control lp-date-only" value="" placeholder="Pilih tanggal…" autocomplete="off">
-                            </div>
-                        </div>
 
                         <div class="input-group input-group-outline mb-0">
                             <label class="form-label">Biaya Pendaftaran</label>

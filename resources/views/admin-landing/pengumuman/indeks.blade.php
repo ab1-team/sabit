@@ -40,7 +40,7 @@
         #lpAnnTable tbody tr:hover { background-color: #f8fafc; }
 
         #lpAnnTable .lp-row-title-cell {
-            min-width: 240px;
+            min-width: 260px;
         }
         #lpAnnTable .lp-row-title-cell .lp-ann-title {
             font-size: .92rem;
@@ -60,21 +60,33 @@
             overflow: hidden;
         }
 
-        #lpAnnTable .lp-ann-file {
+        /* Meta: tanggal + lampiran digabung dalam 1 baris di bawah judul */
+        #lpAnnTable .lp-ann-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .45rem;
+            margin-top: .3rem;
+            font-size: .75rem;
+            color: #64748b;
+            line-height: 1;
+        }
+        #lpAnnTable .lp-ann-meta-item {
             display: inline-flex;
             align-items: center;
             gap: .3rem;
             padding: .2rem .55rem;
             background: #f1f5f9;
             border-radius: .35rem;
-            font-size: .75rem;
-            color: #475569;
-            max-width: 180px;
+            max-width: 220px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        #lpAnnTable .lp-ann-file .material-symbols-rounded { font-size: 16px; }
+        #lpAnnTable .lp-ann-meta-item .material-symbols-rounded { font-size: 15px; line-height: 1; }
+        #lpAnnTable .lp-ann-meta-sep {
+            display: none; /* tidak ada separator visual */
+        }
 
         /* Style DataTables wrapper – konsisten dengan posts & galleries */
         .dataTables_wrapper .dataTables_length,
@@ -197,8 +209,6 @@
                     <thead>
                         <tr>
                             <th style="min-width:260px">Pengumuman</th>
-                            <th style="width:130px;min-width:130px">Tanggal</th>
-                            <th style="width:200px;min-width:200px">Lampiran</th>
                             <th style="width:110px;min-width:110px">Status</th>
                             <th class="text-center" style="width:100px;min-width:100px">Aksi</th>
                         </tr>
@@ -226,7 +236,7 @@
             autoWidth: false,
             scrollX: true,
             responsive: false,
-            order: [[1, 'desc']],
+            order: [[0, 'desc']],
             language: {
                 lengthMenu: 'Tampilkan _MENU_ data',
                 search: 'Cari:',
@@ -241,8 +251,6 @@
             },
             columns: [
                 { data: 'title_col', name: 'title', orderable: true, searchable: true, className: 'lp-row-title-cell' },
-                { data: 'published_at', name: 'published_at', orderable: true, searchable: false },
-                { data: 'file_col', name: 'file', orderable: false, searchable: true },
                 { data: 'status_col', name: 'is_published', orderable: true, searchable: true },
                 { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' },
             ],
@@ -271,12 +279,20 @@
                         url: $form.attr('action'),
                         method: 'POST',
                         data: $form.serialize(),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    }).done(function() {
-                        Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                    }).done(function(resp) {
+                        var msg = (resp && resp.msg) || 'Berhasil dihapus';
+                        var ok = !resp || resp.success !== false;
+                        if (ok) {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: msg, timer: 1800, timerProgressBar: true, showConfirmButton: false });
+                        } else {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, timer: 3500, timerProgressBar: true, showConfirmButton: false });
+                        }
                         $('#lpAnnTable').DataTable().ajax.reload(null, false);
-                    }).fail(function() {
-                        Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                    }).fail(function(xhr) {
+                        var msg = 'Gagal menghapus data.';
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, timer: 3500, timerProgressBar: true, showConfirmButton: false });
                     });
                 }
             });

@@ -91,7 +91,7 @@
                     <div class="col-md-12">
                         <div class="input-group input-group-outline mb-3 @if ($registrationValue !== '') is-filled @endif">
                             <label class="form-label">Konten Pendaftaran</label>
-                            <textarea name="registration" rows="6" class="form-control" placeholder="Tulis teks panjang pendaftaran di sini. Baris baru akan tampil sebagai paragraf di halaman publik.">{{ $registrationValue }}</textarea>
+                            <textarea name="registration" rows="6" class="form-control">{{ $registrationValue }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -134,7 +134,7 @@
                     <div class="col-md-12">
                         <div class="input-group input-group-outline mb-3 @if ($bottomParagraph !== '') is-filled @endif">
                             <label class="form-label">Paragraf</label>
-                            <textarea name="bottom_paragraph" rows="3" class="form-control" placeholder="Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.">{{ $bottomParagraph }}</textarea>
+                            <textarea name="bottom_paragraph" rows="3" class="form-control">{{ $bottomParagraph }}</textarea>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -146,7 +146,7 @@
                     <div class="col-md-6">
                         <div class="input-group input-group-outline mb-3 @if ($bottomPrimaryUrl !== '') is-filled @endif">
                             <label class="form-label">URL Tombol Utama</label>
-                            <input type="text" name="bottom_primary_url" class="form-control" maxlength="255" value="{{ $bottomPrimaryUrl }}" placeholder="/ppdb atau https://...">
+                            <input type="text" name="bottom_primary_url" class="form-control" maxlength="255" value="{{ $bottomPrimaryUrl }}">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -158,7 +158,7 @@
                     <div class="col-md-6">
                         <div class="input-group input-group-outline mb-3 @if ($bottomSecondaryUrl !== '') is-filled @endif">
                             <label class="form-label">URL Tombol Sekunder</label>
-                            <input type="text" name="bottom_secondary_url" class="form-control" maxlength="255" value="{{ $bottomSecondaryUrl }}" placeholder="/kontak atau https://...">
+                            <input type="text" name="bottom_secondary_url" class="form-control" maxlength="255" value="{{ $bottomSecondaryUrl }}">
                         </div>
                     </div>
                     <div class="col-md-12">

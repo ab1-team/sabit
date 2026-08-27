@@ -1038,7 +1038,7 @@
                             <label class="form-label">Judul <span class="text-danger">*</span></label>
                             <input type="text" name="title" required maxlength="200"
                                    value="{{ old('title', $row->title) }}"
-                                   class="form-control" placeholder="Cth: Visi &amp; Misi Sekolah">
+                                   class="form-control">
                         </div>
 
                         @if ($showBadge)
@@ -1046,19 +1046,19 @@
                                 <label class="form-label">Badge</label>
                                 <input type="text" name="badge_text" maxlength="100"
                                        value="{{ old('badge_text', $row->badge_text) }}"
-                                       class="form-control" placeholder="Cth: Akreditasi A">
+                                       class="form-control">
                             </div>
                             <div class="input-group input-group-outline mb-0 @if(old('extra_label', $row->extra_label)) is-filled @endif">
                                 <label class="form-label">Label</label>
                                 <input type="text" name="extra_label" maxlength="100"
                                        value="{{ old('extra_label', $row->extra_label) }}"
-                                       class="form-control" placeholder="Cth: NPSN">
+                                       class="form-control">
                             </div>
                             <div class="input-group input-group-outline mb-0 @if(old('badge_extra', $row->badge_extra)) is-filled @endif">
                                 <label class="form-label">Nilai</label>
                                 <input type="text" name="badge_extra" maxlength="100"
                                        value="{{ old('badge_extra', $row->badge_extra) }}"
-                                       class="form-control" placeholder="Cth: 20212345">
+                                       class="form-control">
                             </div>
                         @endif
 
@@ -1072,8 +1072,7 @@
                             @endphp
                             <textarea name="content"
                                       rows="{{ $contentRows }}"
-                                      class="form-control {{ $useWysiwyg ? 'lp-tinymce' : 'lp-plain' }}"
-                                      placeholder="Tulis konten di sini...">{{ old('content', $row->content) }}</textarea>
+                                      class="form-control {{ $useWysiwyg ? 'lp-tinymce' : 'lp-plain' }}">{{ old('content', $row->content) }}</textarea>
                         </div>
                     </div>
 
@@ -1152,7 +1151,7 @@
                             <div class="lp-fas-body">
                                 <div class="input-group input-group-outline mb-0 @if ($titleVal) is-filled @endif">
                                     <label class="form-label">Judul <span class="text-danger">*</span></label>
-                                    <input type="text" name="rows[{{ $rowIndex }}][title]" class="form-control" required maxlength="150" value="{{ $titleVal }}" placeholder="Cth: Ruang Kelas Modern">
+                                    <input type="text" name="rows[{{ $rowIndex }}][title]" class="form-control" required maxlength="150" value="{{ $titleVal }}">
                                 </div>
 
                                 <div class="lp-fas-side">
@@ -1188,7 +1187,7 @@
                                 <div class="lp-fas-full">
                                     <div class="input-group input-group-outline mb-0 @if ($descVal) is-filled @endif">
                                         <label class="form-label">Deskripsi</label>
-                                        <textarea name="rows[{{ $rowIndex }}][description]" class="form-control" rows="2" placeholder="Cth: Ruang belajar nyaman dengan AC, proyektor...">{{ $descVal }}</textarea>
+                                        <textarea name="rows[{{ $rowIndex }}][description]" class="form-control" rows="2">{{ $descVal }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -1258,11 +1257,11 @@
 
             <div class="lp-fas-body-wrap" data-role="body-wrap">
                 <div class="lp-fas-body-inner">
-                    <div class="lp-fas-body">
-                        <div class="input-group input-group-outline mb-0">
-                            <label class="form-label">Judul <span class="text-danger">*</span></label>
-                            <input type="text" name="rows[__INDEX__][title]" class="form-control" required maxlength="150" value="" placeholder="Cth: Ruang Kelas Modern">
-                        </div>
+                        <div class="lp-fas-body">
+                            <div class="input-group input-group-outline mb-0">
+                                <label class="form-label">Judul <span class="text-danger">*</span></label>
+                                <input type="text" name="rows[__INDEX__][title]" class="form-control" required maxlength="150" value="">
+                            </div>
 
                         <div class="lp-fas-side">
                             <div class="input-group input-group-outline mb-0">
@@ -1298,7 +1297,7 @@
                         <div class="lp-fas-full">
                             <div class="input-group input-group-outline mb-0">
                                 <label class="form-label">Deskripsi</label>
-                                <textarea name="rows[__INDEX__][description]" class="form-control" rows="2" placeholder="Cth: Ruang belajar nyaman dengan AC, proyektor..."></textarea>
+                                <textarea name="rows[__INDEX__][description]" class="form-control" rows="2"></textarea>
                             </div>
                         </div>
                     </div>

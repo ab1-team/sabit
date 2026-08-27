@@ -54,18 +54,17 @@
         }
         .lp-card {
             background: #fff;
-            border: 1px solid #e2e8f0;
+            border: none;
             border-radius: 1rem;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 1px 2px rgba(15,23,42,.04);
-            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,.10), 0 2px 4px -1px rgba(0,0,0,.06);
+            transition: transform .18s ease, box-shadow .18s ease;
         }
         .lp-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 28px -16px rgba(15,23,42,.18);
-            border-color: #cbd5e1;
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,.12) !important;
         }
 
         /* Cover */
@@ -484,8 +483,9 @@
                 },
                 body: new URLSearchParams(new FormData(form)),
             }).then(function (resp) {
-                if (resp.ok || resp.status === 204 || resp.redirected) {
-                    Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1100, showConfirmButton: false });
+                var ct = resp.headers.get('content-type') || '';
+                var showOk = function (msg) {
+                    lpPostToast.fire({ icon: 'success', title: msg || 'Berhasil dihapus' });
                     var card = form.closest('.lp-card');
                     if (card) card.remove();
                     state.total = Math.max(0, state.total - 1);
@@ -493,8 +493,22 @@
                     statsEl.textContent = 'Menampilkan ' + shown + ' dari ' + state.total + ' artikel';
                     if (shown === 0 && state.page === 1) renderEmpty(false);
                     if (shown === 0 && state.page < state.total_pages) fetchPage(true);
+                };
+                var showErr = function (msg) {
+                    lpPostToast.fire({ icon: 'error', title: msg || 'Gagal menghapus data.' });
+                };
+                if (resp.ok || resp.status === 204 || resp.redirected) {
+                    if (ct.indexOf('application/json') >= 0) {
+                        resp.json().then(function (data) {
+                            if (data && data.success) showOk(data.msg); else showErr((data && data.msg) || 'Gagal menghapus data.');
+                        }).catch(function () { showOk(); });
+                    } else {
+                        showOk();
+                    }
+                } else if (ct.indexOf('application/json') >= 0) {
+                    resp.json().then(function (data) { showErr((data && data.msg) || 'Gagal menghapus data.'); }).catch(function () { showErr(); });
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                    showErr();
                 }
             });
         });

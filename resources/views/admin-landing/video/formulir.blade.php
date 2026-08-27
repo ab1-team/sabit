@@ -268,7 +268,7 @@
                             <label for="title">Judul Video</label>
                             <input id="title" type="text" name="title" class="form-control"
                                    value="{{ old('title', $video->title) }}"
-                                   placeholder="mis. Profil Sekolah 2026" required>
+                                   required>
                         </div>
 
                         <div class="lp-field req">
@@ -291,8 +291,7 @@
                         <div class="lp-field req" id="ytUrlField">
                             <label for="youtube_url">URL YouTube</label>
                             <input id="youtube_url" type="url" name="youtube_url" class="form-control"
-                                   value="{{ old('youtube_url', $video->youtube_url) }}"
-                                   placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/...">
+                                   value="{{ old('youtube_url', $video->youtube_url) }}">
                             <small class="help">Bisa paste URL lengkap (watch?v=, youtu.be, shorts, atau embed). Sistem akan otomatis dikonversi ke format embed.</small>
                         </div>
 
@@ -322,8 +321,7 @@
 
                         <div class="lp-field">
                             <label for="description">Deskripsi</label>
-                            <textarea id="description" name="description" class="form-control" rows="4"
-                                      placeholder="Keterangan singkat tentang video (opsional)">{{ old('description', $video->description) }}</textarea>
+                            <textarea id="description" name="description" class="form-control" rows="4">{{ old('description', $video->description) }}</textarea>
                         </div>
                     </div>
 

@@ -242,20 +242,24 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
         Route::delete('/announcements/{announcement}', [AdminLandingController::class, 'announcementDestroy'])->name('announcements.destroy');
 
         Route::get('/galleries', [AdminLandingController::class, 'galleries'])->name('galleries');
-        Route::get('/galleries/data', [AdminLandingController::class, 'galleriesData'])->name('galleries.data');
+        Route::get('/galleries/cards', [AdminLandingController::class, 'galleriesCards'])->name('galleries.cards');
         Route::get('/galleries/create', [AdminLandingController::class, 'galleryCreate'])->name('galleries.create');
         Route::post('/galleries', [AdminLandingController::class, 'galleryStore'])->name('galleries.store');
-        Route::get('/galleries/{gallery}/edit', [AdminLandingController::class, 'galleryEdit'])->name('galleries.edit');
-        Route::put('/galleries/{gallery}', [AdminLandingController::class, 'galleryUpdate'])->name('galleries.update');
-        Route::delete('/galleries/{gallery}', [AdminLandingController::class, 'galleryDestroy'])->name('galleries.destroy');
+        Route::get('/galleries/{type}/{id}/edit', [AdminLandingController::class, 'galleryEdit'])->name('galleries.edit')->where(['type' => 'photo|video', 'id' => '[0-9]+']);
+        Route::put('/galleries/{type}/{id}', [AdminLandingController::class, 'galleryUpdate'])->name('galleries.update')->where(['type' => 'photo|video', 'id' => '[0-9]+']);
+        Route::patch('/galleries/{type}/{id}/toggle-publish', [AdminLandingController::class, 'galleryTogglePublish'])->name('galleries.toggle-publish')->where(['type' => 'photo|video', 'id' => '[0-9]+']);
+        Route::delete('/galleries/{type}/{id}', [AdminLandingController::class, 'galleryDestroy'])->name('galleries.destroy')->where(['type' => 'photo|video', 'id' => '[0-9]+']);
 
-        Route::get('/videos', [AdminLandingController::class, 'videos'])->name('videos');
-        Route::get('/videos/data', [AdminLandingController::class, 'videosData'])->name('videos.data');
-        Route::get('/videos/create', [AdminLandingController::class, 'videoCreate'])->name('videos.create');
-        Route::post('/videos', [AdminLandingController::class, 'videoStore'])->name('videos.store');
-        Route::get('/videos/{video}/edit', [AdminLandingController::class, 'videoEdit'])->name('videos.edit');
-        Route::put('/videos/{video}', [AdminLandingController::class, 'videoUpdate'])->name('videos.update');
-        Route::delete('/videos/{video}', [AdminLandingController::class, 'videoDestroy'])->name('videos.destroy');
+        // Route 'videos' lama di-redirect ke galleries karena menu Galeri
+        // sudah menggabungkan pengelolaan foto + video dalam 1 halaman.
+        Route::redirect('/videos', '/app/admin-landing/galleries', 301)->name('videos');
+        // Endpoint data lama dipindahkan/dihapus; biarkan 404 eksplisit biar tidak nyasar.
+        Route::get('/videos/data', fn () => abort(410, 'Endpoint dipindahkan ke /app/admin-landing/galleries/cards.'));
+        Route::get('/videos/create', fn () => redirect()->route('app.admin-landing.galleries.create'));
+        Route::post('/videos', fn () => abort(410, 'Endpoint dipindahkan ke /app/admin-landing/galleries.'));
+        Route::get('/videos/{video}/edit', fn ($video) => abort(410, 'Edit item via menu Galeri.'));
+        Route::put('/videos/{video}', fn ($video) => abort(410, 'Update item via menu Galeri.'));
+        Route::delete('/videos/{video}', fn ($video) => abort(410, 'Hapus item via menu Galeri.'));
 
         Route::get('/struktur', [AdminLandingController::class, 'struktur'])->name('struktur');
         Route::get('/struktur/create', [AdminLandingController::class, 'strukturCreate'])->name('struktur.create');

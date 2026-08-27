@@ -163,23 +163,22 @@
                     <label class="form-label">Nama Sekolah (header)</label>
                     <input type="text" name="school_name" maxlength="150"
                            value="{{ old('school_name', $ppdb->school_name) }}"
-                           class="form-control" placeholder="{{ $setting->school_name ?? 'Nama Sekolah' }}">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('eyebrow', $ppdb->eyebrow)) is-filled @endif">
                     <label class="form-label">Eyebrow (kecil di atas judul)</label>
                     <input type="text" name="eyebrow" maxlength="100"
                            value="{{ old('eyebrow', $ppdb->eyebrow) }}"
-                           class="form-control" placeholder="Penerimaan Peserta Didik Baru">
+                           class="form-control">
                 </div>
                 <div class="lp-ps-full input-group input-group-outline mb-0 @if(old('title', $ppdb->title)) is-filled @endif">
                     <label class="form-label">Judul Utama <span class="text-danger">*</span></label>
                     <input type="text" name="title" required maxlength="200"
                            value="{{ old('title', $ppdb->title) }}"
-                           class="form-control" placeholder="PPDB 2026/2027">
+                           class="form-control">
                 </div>
                 <div class="lp-ps-full">
-                    <textarea name="subtitle" rows="3" class="form-control"
-                              placeholder="Mari bergabung bersama kami wujudkan pendidikan berkualitas.">{{ old('subtitle', $ppdb->subtitle) }}</textarea>
+                    <textarea name="subtitle" rows="3" class="form-control">{{ old('subtitle', $ppdb->subtitle) }}</textarea>
                 </div>
             </div>
 
@@ -213,25 +212,25 @@
                     <label class="form-label">Teks Tombol Utama</label>
                     <input type="text" name="cta_text" maxlength="100"
                            value="{{ old('cta_text', $ppdb->cta_text) }}"
-                           class="form-control" placeholder="Formulir Pendaftaran Online">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('cta_url', $ppdb->cta_url)) is-filled @endif">
                     <label class="form-label">URL Tombol Utama</label>
                     <input type="text" name="cta_url" maxlength="255"
                            value="{{ old('cta_url', $ppdb->cta_url) }}"
-                           class="form-control" placeholder="/ppdb atau https://...">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('secondary_text', $ppdb->secondary_text)) is-filled @endif">
                     <label class="form-label">Teks Tombol Sekunder</label>
                     <input type="text" name="secondary_text" maxlength="100"
                            value="{{ old('secondary_text', $ppdb->secondary_text) }}"
-                           class="form-control" placeholder="Kontak Kami">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('secondary_url', $ppdb->secondary_url)) is-filled @endif">
                     <label class="form-label">URL Tombol Sekunder</label>
                     <input type="text" name="secondary_url" maxlength="255"
                            value="{{ old('secondary_url', $ppdb->secondary_url) }}"
-                           class="form-control" placeholder="/kontak atau https://...">
+                           class="form-control">
                 </div>
             </div>
 
@@ -265,47 +264,46 @@
                     <label class="form-label">Eyebrow</label>
                     <input type="text" name="bottom_eyebrow" maxlength="100"
                            value="{{ old('bottom_eyebrow', $ppdb->bottom_eyebrow) }}"
-                           class="form-control" placeholder="PPDB 2026/2027">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('bottom_title', $ppdb->bottom_title)) is-filled @endif">
                     <label class="form-label">Judul</label>
                     <input type="text" name="bottom_title" maxlength="200"
                            value="{{ old('bottom_title', $ppdb->bottom_title) }}"
-                           class="form-control" placeholder="Siap mendaftarkan putra/putri Anda?">
+                           class="form-control">
                 </div>
                 <div class="lp-ps-full">
-                    <textarea name="bottom_paragraph" rows="3" class="form-control"
-                              placeholder="Tim PPDB siap membantu Anda. Hubungi kami atau mulai pendaftaran online sekarang.">{{ old('bottom_paragraph', $ppdb->bottom_paragraph) }}</textarea>
+                    <textarea name="bottom_paragraph" rows="3" class="form-control">{{ old('bottom_paragraph', $ppdb->bottom_paragraph) }}</textarea>
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('bottom_primary_text', $ppdb->bottom_primary_text)) is-filled @endif">
                     <label class="form-label">Teks Tombol Utama</label>
                     <input type="text" name="bottom_primary_text" maxlength="100"
                            value="{{ old('bottom_primary_text', $ppdb->bottom_primary_text) }}"
-                           class="form-control" placeholder="Mulai Pendaftaran Online">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('bottom_primary_url', $ppdb->bottom_primary_url)) is-filled @endif">
                     <label class="form-label">URL Tombol Utama</label>
                     <input type="text" name="bottom_primary_url" maxlength="255"
                            value="{{ old('bottom_primary_url', $ppdb->bottom_primary_url) }}"
-                           class="form-control" placeholder="/ppdb atau https://...">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('bottom_secondary_text', $ppdb->bottom_secondary_text)) is-filled @endif">
                     <label class="form-label">Teks Tombol Sekunder</label>
                     <input type="text" name="bottom_secondary_text" maxlength="100"
                            value="{{ old('bottom_secondary_text', $ppdb->bottom_secondary_text) }}"
-                           class="form-control" placeholder="Hubungi Tim PPDB">
+                           class="form-control">
                 </div>
                 <div class="input-group input-group-outline mb-0 @if(old('bottom_secondary_url', $ppdb->bottom_secondary_url)) is-filled @endif">
                     <label class="form-label">URL Tombol Sekunder</label>
                     <input type="text" name="bottom_secondary_url" maxlength="255"
                            value="{{ old('bottom_secondary_url', $ppdb->bottom_secondary_url) }}"
-                           class="form-control" placeholder="/kontak atau https://...">
+                           class="form-control">
                 </div>
                 <div class="lp-ps-full input-group input-group-outline mb-0 @if(old('bottom_meta', $ppdb->bottom_meta)) is-filled @endif">
                     <label class="form-label">Teks Meta (di bawah tombol)</label>
                     <input type="text" name="bottom_meta" maxlength="150"
                            value="{{ old('bottom_meta', $ppdb->bottom_meta) }}"
-                           class="form-control" placeholder="Konsultasi gratis sebelum mendaftar">
+                           class="form-control">
                 </div>
             </div>
 

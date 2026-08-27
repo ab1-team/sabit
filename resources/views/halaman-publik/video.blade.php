@@ -200,6 +200,15 @@
             player.innerHTML = '';
         }
 
+        function lockBody() {
+            document.documentElement.classList.add('lp-media-modal-open');
+            document.body.classList.add('lp-media-modal-open');
+        }
+        function unlockBody() {
+            document.documentElement.classList.remove('lp-media-modal-open');
+            document.body.classList.remove('lp-media-modal-open');
+        }
+
         function openVideoFromTrigger(trigger) {
             var ytId = trigger.getAttribute('data-yt-id') || '';
             var localSrc = trigger.getAttribute('data-local-src') || '';
@@ -250,6 +259,9 @@
         document.querySelectorAll('.lp-video-trigger').forEach(function (trigger) {
             trigger.addEventListener('click', function () { openVideoFromTrigger(trigger); });
         });
+
+        modalEl.addEventListener('show.bs.modal', lockBody);
+        modalEl.addEventListener('hidden.bs.modal', unlockBody);
 
         modalEl.addEventListener('hidden.bs.modal', function () {
             resetPlayer();

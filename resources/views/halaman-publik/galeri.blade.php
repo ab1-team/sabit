@@ -123,9 +123,43 @@
         padding: .65rem 1rem;
         background: rgba(0,0,0,.4);
     }
+    /* Card video di grid campuran (overlay play di tengah). */
+    .lp-gallery-item--video {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        background: #0f172a;
+        cursor: pointer;
+    }
+    .lp-gallery-item--video > img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform .25s ease, filter .2s ease;
+    }
+    .lp-gallery-item--video:hover > img {
+        transform: scale(1.04);
+        filter: brightness(.85);
+    }
+    .lp-gallery-play {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        pointer-events: none;
+        transition: transform .25s ease;
+    }
+    .lp-gallery-item--video:hover .lp-gallery-play { transform: scale(1.1); }
+    .lp-gallery-item--video:focus-visible { outline: 3px solid var(--lp-primary, #2563eb); outline-offset: 2px; }
     @media (prefers-reduced-motion: reduce) {
         .lp-video-thumb-img,
-        .lp-video-play-icon { transition: none; }
+        .lp-video-play-icon,
+        .lp-gallery-item--video > img,
+        .lp-gallery-play { transition: none; }
     }
 </style>
 @endsection
@@ -150,89 +184,51 @@
             </div>
         @endif
 
-        @if ($galleries->isEmpty())
+        @if (($items ?? collect())->isEmpty() && ($videos ?? collect())->isEmpty())
             <div class="text-center text-muted py-5 lp-reveal" data-from="zoom">
                 <i class="bi bi-image" style="font-size:3rem; opacity:.3;"></i>
-                <p class="mt-3 mb-0">Belum ada foto.</p>
+                <p class="mt-3 mb-0">Belum ada dokumentasi.</p>
             </div>
         @else
             <div class="row g-3">
-                @foreach ($galleries as $i => $item)
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="{{ Storage::disk('public')->url('landing/' . $item->image) }}" target="_blank" class="lp-gallery-item lp-reveal d-block" data-from="zoom" data-delay="{{ (($i % 4) + 1) }}">
-                            @if ($item->image)
-                                <img src="{{ Storage::disk('public')->url('landing/' . $item->image) }}" alt="{{ $item->title }}" loading="lazy">
+                @foreach (($items ?? collect()) as $i => $item)
+                    @if ($item->media_type === 'video')
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <button type="button"
+                                    class="lp-gallery-item lp-gallery-item--video lp-reveal lp-video-trigger border-0 p-0 d-block"
+                                    data-from="zoom"
+                                    data-delay="{{ (($i % 4) + 1) }}"
+                                    data-yt-id="{{ $item->youtube_id ?? '' }}"
+                                    data-local-src="{{ $item->local_src ?? '' }}"
+                                    data-poster="{{ $item->poster_url ?? '' }}"
+                                    data-title="{{ $item->title }}"
+                                    data-description="{{ strip_tags($item->description ?? '') }}"
+                                    aria-label="Putar video: {{ $item->title }}">
+                                <img src="{{ $item->poster_url ?: 'https://i.ytimg.com/vi/'.($item->youtube_id ?? '').'/hqdefault.jpg' }}" alt="{{ $item->title }}" loading="lazy">
+                                <span class="lp-gallery-play" aria-hidden="true">
+                                    <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="32" cy="32" r="30" fill="rgba(15,23,42,.6)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+                                        <polygon points="26,20 26,44 46,32" fill="#fff"/>
+                                    </svg>
+                                </span>
                                 <div class="lp-gallery-overlay">{{ $item->title }}</div>
-                            @endif
-                        </a>
-                        @if ($item->album)
-                            <div class="small text-muted mt-2 text-center">{{ $item->album }}</div>
-                        @endif
-                    </div>
+                            </button>
+                        </div>
+                    @else
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <a href="{{ $item->image_path ? Storage::disk('public')->url('landing/' . $item->image_path) : '#' }}" target="_blank" class="lp-gallery-item lp-reveal d-block" data-from="zoom" data-delay="{{ (($i % 4) + 1) }}">
+                                @if ($item->image_path)
+                                    <img src="{{ Storage::disk('public')->url('landing/' . $item->image_path) }}" alt="{{ $item->title }}" loading="lazy">
+                                    <div class="lp-gallery-overlay">{{ $item->title }}</div>
+                                @endif
+                            </a>
+                        </div>
+                    @endif
                 @endforeach
             </div>
 
             <div class="mt-5 d-flex justify-content-center">
                 {{ $galleries->links() }}
-            </div>
-        @endif
-
-        @if (($videos ?? collect())->isNotEmpty())
-            <div class="lp-video-grid-section" id="video">
-                <div class="text-center mb-4 lp-reveal" data-from="zoom">
-                    <span class="lp-section-eyebrow">Multimedia</span>
-                    <h3 class="lp-section-title h4">Video</h3>
-                    <p class="text-muted small mb-0">Cuplikan kegiatan sekolah dalam format video.</p>
-                </div>
-                <div class="row g-3 g-lg-4">
-                    @foreach ($videos as $i => $video)
-                        <div class="col-md-6 col-lg-4">
-                            <button type="button"
-                                    class="lp-glass lp-media-card lp-reveal lp-video-trigger h-100 p-0 border-0 text-start"
-                                    data-from="zoom"
-                                    data-delay="{{ (($i % 3) + 1) }}"
-                                    data-yt-id="{{ $video->isYoutube() ? $video->youtube_id : '' }}"
-                                    data-local-src="{{ $video->isLocal() && $video->file_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($video->file_path) : '' }}"
-                                    data-poster="{{ $video->poster ? \Illuminate\Support\Facades\Storage::disk('public')->url($video->poster) : '' }}"
-                                    data-title="{{ $video->title }}"
-                                    data-description="{{ strip_tags($video->description ?? '') }}"
-                                    aria-label="Putar video: {{ $video->title }}">
-                                <div class="ratio ratio-16x9 lp-video-frame">
-                                    @if ($video->display_thumb)
-                                        <img src="{{ $video->display_thumb }}" alt="{{ $video->title }}" loading="lazy" class="lp-video-thumb-img">
-                                    @endif
-                                    <span class="lp-video-play-icon" aria-hidden="true">
-                                        <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="32" cy="32" r="30" fill="rgba(15,23,42,.6)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
-                                            <polygon points="26,20 26,44 46,32" fill="#fff"/>
-                                        </svg>
-                                    </span>
-                                    @if ($video->isLocal())
-                                        <span class="lp-video-source-badge">
-                                            <span class="material-symbols-rounded" style="font-size:13px;">movie</span>
-                                            Lokal
-                                        </span>
-                                    @endif
-                                </div>
-                                <div class="lp-media-body">
-                                    <h6 class="fw-bold mb-2">{{ $video->title }}</h6>
-                                    @if ($video->description)
-                                        <p class="text-muted small mb-0">
-                                            {{ Str::limit(strip_tags($video->description), 100) }}
-                                        </p>
-                                    @endif
-                                </div>
-                            </button>
-                        </div>
-                    @endforeach
-                </div>
-                @if ($videos->count() >= 8)
-                    <div class="text-center mt-3">
-                        <a href="{{ route('halaman-publik.video') }}" class="lp-link-soft">
-                            Lihat semua video <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                @endif
             </div>
         @endif
     </div>
@@ -271,6 +267,21 @@
         try { bsModal = new bootstrap.Modal(modalEl); } catch (e) { return; }
 
         function resetPlayer() { player.innerHTML = ''; }
+
+        // Body-lock navbar + konten saat modal video dibuka (mirip pola modal
+        // sambutan). Pakai class pada <html> & <body> supaya sibling selector
+        // `body.lp-media-modal-open > *` bisa memblur isi di belakang modal.
+        function lockBody() {
+            document.documentElement.classList.add('lp-media-modal-open');
+            document.body.classList.add('lp-media-modal-open');
+        }
+        function unlockBody() {
+            document.documentElement.classList.remove('lp-media-modal-open');
+            document.body.classList.remove('lp-media-modal-open');
+        }
+
+        modalEl.addEventListener('show.bs.modal', lockBody);
+        modalEl.addEventListener('hidden.bs.modal', unlockBody);
 
         function openVideoFromTrigger(trigger) {
             var ytId = trigger.getAttribute('data-yt-id') || '';

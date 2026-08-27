@@ -1,4 +1,4 @@
-@php
+    @php
     $name = $name ?? '';
     $label = $label ?? '';
     $type = $type ?? 'text';
@@ -21,7 +21,7 @@
         @if ($type === 'textarea')
             <textarea name="{{ $name }}" rows="{{ $rows ?? 3 }}" class="form-control {{ $inputClass }}"
                       {{ $required ? 'required' : '' }}
-                      placeholder="{{ $placeholder }}"{!! $extraAttrs !!}>{!! $value !!}</textarea>
+                      @if($placeholder !== '') placeholder="{{ $placeholder }}"@endif{!! $extraAttrs !!}>{!! $value !!}</textarea>
         @else
             <label class="form-label">
                 {!! $label !!}
@@ -31,7 +31,7 @@
                    name="{{ $name }}"
                    class="form-control {{ $inputClass }}"
                    value="{{ $value }}"
-                   placeholder="{{ $placeholder }}"
+                   @if($placeholder !== '') placeholder="{{ $placeholder }}"@endif
                    @if($required) required @endif
                    @if($accept) accept="{{ $accept }}" @endif
                    @if($min !== null) min="{{ $min }}" @endif

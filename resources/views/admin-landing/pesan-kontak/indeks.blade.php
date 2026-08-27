@@ -196,121 +196,106 @@
             vertical-align: middle;
         }
 
+        /* === Mobile (≤768px): ubah tabel jadi compact card list === */
         @media (max-width: 768px) {
-            /* === Mobile: ubah tabel jadi card list vertikal === */
             .lp-msg-table-scroll { overflow-x: visible !important; }
-
-            /* Override aturan global .table dari layout agar layout bertumpu
-               pada lebar kontainer, bukan lebar kolom fixed. */
             #lpMsgTable {
                 table-layout: auto !important;
                 width: 100% !important;
             }
-
-            /* Sembunyikan header & buat setiap elemen jadi block */
             #lpMsgTable thead { display: none !important; }
-            #lpMsgTable tbody,
-            #lpMsgTable tbody tr,
-            #lpMsgTable tbody td {
-                display: block !important;
-                float: none !important;
-            }
+
+            /* Baris = kartu ringkas, 1 baris horizontal:
+               [email (flex)] [view] [toggle] [delete] */
             #lpMsgTable tbody tr {
-                background: transparent;
-                border: 0;
-                box-shadow: none;
-                padding: .55rem 0;
-                margin: 0 0 .65rem 0;
-                width: 100% !important;
-                min-width: 0 !important;
-                max-width: none !important;
-                height: auto !important;
-                overflow: hidden;
-                word-break: break-word;
+                display: flex !important;
+                flex-wrap: nowrap;
+                align-items: center;
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: .65rem;
+                padding: .5rem .6rem;
+                margin: 0 0 .45rem 0;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+                transition: border-color .15s ease, box-shadow .15s ease;
+                gap: .5rem;
             }
-            #lpMsgTable tbody tr:hover { background-color: transparent; }
+            #lpMsgTable tbody tr:hover {
+                border-color: #cbd5e1;
+                box-shadow: 0 2px 6px rgba(15, 23, 42, .06);
+            }
 
             #lpMsgTable tbody td {
                 border: 0 !important;
-                padding: .35rem 0 !important;
-                width: 100% !important;
-                min-width: 0 !important;
-                max-width: none !important;
-                display: flex !important;
-                align-items: flex-start;
-                justify-content: space-between;
-                gap: .65rem;
-                font-size: .85rem;
-                line-height: 1.35;
+                padding: 0 !important;
+                display: block !important;
+                float: none !important;
             }
-            #lpMsgTable tbody td::before {
-                content: attr(data-label);
-                flex: 0 0 5.5rem;
-                max-width: 5.5rem;
-                font-size: .68rem;
-                font-weight: 600;
-                letter-spacing: .04em;
-                text-transform: uppercase;
-                color: #64748b;
-                padding-top: .15rem;
-            }
+            #lpMsgTable tbody td::before { content: none !important; }
 
-            /* Sel-sel yang tidak butuh label (kontrol murni): sembunyikan
-               pseudo-label, dan tampilkan konten di sisi kanan/sendiri. */
-            #lpMsgTable td.lp-col-check,
-            #lpMsgTable td.lp-col-action {
-                justify-content: flex-end !important;
-                padding-top: .6rem !important;
-                border-top: 1px dashed #e2e8f0 !important;
-                margin-top: .35rem;
-            }
-            #lpMsgTable td.lp-col-check::before,
-            #lpMsgTable td.lp-col-action::before { content: none !important; }
+            /* Sembunyikan di HP: checkbox, subjek, status, tanggal */
+            #lpMsgTable td.lp-col-check { display: none !important; }
+            #lpMsgTable td.lp-col-subject { display: none !important; }
+            #lpMsgTable td.lp-col-status { display: none !important; }
+            #lpMsgTable td.lp-col-date { display: none !important; }
+            #lpBulkDeleteBtn { display: none !important; }
 
-            /* === Sel Pengirim & Subjek (KRUSIAL) ===
-               Server render menumpuk 2 baris di dalam <div class="text-truncate">.
-               .text-truncate memaksakan overflow:hidden + white-space:nowrap
-               + ellipsis. Pada mobile kita override total supaya nama/email/
-               subjek/preview pesan benar-benar tampil (bukan ellipsis). */
-            #lpMsgTable td.lp-col-sender,
-            #lpMsgTable td.lp-col-subject {
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: .3rem;
+            /* Email: ambil sisa ruang, dipotong dengan ellipsis */
+            #lpMsgTable td.lp-col-sender {
+                flex: 1 1 auto;
+                min-width: 0;
+                line-height: 1.2;
+                align-self: center;
             }
-            #lpMsgTable td.lp-col-sender > div,
-            #lpMsgTable td.lp-col-subject > div {
-                text-align: left !important;
+            #lpMsgTable td.lp-col-sender > div {
                 width: 100% !important;
                 max-width: 100% !important;
-                white-space: normal !important;
-                overflow: visible !important;
-                text-overflow: clip !important;
-                overflow-wrap: anywhere;
-                word-break: break-word;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            #lpMsgTable td.lp-col-sender > div:nth-child(1) {
+                display: none !important; /* nama */
+            }
+            #lpMsgTable td.lp-col-sender > div:nth-child(2) {
+                font-size: .85rem;
+                font-weight: 500;
+                color: #334155 !important;
+                line-height: 1.2;
             }
 
-            /* Badge status: span inline, tetap terlihat full */
-            #lpMsgTable td.lp-col-sender > .badge,
-            #lpMsgTable td.lp-col-subject > .badge {
-                display: inline-block;
-                width: auto;
-                max-width: 100%;
+            /* Aksi: tombol compact di pojok kanan */
+            #lpMsgTable td.lp-col-action {
+                flex: 0 0 auto;
+                margin-left: 0;
+                align-self: center;
+            }
+            .lp-table-actions {
+                display: inline-flex !important;
+                flex-wrap: nowrap;
+                align-items: center;
+                justify-content: flex-end;
+                gap: .3rem !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .lp-table-actions form { display: inline-flex !important; margin: 0 !important; }
+            .lp-table-actions .btn.btn-icon {
+                width: 1.85rem;
+                height: 1.85rem;
+                min-width: 1.85rem;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: .45rem;
+            }
+            .lp-table-actions .btn.btn-icon .material-symbols-rounded {
+                font-size: .95rem;
+                line-height: 1;
             }
 
-            /* Status & tanggal: ringkas, label disembunyikan agar hemat baris */
-            #lpMsgTable td.lp-col-date::before,
-            #lpMsgTable td.lp-col-status::before { content: none !important; }
-            #lpMsgTable td.lp-col-date,
-            #lpMsgTable td.lp-col-status {
-                justify-content: space-between !important;
-                font-size: .78rem;
-                color: #475569;
-                padding-top: .25rem !important;
-            }
-            #lpMsgTable td.lp-col-status { font-weight: 500; }
-
-            /* Wrapper DataTables */
+            /* Toolbar / wrapper DataTables */
             .dataTables_wrapper .dataTables_filter { float: none; text-align: left; }
             .dataTables_wrapper .dataTables_length { float: none; text-align: left; }
             .dataTables_wrapper .dataTables_filter input {
@@ -327,8 +312,7 @@
             }
         }
 
-        /* HP kecil (≤576px): padding lebih ketat, toolbar stack vertikal,
-           tombol aksi tetap ukuran cukup untuk tap (touch target ≥44px). */
+        /* HP kecil (≤576px): padding lebih ketat, toolbar stack vertikal */
         @media (max-width: 576px) {
             .px-2.py-2 { padding-left: .65rem !important; padding-right: .65rem !important; }
             .card.my-3 { margin-left: -.25rem; margin-right: -.25rem; }
@@ -347,64 +331,45 @@
                 justify-content: center;
             }
 
-            /* Tabel card lebih ringkas */
+            /* Kartu lebih ringkas */
             #lpMsgTable tbody tr {
-                padding: .4rem 0;
-                margin-bottom: .25rem;
+                padding: .45rem .55rem;
+                margin-bottom: .4rem;
+                gap: .4rem;
             }
-            #lpMsgTable tbody td {
-                font-size: .85rem;
-                gap: .5rem;
-                padding: .2rem 0 !important;
-            }
-            #lpMsgTable tbody td::before {
-                font-size: .65rem;
-                flex-basis: 4.5rem;
-                max-width: 4.5rem;
-            }
+            #lpMsgTable td.lp-col-sender > div:nth-child(2) { font-size: .82rem; }
 
-            /* Tombol aksi: perkecil sedikit tapi tetap tap-friendly */
+            /* Tombol aksi kompak (≥1.75rem) */
             .lp-table-actions .btn.btn-icon {
-                width: 2.1rem;
-                height: 2.1rem;
-                padding: 0;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
+                width: 1.75rem;
+                height: 1.75rem;
+                min-width: 1.75rem;
             }
-            .lp-table-actions .btn.btn-icon .material-symbols-rounded {
-                font-size: 1.05rem;
-            }
-            .lp-table-actions {
-                flex-wrap: wrap;
-                gap: .25rem !important;
-                justify-content: flex-end !important;
-            }
+            .lp-table-actions .btn.btn-icon .material-symbols-rounded { font-size: .9rem; }
+            .lp-table-actions { gap: .2rem !important; }
 
-            /* DataTables filter & length: full-width */
+            /* DataTables filter & length: center */
             .dataTables_wrapper .dataTables_length,
             .dataTables_wrapper .dataTables_filter,
             .dataTables_wrapper .dataTables_info {
                 text-align: center !important;
             }
-            .dataTables_wrapper .dataTables_filter input {
-                margin-top: .35rem;
-            }
-
-            /* Pagination: ukuran tetap proporsional */
-            .dataTables_wrapper .dataTables_paginate {
-                text-align: center !important;
-            }
+            .dataTables_wrapper .dataTables_filter input { margin-top: .35rem; }
+            .dataTables_wrapper .dataTables_paginate { text-align: center !important; }
         }
 
         /* HP sangat kecil (≤380px): kompres lebih lanjut */
         @media (max-width: 380px) {
-            #lpMsgTable tbody tr { padding: .35rem 0; margin-bottom: .2rem; }
-            #lpMsgTable tbody td { padding: .15rem 0 !important; }
+            #lpMsgTable tbody tr { padding: .35rem .45rem; gap: .3rem; margin-bottom: .3rem; }
+            #lpMsgTable td.lp-col-sender > div:nth-child(2) { font-size: .75rem; }
             .lp-table-actions .btn.btn-icon {
-                width: 1.95rem;
-                height: 1.95rem;
+                width: 1.6rem;
+                height: 1.6rem;
+                min-width: 1.6rem;
+                border-radius: .4rem;
             }
+            .lp-table-actions .btn.btn-icon .material-symbols-rounded { font-size: .82rem; }
+            .lp-table-actions { gap: .15rem !important; }
         }
     </style>
 @endsection
@@ -743,12 +708,20 @@ $(document).ready(function() {
                     url: $form.attr('action'),
                     method: 'POST',
                     data: $form.serialize(),
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                }).done(function() {
-                    Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                }).done(function(resp) {
+                    var msg = (resp && resp.msg) || 'Berhasil dihapus';
+                    var ok = !resp || resp.success !== false;
+                    if (ok) {
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: msg, timer: 1800, timerProgressBar: true, showConfirmButton: false });
+                    } else {
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, timer: 3500, timerProgressBar: true, showConfirmButton: false });
+                    }
                     table.ajax.reload(null, false);
-                }).fail(function() {
-                    Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                }).fail(function(xhr) {
+                    var msg = 'Gagal menghapus data.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, timer: 3500, timerProgressBar: true, showConfirmButton: false });
                 });
             }
         });

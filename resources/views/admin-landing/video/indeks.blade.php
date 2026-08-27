@@ -624,12 +624,20 @@
                         url: $form.attr('action'),
                         method: 'POST',
                         data: $form.serialize(),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    }).done(function() {
-                        Swal.fire({ icon: 'success', title: 'Berhasil dihapus', timer: 1200, showConfirmButton: false });
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                    }).done(function(resp) {
+                        var msg = (resp && resp.msg) || 'Berhasil dihapus';
+                        var ok = !resp || resp.success !== false;
+                        if (ok) {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: msg, timer: 1800, timerProgressBar: true, showConfirmButton: false });
+                        } else {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, timer: 3500, timerProgressBar: true, showConfirmButton: false });
+                        }
                         dt.ajax.reload(null, false);
-                    }).fail(function() {
-                        Swal.fire({ icon: 'error', title: 'Gagal menghapus data.' });
+                    }).fail(function(xhr) {
+                        var msg = 'Gagal menghapus data.';
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, timer: 3500, timerProgressBar: true, showConfirmButton: false });
                     });
                 }
             });

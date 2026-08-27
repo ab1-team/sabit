@@ -132,24 +132,91 @@ class HalamanPublikController extends Controller
     {
         $album = $request->query('album');
 
-        $query = GaleriLanding::published()->orderBy('sort_order');
-
+        // Foto: filter album hanya untuk foto. Jika $album di-set, sembunyikan
+        // video dari grid (supaya filter album benar-benar menampilkan foto saja).
+        $photoQuery = GaleriLanding::published()->orderBy('sort_order')->orderByDesc('id');
         if ($album) {
-            $query->where('album', $album);
+            $photoQuery->where('album', $album);
         }
+        $photos = $photoQuery->limit(48)->get();
+
+        // Video: tampil di grid hanya jika tidak ada filter album. Urut created_at desc.
+        $videos = $album
+            ? collect()
+            : VideoLanding::published()->latest('id')->limit(24)->get();
+
+        // Bangun satu list gabungan dengan field media_type, diurutkan
+        // berdasarkan tanggal dibuat (terbaru paling atas), foto & video dicampur.
+        $items = $photos->map(function ($p) {
+            return (object) [
+                'id'         => $p->id,
+                'media_type' => 'photo',
+                'title'      => $p->title,
+                'description'=> $p->description,
+                'album'      => $p->album,
+                'sort_order' => $p->sort_order,
+                'image_path' => $p->image,
+                'created_at' => $p->created_at,
+                '_sort'      => optional($p->created_at)->timestamp ?? 0,
+            ];
+        })->concat($videos->map(function ($v) {
+            $ytId  = $v->isYoutube() ? \App\Http\Controllers\AdminLandingController::extractYoutubeId($v->youtube_url) : null;
+            $thumb = null;
+            if ($v->poster) {
+                $thumb = \Illuminate\Support\Facades\Storage::disk('public')->url($v->poster);
+            } elseif ($ytId) {
+                $thumb = 'https://i.ytimg.com/vi/'.$ytId.'/hqdefault.jpg';
+            }
+            return (object) [
+                'id'          => $v->id,
+                'media_type'  => 'video',
+                'title'       => $v->title,
+                'description' => $v->description,
+                'album'       => null,
+                'sort_order'  => 0,
+                'image_path'  => null,
+                'youtube_id'  => $ytId,
+                'local_src'   => $v->isLocal() && $v->file_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->file_path) : null,
+                'poster_url'  => $thumb,
+                'source'      => $v->source,
+                'created_at'  => $v->created_at,
+                '_sort'       => optional($v->created_at)->timestamp ?? 0,
+            ];
+        }));
+
+        // Urut terbaru-dulu (created_at desc, lalu id desc sebagai tiebreaker).
+        $page = max(1, (int) $request->query('page', 1));
+        $items = $items
+            ->sortByDesc(function ($it) {
+                return [(int) ($it->_sort ?? 0), (int) ($it->id ?? 0)];
+            })
+            ->values();
+
+        // Paginate manual: chunk 24 per halaman.
+        $perPage = 24;
+        $total   = $items->count();
+        $paged   = $items->forPage($page, $perPage);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+
+        // Bungkus ke Paginator-like untuk links().
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paged, $total, $perPage, $page,
+            ['path' => $request->url(), 'pageName' => 'page', 'query' => $request->query()]
+        );
 
         return view('halaman-publik.galeri', [
-            'setting' => PengaturanLanding::current(),
-            'menus' => $this->menus(),
-            'galleries' => $query->paginate(24),
-            'albums' => GaleriLanding::published()
+            'setting'   => PengaturanLanding::current(),
+            'menus'     => $this->menus(),
+            'galleries' => $paginator,
+            'items'     => $paged,
+            'albums'    => GaleriLanding::published()
                 ->whereNotNull('album')
                 ->where('album', '!=', '')
                 ->distinct()
                 ->orderBy('album')
                 ->pluck('album'),
-            'album' => $album,
-            'videos' => VideoLanding::published()->latest('id')->limit(8)->get(),
+            'album'     => $album,
+            'videos'    => $videos,
         ]);
     }
 

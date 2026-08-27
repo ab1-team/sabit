@@ -179,17 +179,41 @@ window.lpRep = (function () {
                         var ct = resp.headers.get('content-type') || '';
                         if (ct.includes('application/json')) {
                             return resp.json().then(function (data) {
-                                notify({
-                                    icon: 'success',
-                                    title: data.msg || 'Berhasil dihapus',
-                                    timer: 1500,
-                                    showConfirmButton: false,
-                                }).then(function () { window.location.reload(); });
+                                if (data && data.success) {
+                                    notify({
+                                        icon: 'success',
+                                        title: data.msg || 'Berhasil dihapus',
+                                        toast: true,
+                                        position: 'top-end',
+                                        timer: 1800,
+                                        timerProgressBar: true,
+                                        showConfirmButton: false,
+                                    }).then(function () { window.location.reload(); });
+                                } else {
+                                    notify({
+                                        icon: 'error',
+                                        title: (data && data.msg) || 'Gagal menghapus data',
+                                        toast: true,
+                                        position: 'top-end',
+                                        timer: 3500,
+                                        timerProgressBar: true,
+                                        showConfirmButton: false,
+                                    });
+                                }
                             });
                         }
                         window.location.reload();
                     }).catch(function () {
-                        notify({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan.' });
+                        notify({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Terjadi kesalahan.',
+                            toast: true,
+                            position: 'top-end',
+                            timer: 3500,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                        });
                     });
                 });
             });

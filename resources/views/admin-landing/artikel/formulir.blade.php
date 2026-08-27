@@ -3,239 +3,31 @@
 @section('style')
     @include('admin-landing._gaya')
     <style>
-        .lp-post-form-card {
-            border: 1px solid #e2e8f0 !important;
-            border-radius: .75rem !important;
-            background: #fff;
-        }
-        .lp-post-form-card > .card-body { padding: .9rem 1.05rem; }
-
-        /* Field: ringkas, label kecil, input seragam */
-        .lp-field {
-            display: flex;
-            flex-direction: column;
-            gap: .3rem;
-            margin-bottom: .7rem;
-        }
-        .lp-field > label {
-            font-size: .8rem;
-            font-weight: 600;
-            color: #334155;
-            margin: 0;
-        }
-        .lp-field .form-control,
-        .lp-field textarea.form-control {
-            height: 38px;
-            padding: .45rem .7rem;
-            border-radius: .5rem;
+        /* Bungkus TinyMCE di dalam .input-group-outline supaya pojok kiri
+           konsisten melengkung mengikuti border-radius Material Dashboard. */
+        .lp-tinymce-wrap.input-group.input-group-outline {
             border: 1px solid #d4d8dd;
-            background: #fff;
-            color: #1f2937;
-            font-size: .9rem;
+            border-radius: .5rem;
+            overflow: hidden;
             transition: border-color .15s ease, box-shadow .15s ease;
-            box-shadow: none !important;
         }
-        .lp-field textarea.form-control {
-            height: auto;
-            min-height: 70px;
-            line-height: 1.45;
-        }
-        .lp-field .form-control:focus,
-        .lp-field textarea.form-control:focus {
+        .lp-tinymce-wrap.input-group.input-group-outline.is-filled,
+        .lp-tinymce-wrap.input-group.input-group-outline:focus-within {
             border-color: #1d4ed8;
-            box-shadow: 0 0 0 3px rgba(29,78,216,.12) !important;
-            outline: none;
+            box-shadow: 0 0 0 3px rgba(29,78,216,.12);
         }
-        .lp-field .help {
-            font-size: .7rem;
-            color: #94a3b8;
+        .lp-tinymce-wrap.input-group.input-group-outline .tox-tinymce {
+            border: none !important;
+            border-radius: 0 !important;
         }
-        .lp-field.req > label::after { content: " *"; color: #dc2626; }
-
-        /* Layout 2 kolom via CSS Grid agar field bisa sejajar horizontal */
-        .lp-form-row {
-            display: grid;
-            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-            gap: .9rem 1rem;
-            align-items: stretch;
-        }
-        .lp-form-col {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            min-width: 0;
-        }
-        .lp-form-col-main { grid-column: 1; }
-        .lp-form-col-side { grid-column: 2; }
-
-        @media (max-width: 767.98px) {
-            .lp-form-row { grid-template-columns: 1fr; }
-            .lp-form-col-main,
-            .lp-form-col-side { grid-column: 1; }
-        }
-
-        /* Kolom kanan didistribusikan rata agar tidak ada space kosong
-           jika Gambar Sampul lebih pendek dari kolom kiri. */
-        .lp-form-col-side .lp-field:last-of-type { margin-bottom: 0; }
-        .lp-form-col-side .lp-publish-card { margin-bottom: 0; }
-
-        /* Preview box gambar sampul */
-        .lp-preview-wrap {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: .7rem;
-        }
-        .lp-preview-wrap > .form-label {
-            font-size: .8rem;
-            font-weight: 600;
-            color: #334155;
-            margin: 0 0 .3rem 0;
-        }
-        .lp-preview-box.lp-preview-cover {
-            position: relative;
-            flex: 0 0 auto;
-            height: 250px;
-            min-height: 250px;
-            padding: 0;
-        }
-        .lp-preview-box.lp-preview-cover img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-        }
-        .lp-preview-box.lp-preview-cover .lp-preview-empty,
-        .lp-preview-box.lp-preview-cover .lp-preview-hint {
-            position: relative;
-            z-index: 1;
-        }
-        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-empty,
-        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-hint {
-            position: absolute;
-        }
-        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-empty {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -65%);
-        }
-        .lp-preview-box.lp-preview-cover:not(:has(img)) .lp-preview-hint {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, 30%);
-        }
-        .lp-preview-box.lp-preview-cover .lp-preview-hint {
-            position: absolute;
-            top: auto;
-            bottom: .5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15,23,42,.55);
-            color: #fff;
-            padding: .25rem .55rem;
-            border-radius: .35rem;
-            font-size: .72rem;
-            font-weight: 500;
-            white-space: nowrap;
-            z-index: 2;
-            opacity: .85;
-            transition: opacity .15s ease, background .15s ease;
-        }
-        .lp-preview-box.lp-preview-cover:hover .lp-preview-hint {
-            opacity: 1;
-            background: rgba(15,23,42,.75);
-        }
-
-        /* Side card publish + featured: ringkas */
-        .lp-publish-card {
-            border: 1px solid #e2e8f0;
-            border-radius: .65rem;
-            padding: .15rem .9rem;
-            background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-        .lp-switch-row {
-            display: flex;
-            gap: .65rem;
-            align-items: center;
-            justify-content: space-between;
-            padding: .55rem 0;
-        }
-        .lp-switch-row + .lp-switch-row {
-            border-top: 1px dashed #e2e8f0;
-        }
-        .lp-switch-row .lp-switch-text {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        .lp-switch-row .lp-switch-text strong {
-            font-size: .82rem;
-            color: #1f2937;
-            line-height: 1.2;
-        }
-        .lp-switch-row .lp-switch-text small {
-            font-size: .7rem;
-            color: #64748b;
-        }
-        .lp-switch-row .form-check.form-switch {
-            margin: 0;
-            flex: 0 0 auto;
-        }
-
-        /* TinyMCE: tinggi pas agar total form tidak overflow */
-        .lp-tinymce-wrap .tox-tinymce {
-            border-radius: .5rem !important;
-            border-color: #d4d8dd !important;
-        }
-        .lp-tinymce-wrap .tox .tox-toolbar {
+        .lp-tinymce-wrap.input-group.input-group-outline .tox .tox-toolbar__primary {
             background: #f8fafc !important;
         }
-
-        /* Footer form */
-        .lp-post-foot {
-            display: flex;
-            flex-direction: column;
-            gap: .5rem;
-            padding: .65rem 1.05rem;
-            background: #f8fafc;
-            border-radius: 0 0 .75rem .75rem;
-        }
-        @media (min-width: 768px) {
-            .lp-post-foot {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-            }
-        }
-        .lp-post-foot .lp-foot-hint {
-            font-size: .8rem;
-            color: #475569;
-        }
-        .lp-post-foot .btn {
-            min-height: 38px;
-            padding: .4rem 1rem;
-            border-radius: .5rem;
-            font-size: .88rem;
-        }
-
-        /* Kurangi padding wrapper luar halaman */
-        .lp-post-page { padding: .35rem .5rem; }
-        @media (max-width: 575.98px) {
-            .lp-post-page { padding: .35rem .35rem; }
-        }
-
-        /* Batas tinggi konten kolom kanan: disesuaikan dengan kolom kiri */
-        .lp-preview-empty { font-size: 36px; }
     </style>
 @endsection
 
 @section('content')
-<div class="lp-post-page">
+<div class="px-2 py-2">
     @if (session('success'))
         <div class="alert alert-success py-2 small mb-2">{{ session('success') }}</div>
     @endif
@@ -258,40 +50,44 @@
 
         <div class="card my-2 lp-post-form-card">
             <div class="card-body">
-                <div class="lp-form-row">
-                    {{-- KOLOM KIRI --}}
-                    <div class="lp-form-col lp-form-col-main">
-                        <div class="lp-field req">
-                            <label for="title">Judul</label>
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-8 d-flex flex-column">
+                        <div class="input-group input-group-outline mb-2 @if(old('title', $post->title)) is-filled @endif">
+                            <label class="form-label">Judul <span class="text-danger">*</span></label>
                             <input id="title" type="text" name="title" class="form-control"
-                                   value="{{ old('title', $post->title) }}"
-                                   placeholder="Judul artikel / berita" required>
+                                   value="{{ old('title', $post->title) }}" required>
                         </div>
 
-                        <div class="lp-field">
-                            <label for="category">Kategori</label>
-                            <input id="category" type="text" name="category" class="form-control"
-                                   value="{{ old('category', $post->category) }}"
-                                   placeholder="mis. Pengumuman, Kegiatan, Prestasi">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="input-group input-group-outline mb-2 @if(old('category', $post->category)) is-filled @endif">
+                                    <label class="form-label">Kategori</label>
+                                    <input id="category" type="text" name="category" class="form-control"
+                                           value="{{ old('category', $post->category) }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group input-group-outline mb-2 @if(old('published_at', $post->published_at?->format('Y-m-d'))) is-filled @endif">
+                                    <label class="form-label">Tanggal Publikasi</label>
+                                    <input id="published_at" type="text" name="published_at" class="form-control datepicker"
+                                           value="{{ old('published_at', $post->published_at?->format('Y-m-d')) }}">
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="lp-field">
-                            <label for="excerpt">Ringkasan</label>
-                            <textarea id="excerpt" name="excerpt" class="form-control" rows="2"
-                                      placeholder="Cuplikan singkat yang tampil di daftar artikel (opsional)">{{ old('excerpt', $post->excerpt) }}</textarea>
+                        <div class="input-group input-group-outline mb-2 @if(old('excerpt', $post->excerpt)) is-filled @endif">
+                            <label class="form-label">Ringkasan</label>
+                            <textarea id="excerpt" name="excerpt" class="form-control" rows="2">{{ old('excerpt', $post->excerpt) }}</textarea>
                         </div>
 
-                        <div class="lp-field req lp-tinymce-wrap">
-                            <label for="content">Konten</label>
-                            <textarea id="content" name="content" class="form-control lp-tinymce" rows="6"
-                                      placeholder="Tulis isi artikel di sini...">{{ old('content', $post->content) }}</textarea>
+                        <div class="input-group input-group-outline mb-0 @if(old('content', $post->content)) is-filled @endif lp-tinymce-wrap flex-grow-1 d-flex flex-column">
+                            <label class="form-label">Konten <span class="text-danger">*</span></label>
+                            <textarea id="content" name="content" class="form-control lp-tinymce flex-grow-1">{{ old('content', $post->content) }}</textarea>
                         </div>
                     </div>
 
-                    {{-- KOLOM KANAN --}}
-                    <div class="lp-form-col lp-form-col-side">
-                        <div class="lp-preview-wrap">
-                            <label class="form-label">Gambar Sampul</label>
+                    <div class="col-md-4 d-flex flex-column">
+                        <div class="lp-preview-wrap mb-0">
                             <label for="imageInput" class="lp-preview-box lp-preview-cover d-block" id="imagePreviewBox">
                                 @if ($post->image)
                                     <img src="{{ Storage::disk('public')->url('landing/'.$post->image) }}" alt="Gambar Sampul" id="imagePreviewImg">
@@ -308,43 +104,25 @@
                             @endif
                         </div>
 
-                        <div class="lp-field">
-                            <label for="published_at">Tanggal Publikasi</label>
-                            <input id="published_at" type="text" name="published_at" class="form-control lp-date"
-                                   value="{{ old('published_at', $post->published_at?->format('Y-m-d H:i')) }}"
-                                   placeholder="YYYY-MM-DD HH:MM">
-                            <div class="help">Kosongkan untuk otomatis menggunakan waktu saat ini.</div>
-                        </div>
-
-                        <div class="lp-publish-card">
-                            <div class="lp-switch-row">
-                                <div class="lp-switch-text">
-                                    <strong>Publish</strong>
-                                    <small>Tampilkan artikel di halaman publik.</small>
-                                </div>
-                                <div class="form-check form-switch m-0">
-                                    <input type="hidden" name="is_published" value="0">
-                                    <input class="form-check-input" type="checkbox" name="is_published" value="1"
-                                           id="is_pub_post" {{ ($post->is_published ?? true) ? 'checked' : '' }}>
-                                </div>
+                        <div class="lp-publish-card mt-2">
+                            <div class="form-check form-switch mb-2">
+                                <input type="hidden" name="is_published" value="0">
+                                <input class="form-check-input" type="checkbox" name="is_published" value="1"
+                                       id="is_pub_post" {{ ($post->is_published ?? true) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_pub_post">Publish (tampilkan di halaman publik)</label>
                             </div>
-                            <div class="lp-switch-row">
-                                <div class="lp-switch-text">
-                                    <strong>Tampilkan di Beranda</strong>
-                                    <small>Sematkan sebagai artikel pilihan.</small>
-                                </div>
-                                <div class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" name="is_featured" value="1"
-                                           id="is_featured_post" {{ ($post->is_featured ?? false) ? 'checked' : '' }}>
-                                </div>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" name="is_featured" value="1"
+                                       id="is_featured_post" {{ ($post->is_featured ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_featured_post">Tampilkan di Beranda (artikel pilihan)</label>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="lp-post-foot border-top">
-                <span class="lp-foot-hint">
+            <div class="card-body border-top d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 p-2 pb-1">
+                <span class="fw-bold" style="font-size: 14px;">
                     Isi semua kolom bertanda <span class="text-danger">*</span>.
                 </span>
                 <div class="d-flex flex-wrap gap-2 justify-content-end">
@@ -352,7 +130,7 @@
                         <span class="material-symbols-rounded align-middle" style="font-size:18px;">arrow_back</span>
                         <span class="align-middle">Kembali</span>
                     </a>
-                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1">
+                    <button type="submit" class="btn btn-info d-inline-flex align-items-center gap-1">
                         <span class="material-symbols-rounded align-middle" style="font-size:18px;">save</span>
                         <span class="align-middle">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Artikel' }}</span>
                     </button>
@@ -402,11 +180,17 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Flatpickr datepicker (gaya siswa)
+    if (window.flatpickr) {
+        flatpickr('.datepicker', { dateFormat: "Y-m-d" });
+        $('.datepicker').on('change', function () {
+            $(this).closest('.input-group').addClass('is-filled');
+        });
+    }
+
     if (typeof tinymce === 'undefined') return;
 
-    // Sinkronkan isi TinyMCE ke textarea SEBELUM submit agar FormData
-    // tidak pernah mengirim konten kosong (mis. browser yang tidak
-    // auto-save saat submit form via AJAX).
+    // Sinkronkan isi TinyMCE ke textarea SEBELUM submit
     const lpForm = document.getElementById('lpPostForm');
     if (lpForm) {
         lpForm.addEventListener('submit', function () {
@@ -488,16 +272,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tinymce.init({
         selector: 'textarea.lp-tinymce',
-        height: 320,
+        min_height: 280,
+        height: 'auto',
+        autoresize_bottom_margin: 8,
         menubar: false,
-        plugins: 'lists link image media table code wordcount',
+        plugins: 'lists link image media table code wordcount autoresize',
         toolbar: 'undo redo | bold italic underline | bullist numlist | link image media lpfileopen lpyt table | code',
         branding: false,
         promotion: false,
-        // PENTING: simpan URL absolut (tidak dikonversi jadi path relatif
-        // terhadap URL halaman admin). Kalau diaktifkan (default true),
-        // TinyMCE akan menulis "src=../../../storage/..." ke <img>, dan
-        // gambar/video tidak akan muncul lagi saat edit artikel.
         relative_urls: false,
         remove_script_host: false,
         convert_urls: true,

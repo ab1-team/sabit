@@ -40,7 +40,6 @@
                     ])
                     @include('admin-landing._komponen.input-teks', [
                         'name' => 'role', 'label' => 'Jabatan', 'required' => true,
-                        'placeholder' => 'Kepala Sekolah / Wakil Kurikulum / ...',
                         'value' => old('role', $item->role), 'colClass' => 'col-md-6',
                     ])
                     @include('admin-landing._komponen.input-file', [

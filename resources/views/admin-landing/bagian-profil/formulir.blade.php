@@ -162,12 +162,12 @@
                     </h6>
                     <div class="lp-ps-card-title">Judul Section</div>
                     <p class="lp-ps-card-help">Judul utama yang ditampilkan di halaman publik.</p>
-                    <div class="input-group input-group-outline mb-3 @if(old('title', $item->title)) is-filled @endif">
-                        <label class="form-label">Judul <span class="text-danger">*</span></label>
-                        <input type="text" name="title" required maxlength="200"
-                               value="{{ old('title', $item->title) }}"
-                               class="form-control" placeholder="Cth: Visi &amp; Misi Sekolah">
-                    </div>
+                        <div class="input-group input-group-outline mb-3 @if(old('title', $item->title)) is-filled @endif">
+                            <label class="form-label">Judul <span class="text-danger">*</span></label>
+                            <input type="text" name="title" required maxlength="200"
+                                   value="{{ old('title', $item->title) }}"
+                                   class="form-control">
+                        </div>
 
                     <div class="lp-ps-card-title mt-3">Isi Konten</div>
                     <p class="lp-ps-card-help">
@@ -184,8 +184,7 @@
                         @endif
                     </p>
                     <textarea name="content" id="lp-ps-content" rows="10"
-                              class="form-control lp-tinymce"
-                              placeholder="Tulis konten di sini...">{{ old('content', $item->content) }}</textarea>
+                              class="form-control lp-tinymce">{{ old('content', $item->content) }}</textarea>
                 </div>
 
                 {{-- Card: Badge / Label Pendukung --}}
@@ -203,7 +202,7 @@
                                 <label class="form-label">Badge Text</label>
                                 <input type="text" name="badge_text" maxlength="100"
                                        value="{{ old('badge_text', $item->badge_text) }}"
-                                       class="form-control" placeholder="Cth: Akreditasi A">
+                                       class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -211,7 +210,7 @@
                                 <label class="form-label">Badge Extra</label>
                                 <input type="text" name="badge_extra" maxlength="100"
                                        value="{{ old('badge_extra', $item->badge_extra) }}"
-                                       class="form-control" placeholder="Cth: 20212345">
+                                       class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -219,7 +218,7 @@
                                 <label class="form-label">Label untuk Badge Extra</label>
                                 <input type="text" name="extra_label" maxlength="100"
                                        value="{{ old('extra_label', $item->extra_label) }}"
-                                       class="form-control" placeholder="Cth: NPSN">
+                                       class="form-control">
                             </div>
                         </div>
                     </div>

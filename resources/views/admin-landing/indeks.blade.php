@@ -6,9 +6,6 @@
 
 @section('content')
 <div class="px-2 py-2">
-    @if (session('success'))
-        <div class="alert alert-success py-2 small mb-3">{{ session('success') }}</div>
-    @endif
 
     {{-- Hero banner ringkas --}}
     <div class="lp-admin-hero mb-3">

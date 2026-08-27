@@ -182,6 +182,35 @@
             pointer-events: none !important;
             user-select: none;
         }
+        /* Saat modal video dibuka (#lpVideoModal di /galeri), navbar + scroll-top
+           di-blur dan body scroll-lock. Konten grid di-blur juga via selector
+           ":has" — fallback untuk browser tanpa :has tetap di-handle via class. */
+        body.lp-media-modal-open .lp-navbar-inner,
+        body.lp-media-modal-open .lp-navbar-inner::before {
+            filter: blur(6px) saturate(120%);
+            opacity: 0.55;
+        }
+        body.lp-media-modal-open .lp-navbar-inner,
+        body.lp-media-modal-open .lp-navbar-inner * {
+            pointer-events: none !important;
+        }
+        body.lp-media-modal-open #lpScrollTopBtn {
+            filter: blur(6px) saturate(120%);
+            opacity: 0.45;
+            pointer-events: none !important;
+        }
+        html.lp-media-modal-open,
+        body.lp-media-modal-open {
+            overflow: hidden !important;
+            overscroll-behavior: contain;
+            touch-action: none;
+        }
+        body.lp-media-modal-open > *:not(.modal):not(.modal-backdrop):not(.lp-navbar-wrap):not(.lp-scroll-top-wrap) {
+            filter: blur(6px) saturate(120%);
+            opacity: 0.6;
+            pointer-events: none !important;
+            user-select: none;
+        }
         .lp-navbar-inner > .lp-navbar,
         .lp-navbar-inner > .lp-cta-desktop,
         .lp-navbar-wrap > .lp-nav-menu > .lp-nav-menu-body { pointer-events: auto; }

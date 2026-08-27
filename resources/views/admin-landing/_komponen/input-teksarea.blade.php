@@ -1,4 +1,4 @@
-@php
+    @php
     $name = $name ?? '';
     $label = $label ?? '';
     $value = $value ?? old($name);
@@ -19,7 +19,7 @@
             @if ($required)<span class="text-danger">*</span>@endif
         </label>
         <textarea name="{{ $name }}" rows="{{ $rows }}" class="form-control {{ $inputClass }}"
-                  placeholder="{{ $placeholder }}"
+                  @if($placeholder !== '') placeholder="{{ $placeholder }}"@endif
                   {{ $required ? 'required' : '' }}{!! $extraAttrs !!}>{!! $value !!}</textarea>
     </div>
     @if ($help)

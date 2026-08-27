@@ -940,6 +940,34 @@
         </script>
     @endif
 
+    @if(session('success'))
+        <script>
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: @json(session('success')),
+            showConfirmButton: false,
+            timer: 1800,
+            timerProgressBar: true
+        });
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: @json(session('error')),
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true
+        });
+        </script>
+    @endif
+
 
 <script>
     $('.btn-logout').on('click', function(e) {

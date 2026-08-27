@@ -338,12 +338,13 @@ $kode = $rek->kode_akun;
         ];
 
         // Sub Judul + tanggal
-        $data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn;
+$data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn;
         $data['tgl_awal_bulan']  = $tgl_awal_bulan;
         $data['tgl_akhir_bulan'] = $tgl_akhir_bulan;
         $data['tahun'] = $thn;
         $data['bulan'] = $bln;
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl_akhir_bulan);
 
         $view = view('laporan-keuangan.views.buku_besar', $data)->render();
 
@@ -378,9 +379,10 @@ $kode = $rek->kode_akun;
             ->when(!empty($data['hari']), function ($q) use ($thn, $bln, $hari) {
                 $q->whereDate('tanggal_transaksi', "$thn-$bln-$hari");
             })
-            ->orderBy('tanggal_transaksi', 'asc')
+->orderBy('tanggal_transaksi', 'asc')
             ->get();
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl);
         $view = view('laporan-keuangan.views.jurnal_transaksi', $data)->render();
 
         return $this->respond($view, $data, 'jurnal-transaksi.xls');
@@ -449,6 +451,7 @@ $kode = $rek->kode_akun;
 
         $data['arus_kas'] = $arusKas;
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl_akhir_bulan);
 
         // hitung saldo kas sampai akhir bulan sebelumnya
         $keuangan = new Keuangan;
@@ -496,11 +499,12 @@ private function laba_rugi(array $data)
 
         $data['title'] = 'Laba Rugi';
         $data['title_bulan'] = 'Tahun ' . Tanggal::tahun($tgl);
-        if (!empty($data['bulan'])) {
+if (!empty($data['bulan'])) {
             $data['title_bulan'] = Tanggal::namaBulan($tgl) . ' ' . Tanggal::tahun($tgl);
             $data['tgl']       = Tanggal::namaBulan($tgl) . ' ' . Tanggal::tahun($tgl);
         }
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl);
 
         $view = view('laporan-keuangan.views.laba_rugi', $data)->render();
 
@@ -577,9 +581,10 @@ $data['akun1'] = AkunLevel1::whereIn('kode_akun', ['1.0.00.00', '2.0.00.00', '3.
 
         $data['laba_rugi_berjalan'] = $laba_rugi_berjalan;
 
-        $data['tgl_awal']  = $tgl_awal;
+$data['tgl_awal']  = $tgl_awal;
         $data['tgl_akhir'] = $tgl_akhir;
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl_akhir);
 
         $view = view('laporan-keuangan.views.neraca', $data)->render();
 
@@ -633,9 +638,10 @@ $data['akun1'] = AkunLevel1::whereIn('kode_akun', ['1.0.00.00', '2.0.00.00', '3.
         $data['rekening'] = $rekenings->map(function ($r) use ($debits, $kredits) {
             $r->total_debit  = (float) ($debits[$r->kode_akun] ?? 0);
             $r->total_kredit = (float) ($kredits[$r->kode_akun] ?? 0);
-            return $r;
+return $r;
         });
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl_akhir);
 
         $view = view('laporan-keuangan.views.neraca_saldo', $data)->render();
 
@@ -679,8 +685,9 @@ $data['akun1'] = AkunLevel1::whereIn('kode_akun', ['1.0.00.00', '2.0.00.00', '3.
 
         $calk = Calk::where('tanggal', $tanggal)->first();
 
-        $data['catatan'] = $calk ? $calk->catatan : '';
+$data['catatan'] = $calk ? $calk->catatan : '';
         $data['ttd'] = TandaTangan::first();
+        $data['ttd']?->applyDatePlaceholders($tgl_akhir);
 
         $view = view('laporan-keuangan.views.calk', $data)->render();
 

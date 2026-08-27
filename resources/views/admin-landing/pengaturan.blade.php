@@ -38,7 +38,6 @@
                             <div class="input-group input-group-outline mb-3 @if(old('hero_title', $heroTitle ?? null)) is-filled @endif">
                                 <label class="form-label">Judul Hero Beranda</label>
                                 <input type="text" name="hero_title" class="form-control" maxlength="150"
-                                       placeholder="Selamat Datang di {{ $setting->school_name ?? 'Sekolah' }}"
                                        value="{{ old('hero_title', $heroTitle ?? null) }}">
                             </div>
                         </div>
@@ -197,7 +196,6 @@
                                 <div class="input-group input-group-outline mb-3 @if(old($field, $setting->{$field})) is-filled @endif">
                                     <label class="form-label">{{ $label }} (URL)</label>
                                     <input type="url" name="{{ $field }}" class="form-control"
-                                           placeholder="https://..."
                                            value="{{ old($field, $setting->{$field}) }}">
                                 </div>
                             </div>
@@ -607,6 +605,13 @@ $(function () {
                     // pola halaman SOP, tanpa reload & tanpa scroll-spy.
                     if (result.section && history && history.replaceState) {
                         history.replaceState(null, '', '#lp-section-' + result.section);
+                    }
+
+                    // Reset input file setelah submit sukses agar file lama
+                    // tidak ikut terkirim pada submit berikutnya (mis. ketika
+                    // admin ganti dari custom -> preset default).
+                    if (result.section === 'background' && customInput) {
+                        customInput.value = '';
                     }
 
                     clearPendingCustom();

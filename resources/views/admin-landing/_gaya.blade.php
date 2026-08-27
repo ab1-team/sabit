@@ -581,4 +581,35 @@
         .lp-pengaturan-hero h4 { font-size: 17px; }
         .lp-pengaturan-content .card .card-body { padding: 14px; }
     }
+
+    /* Input file dengan border tegas + hover/focus hijau tema */
+    .lp-bordered-input {
+        border: 1px solid #d0d5dd !important;
+        border-radius: .5rem !important;
+        padding: .55rem .85rem !important;
+        background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .lp-bordered-input:hover { border-color: #37d17c !important; }
+    .lp-bordered-input:focus,
+    .lp-bordered-input:focus-within {
+        border-color: #37d17c !important;
+        box-shadow: 0 0 0 .2rem rgba(55, 209, 124, .18) !important;
+        outline: none !important;
+    }
+
+    /* Loading state tombol submit (anti double-click) */
+    @keyframes lpSpin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+    .lp-spinner {
+        display: inline-block;
+        animation: lpSpin 0.85s linear infinite;
+    }
+    #submitBtn[disabled] {
+        opacity: 0.75;
+        cursor: wait !important;
+        pointer-events: none;
+    }
 </style>

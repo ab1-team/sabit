@@ -1165,19 +1165,30 @@ class AdminLandingController extends Controller
         return DataTables::eloquent($query)
             ->addColumn('title_col', function ($a) {
                 $html = '<div class="lp-ann-title">'.e($a->title).'</div>';
+
+                // Baris meta: tanggal & file (gabung agar tabel lebih ringkas)
+                $meta = [];
+                if ($a->published_at) {
+                    $meta[] = '<span class="lp-ann-meta-item">'
+                        .'<span class="material-symbols-rounded">event</span>'
+                        .'<span>'.$a->published_at->format('Y-m-d H:i').'</span>'
+                        .'</span>';
+                }
+                if (!empty($a->file)) {
+                    $meta[] = '<span class="lp-ann-meta-item lp-ann-file" title="'.e($a->file).'">'
+                        .'<span class="material-symbols-rounded">attach_file</span>'
+                        .'<span>'.e($a->file).'</span>'
+                        .'</span>';
+                }
+                if (!empty($meta)) {
+                    $html .= '<div class="lp-ann-meta">'.implode('<span class="lp-ann-meta-sep"></span>', $meta).'</div>';
+                }
+
                 if (!empty($a->content)) {
                     $excerpt = \Illuminate\Support\Str::limit(strip_tags($a->content), 140);
                     $html .= '<div class="lp-ann-content">'.e($excerpt).'</div>';
                 }
                 return $html;
-            })
-            ->addColumn('file_col', function ($a) {
-                if (!empty($a->file)) {
-                    return '<span class="lp-ann-file" title="'.e($a->file).'">'
-                        .'<span class="material-symbols-rounded">attach_file</span>'
-                        .'<span>'.e($a->file).'</span></span>';
-                }
-                return '<span class="text-muted small">—</span>';
             })
             ->addColumn('status_col', function ($a) {
                 return $a->is_published
@@ -1203,7 +1214,7 @@ class AdminLandingController extends Controller
             ->editColumn('is_published', function ($a) {
                 return $a->is_published ? 1 : 0;
             })
-            ->rawColumns(['title_col', 'file_col', 'status_col', 'action'])
+            ->rawColumns(['title_col', 'status_col', 'action'])
             ->orderColumn('published_at', 'published_at $1')
             ->make(true);
     }
@@ -1293,86 +1304,409 @@ class AdminLandingController extends Controller
         ]);
     }
 
-    public function galleriesData(Request $request)
+    /**
+     * Endpoint AJAX: gabung data lp_galeri (foto) & lp_video (video) jadi 1 list.
+     * 1 card = 1 item. Output diserialisasi ke JSON agar JS merender langsung
+     * markup kartu, sehingga bisa di-stream per halaman pakai load-more.
+     */
+    public function galleriesCards(Request $request)
     {
-        $query = GaleriLanding::query();
+        $perPage = max(4, min(48, (int) $request->query('per_page', 12)));
+        $page    = max(1, (int) $request->query('page', 1));
+        $q       = trim((string) $request->query('q', ''));
+        $typeFilter = $request->query('type', '');
 
-        return DataTables::eloquent($query)
-            ->addColumn('image', function ($g) {
-                if ($g->image) {
-                    $url = Storage::disk('public')->url('landing/'.$g->image);
-                    return '<img src="'.e($url).'" alt="" class="lp-gallery-thumb">';
-                }
-                return '<span class="lp-gallery-thumb-empty"><span class="material-symbols-rounded">image</span></span>';
-            })
-            ->addColumn('title_col', function ($g) {
-                $html = '<div class="lp-gallery-title">'.e($g->title).'</div>';
-                if (!empty($g->description)) {
-                    $excerpt = \Illuminate\Support\Str::limit(strip_tags($g->description), 90);
-                    $html .= '<small>'.e($excerpt).'</small>';
-                }
-                return $html;
-            })
-            ->addColumn('album_col', function ($g) {
-                if (!empty($g->album)) {
-                    return '<span class="badge text-bg-light border">'.e($g->album).'</span>';
-                }
-                return '<span class="text-muted small">—</span>';
-            })
-            ->addColumn('sort_col', function ($g) {
-                return '<span class="text-muted small">'.e($g->sort_order ?? 0).'</span>';
-            })
-            ->addColumn('status_col', function ($g) {
-                return $g->is_published
-                    ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
-                    : '<span class="lp-status-badge is-draft">Draft</span>';
-            })
-            ->addColumn('action', function ($g) {
-                $edit = route('app.admin-landing.galleries.edit', $g->id);
-                $destroy = route('app.admin-landing.galleries.destroy', $g->id);
-                $html  = '<div class="lp-table-actions justify-content-center">';
-                $html .= '<a href="'.e($edit).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit foto">';
-                $html .= '<span class="material-symbols-rounded">edit</span></a>';
-                $html .= '<form action="'.e($destroy).'" method="POST" data-confirm="'.e('Hapus foto "'.$g->title.'" ?').'" class="d-inline">';
-                $html .= csrf_field().method_field('DELETE');
-                $html .= '<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus foto">';
-                $html .= '<span class="material-symbols-rounded">delete</span></button>';
-                $html .= '</form></div>';
-                return $html;
-            })
-            ->editColumn('sort_order', function ($g) {
-                return (int) ($g->sort_order ?? 0);
-            })
-            ->editColumn('is_published', function ($g) {
-                return $g->is_published ? 1 : 0;
-            })
-            ->rawColumns(['image', 'title_col', 'album_col', 'sort_col', 'status_col', 'action'])
-            ->orderColumn('sort_order', 'sort_order $1')
-            ->make(true);
+        // Foto: kolom search di title/description/album.
+        $photoQuery = GaleriLanding::query()
+            ->selectRaw("id, title, description, album, sort_order, is_published, 'photo' as media_type, image as thumb_path, NULL as video_source, NULL as file_path, NULL as poster, NULL as youtube_url, created_at");
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $photoQuery->where(function ($w) use ($like) {
+                $w->where('title', 'like', $like)
+                  ->orWhere('description', 'like', $like)
+                  ->orWhere('album', 'like', $like);
+            });
+        }
+
+        // Video: kolom search di title/description.
+        $videoQuery = VideoLanding::query()
+            ->selectRaw("id, title, description, NULL as album, 0 as sort_order, is_published, 'video' as media_type, NULL as thumb_path, source as video_source, file_path, poster, youtube_url, created_at");
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $videoQuery->where(function ($w) use ($like) {
+                $w->where('title', 'like', $like)
+                  ->orWhere('description', 'like', $like);
+            });
+        }
+
+        if ($typeFilter === 'photo') {
+            $union = $photoQuery;
+            $total = (clone $union)->count();
+        } elseif ($typeFilter === 'video') {
+            $union = $videoQuery;
+            $total = (clone $union)->count();
+        } else {
+            // Gabung: query pertama pakai unionAll. Materialize untuk hitung total
+            // & paginasi agar tidak bergantung pada quirks clone() + unionAll().
+            $union = $photoQuery->unionAll($videoQuery);
+        }
+
+        // Eloquent unionAll with offset/limit: materialize dulu, slice manual.
+        $allRows = $union->get();
+        if (!isset($total)) {
+            $total = $allRows->count();
+        }
+
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $offset = ($page - 1) * $perPage;
+
+        $rows = $allRows->sortByDesc(function ($r) {
+            return $r->created_at ? $r->created_at->timestamp : 0;
+        })->values()->slice($offset, $perPage)->values();
+
+        $html = '';
+        foreach ($rows as $row) {
+            $html .= $this->renderGalleryCard($row);
+        }
+
+        return response()->json([
+            'html'        => $html,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'total'       => $total,
+            'total_pages' => $totalPages,
+            'has_more'    => $page < $totalPages,
+            'empty'       => $rows->isEmpty(),
+        ]);
     }
 
-    public function galleryCreate()
+    /**
+     * Render satu kartu HTML untuk gabungan foto/video.
+     * $row->media_type = 'photo' | 'video'.
+     */
+    protected function renderGalleryCard($row): string
     {
+        $isPhoto = ($row->media_type ?? 'photo') === 'photo';
+        $type    = $isPhoto ? 'photo' : 'video';
+        $id      = (int) $row->id;
+        $title   = e($row->title);
+        $rawTitle = (string) $row->title;
+        $desc    = $row->description ? e(\Illuminate\Support\Str::limit(strip_tags($row->description), 110)) : '';
+        $rawDesc = $row->description ? (string) $row->description : '';
+        $album   = !$isPhoto ? '' : ($row->album ?: '');
+        $isPub   = (bool) $row->is_published;
+
+        // Data untuk modal preview
+        $previewAttrs = '';
+        $previewAttrs .= ' data-preview-title="'.e($rawTitle).'"';
+        if (!$isPhoto) {
+            $previewAttrs .= ' data-preview-source="'.e($row->video_source).'"';
+        }
+        if ($isPhoto && !empty($row->thumb_path)) {
+            $fullUrl = \Illuminate\Support\Facades\Storage::disk('public')->url('landing/'.$row->thumb_path);
+            $previewAttrs .= ' data-preview-url="'.e($fullUrl).'" data-preview-kind="image"';
+        } elseif (!$isPhoto) {
+            if ($row->video_source === VideoLanding::SOURCE_LOCAL && !empty($row->file_path)) {
+                $videoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($row->file_path);
+                $posterUrl = !empty($row->poster) ? \Illuminate\Support\Facades\Storage::disk('public')->url($row->poster) : '';
+                $previewAttrs .= ' data-preview-url="'.e($videoUrl).'"';
+                $previewAttrs .= ' data-preview-kind="video"';
+                $previewAttrs .= ' data-preview-poster="'.e($posterUrl).'"';
+            } elseif (!empty($row->youtube_url)) {
+                $ytId = self::extractYoutubeId($row->youtube_url);
+                $embed = $ytId ? 'https://www.youtube.com/embed/'.$ytId.'?autoplay=1&rel=0' : '';
+                $previewAttrs .= ' data-preview-url="'.e($embed).'" data-preview-kind="youtube"';
+                if (!empty($row->poster)) {
+                    $previewAttrs .= ' data-preview-poster="'.e(\Illuminate\Support\Facades\Storage::disk('public')->url($row->poster)).'"';
+                }
+            }
+        }
+        if ($rawDesc !== '') {
+            $previewAttrs .= ' data-preview-desc="'.e(\Illuminate\Support\Str::limit(strip_tags($rawDesc), 400)).'"';
+        }
+
+        // Tentukan URL thumbnail untuk cover card.
+        $coverHtml = '';
+        if ($isPhoto) {
+            if (!empty($row->thumb_path)) {
+                $imgUrl = \Illuminate\Support\Facades\Storage::disk('public')->url('landing/'.$row->thumb_path);
+                $coverHtml = '<img src="'.e($imgUrl).'" alt="" class="lp-card-img" loading="lazy">';
+            } else {
+                $coverHtml = '<div class="lp-card-img lp-card-img--empty d-inline-flex align-items-center justify-content-center"><span class="material-symbols-rounded">image</span></div>';
+            }
+        } else {
+            // Video: gunakan poster>YouTube>hqdefault>placeholder
+            $thumb = null;
+            if (!empty($row->poster)) {
+                $thumb = \Illuminate\Support\Facades\Storage::disk('public')->url($row->poster);
+            } elseif (!empty($row->youtube_url) && $row->video_source !== VideoLanding::SOURCE_LOCAL) {
+                $ytId = self::extractYoutubeId($row->youtube_url);
+                if ($ytId) $thumb = 'https://i.ytimg.com/vi/'.$ytId.'/hqdefault.jpg';
+            }
+            if ($thumb) {
+                $coverHtml = '<img src="'.e($thumb).'" alt="" class="lp-card-img" loading="lazy">';
+            } else {
+                $coverHtml = '<div class="lp-card-img lp-card-img--empty d-inline-flex align-items-center justify-content-center" style="background:#0f172a;color:rgba(255,255,255,.45);"><span class="material-symbols-rounded" style="font-size:42px;">movie</span></div>';
+            }
+            // Play overlay untuk video
+            $coverHtml .= '<span class="material-symbols-rounded lp-card-play-overlay">play_circle</span>';
+        }
+
+        // Badge pojok kiri: tipe (Foto/Video)
+        $typeBadge = $isPhoto
+            ? '<span class="lp-status-badge lp-type-photo" title="Foto"><span class="material-symbols-rounded" style="font-size:13px;">photo_library</span> Foto</span>'
+            : '<span class="lp-status-badge lp-type-video" title="Video"><span class="material-symbols-rounded" style="font-size:13px;">'.($row->video_source === VideoLanding::SOURCE_LOCAL ? 'movie' : 'smart_display').'</span> '.($row->video_source === VideoLanding::SOURCE_LOCAL ? 'Lokal' : 'YouTube').'</span>';
+        $statusBadge = $isPub
+            ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
+            : '<span class="lp-status-badge is-draft">Draft</span>';
+
+        $editUrl = route('app.admin-landing.galleries.edit', ['type' => $type, 'id' => $id]);
+        $delUrl  = route('app.admin-landing.galleries.destroy', ['type' => $type, 'id' => $id]);
+        $pubUrl  = route('app.admin-landing.galleries.toggle-publish', ['type' => $type, 'id' => $id]);
+
+        $pubCheck = $isPub ? 'checked' : '';
+
+        // Badge album (foto saja).
+        $albumChip = '';
+        if ($isPhoto && $album !== '') {
+            $albumChip = '<span class="lp-cat-chip">'.e($album).'</span>';
+        }
+
+        // Source text untuk video.
+        $sourceText = '';
+        if (!$isPhoto) {
+            $sourceText = '<div class="lp-card-meta-bottom"><span class="material-symbols-rounded" style="font-size:14px;">'.($row->video_source === VideoLanding::SOURCE_LOCAL ? 'movie' : 'smart_display').'</span> '.($row->video_source === VideoLanding::SOURCE_LOCAL ? 'Upload Lokal' : 'YouTube').'</div>';
+        }
+
+        $actions  = '<div class="lp-card-actions pb-0">'
+            .'<div class="lp-card-toggles">'
+            .'<label class="lp-switch" title="Publish — tampilkan di halaman publik">'
+            .'<input type="checkbox" class="lp-switch-input lp-toggle-publish" data-url="'.e($pubUrl).'" '.$pubCheck.'>'
+            .'<span class="lp-switch-track"><span class="lp-switch-thumb"></span></span>'
+            .'<span class="lp-switch-label"><span class="lp-switch-icon"><span class="material-symbols-rounded" style="font-size:13px;">publish</span></span><span class="lp-switch-text"> Publish</span></span>'
+            .'</label>'
+            .'</div>'
+            .'<div class="lp-card-action-buttons">'
+            .'<a href="'.e($editUrl).'" class="btn btn-sm btn-icon btn-outline-primary" title="Edit '.($isPhoto?'foto':'video').'" aria-label="Edit">'
+            .'<span class="material-symbols-rounded" style="font-size:16px;">edit</span></a>'
+            .'<form action="'.e($delUrl).'" method="POST" class="d-inline lp-card-delete" data-confirm="Hapus '.($isPhoto?'foto':'video').' &quot;'.$title.'&quot;?" style="display:inline">'
+            .csrf_field().'<input type="hidden" name="_method" value="DELETE">'
+            .'<button type="submit" class="btn btn-sm btn-icon btn-outline-danger" title="Hapus" aria-label="Hapus">'
+            .'<span class="material-symbols-rounded" style="font-size:16px;">delete</span></button>'
+            .'</form>'
+            .'</div>'
+            .'</div>';
+
+        return '<article class="lp-card" data-id="'.e($id).'" data-type="'.e($type).'"'.$previewAttrs.'>'
+            .'<div class="lp-card-cover lp-preview-trigger" role="button" tabindex="0" aria-label="Lihat pratinjau '.($isPhoto?'foto':'video').'">'.$coverHtml.'</div>'
+            .'<div class="lp-card-body">'
+            .'<div class="lp-card-meta-top">'.$typeBadge.$albumChip.$statusBadge.'</div>'
+            .'<h3 class="lp-card-title lp-preview-trigger" role="button" tabindex="0">'.$title.'</h3>'
+            .($desc !== '' ? '<p class="lp-card-excerpt lp-preview-trigger" role="button" tabindex="0">'.$desc.'</p>' : '')
+            .$sourceText
+            .$actions
+            .'</div>'
+            .'</article>';
+    }
+
+    /**
+     * Toggle publish/unpublish item gabungan (foto atau video).
+     * PATCH /app/admin-landing/galleries/{type}/{id}/toggle-publish
+     */
+    public function galleryTogglePublish(Request $request, string $type, int $id)
+    {
+        if (!in_array($type, ['photo', 'video'], true)) {
+            abort(404);
+        }
+        $model = $type === 'photo'
+            ? GaleriLanding::findOrFail($id)
+            : VideoLanding::findOrFail($id);
+
+        $model->is_published = ! $model->is_published;
+        $model->save();
+
+        $label = $type === 'photo' ? 'Foto' : 'Video';
+
+        return response()->json([
+            'ok'           => true,
+            'is_published' => (bool) $model->is_published,
+            'label'        => 'Publish',
+            'msg'          => $model->is_published
+                ? "$label ditampilkan di halaman publik."
+                : "$label disembunyikan dari halaman publik.",
+        ]);
+    }
+
+    /**
+     * Mengembalikan URL file untuk di-include di form edit.
+     * Dipakai untuk memberikan data editor via JSON ke JS.
+     */
+    private function galleryEditPayload($type, $id): array
+    {
+        $base = [
+            'media_type' => $type,
+            'id' => $id,
+        ];
+        if ($type === 'photo') {
+            $row = GaleriLanding::findOrFail($id);
+            $base += [
+                'title'       => $row->title,
+                'description' => $row->description,
+                'album'       => $row->album,
+                'sort_order'  => (int) ($row->sort_order ?? 0),
+                'is_published' => (bool) $row->is_published,
+                'image_path'  => $row->image,
+                'image_url'   => $row->image ? \Illuminate\Support\Facades\Storage::disk('public')->url('landing/'.$row->image) : null,
+            ];
+            return $base;
+        }
+        $row = VideoLanding::findOrFail($id);
+        $base += [
+            'title'       => $row->title,
+            'description' => $row->description,
+            'source'      => $row->source ?: VideoLanding::SOURCE_YOUTUBE,
+            'youtube_url' => $row->youtube_url,
+            'is_published' => (bool) $row->is_published,
+            'file_url'    => $row->file_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($row->file_path) : null,
+            'file_path'   => $row->file_path,
+            'poster_url'  => $row->poster ? \Illuminate\Support\Facades\Storage::disk('public')->url($row->poster) : null,
+            'poster_path' => $row->poster,
+        ];
+        return $base;
+    }
+
+    public function galleryCreate(Request $request)
+    {
+        // Default tipe: photo (hanya penanda untuk sembunyikan section video di awal). Bisa diganti via ?type=video.
+        $type = $request->query('type') === 'video' ? 'video' : 'photo';
+        $albumOptions  = $this->galleryAlbumOptions();
+        $albumDefaults = $this->galleryAlbumDefaults();
+
         return view('admin-landing.galeri.formulir', [
-            'title' => 'Tambah Foto Galeri',
-            'gallery' => new GaleriLanding(),
-            'action' => route('app.admin-landing.galleries.store'),
+            'title'         => 'Tambah Konten Galeri',
+            'mediaType'     => $type,
+            'formData'      => null,
+            'action'        => route('app.admin-landing.galleries.store'),
+            'albumOptions'  => $albumOptions,
+            'albumDefaults' => $albumDefaults,
         ]);
     }
 
     public function galleryStore(Request $request)
     {
+        // Auto-detect tipe dari field yang dikirim (mode create).
+        $hasImage = $request->hasFile('image');
+        $hasYt    = trim((string) $request->input('youtube_url', '')) !== '';
+        $hasFile  = $request->hasFile('video_file');
+
+        $type = $request->input('media_type');
+        if ($type !== 'photo' && $type !== 'video') {
+            $type = $hasImage ? 'photo' : (($hasYt || $hasFile) ? 'video' : null);
+        }
+        if (!$type) {
+            return back()->withErrors(['content' => 'Isi foto (image) atau video (YouTube URL / file video).'])->withInput();
+        }
+
+        if ($type === 'photo') {
+            return $this->handlePhotoStore($request);
+        }
+        return $this->handleGalleryVideoStore($request);
+    }
+
+    public function galleryEdit(Request $request, string $type, int $id)
+    {
+        $payload = $this->galleryEditPayload($type, $id);
+        $albumOptions  = $this->galleryAlbumOptions();
+        $albumDefaults = $this->galleryAlbumDefaults();
+
+        return view('admin-landing.galeri.formulir', [
+            'title'         => 'Edit Konten Galeri',
+            'mediaType'     => $type,
+            'formData'      => $payload,
+            'action'        => route('app.admin-landing.galleries.update', ['type' => $type, 'id' => $id]),
+            'albumOptions'  => $albumOptions,
+            'albumDefaults' => $albumDefaults,
+        ]);
+    }
+
+    /** Ambil daftar album unik dari tabel lp_galeri (untuk pilihan Select2). */
+    private function galleryAlbumOptions(): array
+    {
+        return GaleriLanding::whereNotNull('album')
+            ->where('album', '!=', '')
+            ->distinct()
+            ->orderBy('album')
+            ->pluck('album')
+            ->all();
+    }
+
+    /** Daftar kategori default untuk foto sekolah (ditampilkan dulu di Select2). */
+    private function galleryAlbumDefaults(): array
+    {
+        return [
+            'Upacara',
+            'Kegiatan Sekolah',
+            'Class Meeting',
+            'Olahraga',
+            'Seni & Budaya',
+            'Wisuda',
+            'Study Tour',
+            'Pramuka',
+            'Lomba',
+            'Lainnya',
+        ];
+    }
+
+    public function galleryUpdate(Request $request, string $type, int $id)
+    {
+        if (!in_array($type, ['photo', 'video'], true)) {
+            abort(404);
+        }
+        if ($type === 'photo') {
+            return $this->handlePhotoUpdate($request, $id);
+        }
+        return $this->handleGalleryVideoUpdate($request, $id);
+    }
+
+    public function galleryDestroy(Request $request, string $type, int $id)
+    {
+        if (!in_array($type, ['photo', 'video'], true)) {
+            abort(404);
+        }
+
+        if ($type === 'photo') {
+            $model = GaleriLanding::findOrFail($id);
+            if ($model->image) {
+                Storage::disk('public')->delete($this->diskPath($model->image));
+            }
+            $model->delete();
+            return $this->deleteSuccess($request, 'Foto berhasil dihapus.', 'app.admin-landing.galleries');
+        }
+
+        $model = VideoLanding::findOrFail($id);
+        if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
+            Storage::disk('public')->delete($model->file_path);
+        }
+        if ($model->poster && Storage::disk('public')->exists($model->poster)) {
+            Storage::disk('public')->delete($model->poster);
+        }
+        $model->delete();
+        return $this->deleteSuccess($request, 'Video berhasil dihapus.', 'app.admin-landing.galleries');
+    }
+
+    /** ===== Photo store/update (sama logika dgn method lama) ===== */
+    private function handlePhotoStore(Request $request)
+    {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string'],
             'album' => ['nullable', 'string', 'max:100'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $data['image'] = basename($request->file('image')->store($this->uploadDir(), 'public'));
-        $data['sort_order'] = $data['sort_order'] ?? (GaleriLanding::max('sort_order') + 1);
+        $data['sort_order'] = (int) (GaleriLanding::max('sort_order') ?? 0) + 1;
         $data['is_published'] = $request->boolean('is_published');
 
         GaleriLanding::create($data);
@@ -1380,25 +1714,13 @@ class AdminLandingController extends Controller
         return $this->saveSuccess($request, 'Foto berhasil ditambahkan.', 'app.admin-landing.galleries');
     }
 
-    public function galleryEdit($gallery)
+    private function handlePhotoUpdate(Request $request, int $id)
     {
-        $model = GaleriLanding::findOrFail($gallery);
-
-        return view('admin-landing.galeri.formulir', [
-            'title' => 'Edit Foto Galeri',
-            'gallery' => $model,
-            'action' => route('app.admin-landing.galleries.update', $model->id),
-        ]);
-    }
-
-    public function galleryUpdate(Request $request, $gallery)
-    {
-        $model = GaleriLanding::findOrFail($gallery);
+        $model = GaleriLanding::findOrFail($id);
         $data = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string'],
             'album' => ['nullable', 'string', 'max:100'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
@@ -1417,212 +1739,10 @@ class AdminLandingController extends Controller
         return $this->saveSuccess($request, 'Foto berhasil diperbarui.', 'app.admin-landing.galleries');
     }
 
-    public function galleryDestroy(Request $request, $gallery)
-    {
-        $model = GaleriLanding::findOrFail($gallery);
-        if ($model->image) {
-            Storage::disk('public')->delete($this->diskPath($model->image));
-        }
-        $model->delete();
-
-        return $this->deleteSuccess($request, 'Foto berhasil dihapus.', 'app.admin-landing.galleries');
-    }
-
-    public function videos(Request $request)
-    {
-        return view('admin-landing.video.indeks', [
-            'title' => 'Video',
-        ]);
-    }
-
-    public function videosData(Request $request)
-    {
-        $query = VideoLanding::query();
-
-        $stats = [
-            'total'     => (int) VideoLanding::count(),
-            'youtube'   => (int) VideoLanding::where('source', 'youtube')->count(),
-            'local'     => (int) VideoLanding::where('source', 'local')->count(),
-            'published' => (int) VideoLanding::where('is_published', true)->count(),
-        ];
-
-        return DataTables::eloquent($query)
-            ->with(['extra' => ['stats' => $stats]])
-            ->addColumn('preview_col', function ($v) {
-                $thumb   = $v->display_thumb;
-                $isLocal = $v->isLocal();
-                $ytId    = $v->isYoutube() ? ($v->youtube_id ?? '') : '';
-                $local   = $isLocal && $v->file_path
-                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->file_path)
-                    : '';
-                $poster  = $v->poster
-                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->poster)
-                    : '';
-
-                $attrs = ' data-yt-id="'.e($ytId).'"'
-                    .' data-local-src="'.e($local).'"'
-                    .' data-poster="'.e($poster).'"'
-                    .' data-title="'.e($v->title).'"'
-                    .' data-description="'.e(strip_tags((string) $v->description)).'"';
-
-                if ($thumb) {
-                    $html  = '<button type="button" class="lp-video-thumb-btn lp-video-trigger"'.$attrs.' aria-label="Putar '.e($v->title).'">';
-                    $html .= '<div class="lp-video-thumb"><img src="'.e($thumb).'" alt="'.e($v->title).'" loading="lazy"></div>';
-                    $html .= '<span class="material-symbols-rounded lp-video-play">play_circle</span>';
-                    $html .= '</button>';
-                    return $html;
-                }
-                if ($isLocal) {
-                    return '<button type="button" class="lp-video-thumb-btn lp-video-thumb-empty-wrap lp-video-trigger"'.$attrs
-                        .' aria-label="Putar '.e($v->title).'">'
-                        .'<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">movie</span></div>'
-                        .'<span class="material-symbols-rounded lp-video-play">play_circle</span>'
-                        .'</button>';
-                }
-                return '<div class="lp-video-thumb lp-video-thumb-empty"><span class="material-symbols-rounded">videocam_off</span></div>';
-            })
-            ->addColumn('source_col', function ($v) {
-                if ($v->isLocal()) {
-                    return '<span class="lp-status-badge is-local">'
-                        .'<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-3px;">movie</span> Lokal</span>';
-                }
-                return '<span class="lp-status-badge is-yt">'
-                    .'<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-3px;">smart_display</span> YouTube</span>';
-            })
-            ->addColumn('title_col', function ($v) {
-                $html = '<div class="lp-video-title">'.e($v->title).'</div>';
-                if (!empty($v->description)) {
-                    $excerpt = \Illuminate\Support\Str::limit(strip_tags($v->description), 90);
-                    $html .= '<small>'.e($excerpt).'</small>';
-                }
-                return $html;
-            })
-            ->addColumn('url_col', function ($v) {
-                if ($v->isLocal()) {
-                    $path = $v->file_path ?: '-';
-                    $short = \Illuminate\Support\Str::limit($path, 60);
-                    return '<span class="lp-video-url" title="'.e($path).'">'
-                        .'<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">description</span> '
-                        .e($short).'</span>';
-                }
-                $url = (string) $v->youtube_url;
-                $short = \Illuminate\Support\Str::limit($url, 60);
-                $html = '<a href="'.e($url).'" target="_blank" rel="noopener" class="text-decoration-none lp-video-url" title="'.e($url).'">';
-                $html .= '<span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">open_in_new</span> ';
-                $html .= e($short).'</a>';
-                return $html;
-            })
-            ->addColumn('status_col', function ($v) {
-                return $v->is_published
-                    ? '<span class="lp-status-badge is-published">Dipublikasikan</span>'
-                    : '<span class="lp-status-badge is-draft">Draft</span>';
-            })
-            ->addColumn('action', function ($v) {
-                $edit = route('app.admin-landing.videos.edit', $v->id);
-                $destroy = route('app.admin-landing.videos.destroy', $v->id);
-                $html  = '<div class="lp-table-actions justify-content-center">';
-                $html .= '<a href="'.e($edit).'" class="btn btn-sm btn-outline-primary btn-icon" title="Edit video">';
-                $html .= '<span class="material-symbols-rounded">edit</span></a>';
-                $html .= '<form action="'.e($destroy).'" method="POST" data-confirm="'.e('Hapus video "'.$v->title.'" ?').'" class="d-inline">';
-                $html .= csrf_field().method_field('DELETE');
-                $html .= '<button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus video">';
-                $html .= '<span class="material-symbols-rounded">delete</span></button>';
-                $html .= '</form></div>';
-                return $html;
-            })
-            ->editColumn('is_published', function ($v) {
-                return $v->is_published ? 1 : 0;
-            })
-            ->rawColumns(['preview_col', 'source_col', 'title_col', 'url_col', 'status_col', 'action'])
-            ->orderColumn('id', 'id $1')
-            ->make(true);
-    }
-
-    public function videoCreate()
-    {
-        return view('admin-landing.video.formulir', [
-            'title' => 'Tambah Video',
-            'video' => new VideoLanding(),
-            'action' => route('app.admin-landing.videos.store'),
-        ]);
-    }
-
-    public function videoStore(Request $request)
-    {
-        // Log masuk method untuk membantu debug request yang gagal.
-        \Illuminate\Support\Facades\Log::info('[videoStore] masuk', [
-            'method' => $request->method(),
-            'is_ajax' => $request->ajax(),
-            'expects_json' => $request->expectsJson(),
-            'host' => $request->getHost(),
-            'url' => $request->fullUrl(),
-            'has_title' => $request->has('title'),
-            'has_source' => $request->has('source'),
-            'has_youtube_url' => $request->has('youtube_url'),
-            'has_video_file' => $request->hasFile('video_file'),
-            'has_video_poster' => $request->hasFile('video_poster'),
-            'all_keys' => array_keys($request->all()),
-            'files' => array_keys($request->allFiles()),
-        ]);
-
-        try {
-            return $this->handleVideoStore($request);
-        } catch (\Illuminate\Validation\ValidationException $ve) {
-            // Validasi gagal — biarkan Laravel tangani untuk return 422 JSON otomatis.
-            throw $ve;
-        } catch (\Throwable $e) {
-            // Tangani error tak terduga. Untuk AJAX selalu return JSON agar
-            // handler JS tidak melihat HTML error page.
-            \Illuminate\Support\Facades\Log::error('[videoStore] exception: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            if ($this->wantsJsonResponse($request)) {
-                return response()->json([
-                    'success' => false,
-                    'msg' => $e->getMessage() ?: 'Terjadi kesalahan saat menyimpan video.',
-                    'error' => class_basename($e),
-                    'debug' => config('app.debug') ? [
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                    ] : null,
-                ], 500);
-            }
-            throw $e;
-        }
-    }
-
-    /**
-     * Logika inti store video — dipisah dari wrapper videoStore() agar
-     * try-catch dapat membungkus semuanya tanpa mengganggu alur
-     * `return` di tengah method.
-     */
-    private function handleVideoStore(Request $request)
+    /** ===== Video store/update (sama logika dgn videoStore/Update) ===== */
+    private function handleGalleryVideoStore(Request $request)
     {
         $source = $request->input('source', VideoLanding::SOURCE_YOUTUBE);
-
-        // Diagnosa: catat kondisi file upload SEBELUM validasi supaya kalau
-        // server error kita bisa lihat apakah file sampai ke PHP, ukuran,
-        // MIME, dan kode error upload. Penting untuk file .mov iPhone
-        // yang sering gagal di Windows karena MIME tidak standar.
-        if ($source === VideoLanding::SOURCE_LOCAL) {
-            $f = $request->file('video_file');
-            \Illuminate\Support\Facades\Log::info('[videoStore] file diagnostics', [
-                'has_file' => $request->hasFile('video_file'),
-                'is_valid' => $f ? $f->isValid() : null,
-                'upload_error' => $f ? $f->getError() : null,
-                'error_message' => $f ? $f->getErrorMessage() : null,
-                'size_bytes' => $f ? $f->getSize() : null,
-                'client_mime' => $f ? $f->getClientMimeType() : null,
-                'server_mime' => $f ? $f->getMimeType() : null,
-                'client_ext' => $f ? $f->getClientOriginalExtension() : null,
-                'client_name' => $f ? $f->getClientOriginalName() : null,
-                'tmp_path_ok' => $f ? (is_file($f->getPathname()) ? 'yes' : 'no') : null,
-                'tmp_readable' => $f ? (is_readable($f->getPathname()) ? 'yes' : 'no') : null,
-                'poster_has' => $request->hasFile('video_poster'),
-            ]);
-        }
 
         $rules = [
             'title' => ['required', 'string', 'max:200'],
@@ -1633,11 +1753,6 @@ class AdminLandingController extends Controller
         if ($source === VideoLanding::SOURCE_YOUTUBE) {
             $rules['youtube_url'] = ['required', 'string', 'max:500'];
         } else {
-            // Cek file video lewat BOTH ekstensi dan MIME (libmagic) — kasusumum:
-            //  - MP4 iPhone/Canon tulis sebagai 'application/octet-stream'
-            //  - MOV iPhone tulis sebagai 'video/quicktime'
-            //  - MKV terdeteksi 'video/x-matroska'
-            // Jadi gunakan kombinasi yang longgar. Poster tetap opsional.
             $rules['video_file'] = ['required', 'file', 'max:51200', function ($attr, $value, $fail) {
                 if (! $value instanceof \Illuminate\Http\UploadedFile || ! $value->isValid()) return;
                 $ext = strtolower($value->getClientOriginalExtension());
@@ -1648,7 +1763,7 @@ class AdminLandingController extends Controller
                     'application/octet-stream','application/mp4',
                 ], true);
                 if (! $okExt && ! $okMime) {
-                    $fail('Format video harus mp4, mov, m4v, webm, atau mkv. (Terdeteksi ekstensi: '.$ext.', MIME: '.$mime.')');
+                    $fail('Format video harus mp4, mov, m4v, webm, atau mkv.');
                 }
             }];
             $rules['video_poster'] = ['nullable', 'file', 'max:5120', function ($attr, $value, $fail) {
@@ -1666,12 +1781,9 @@ class AdminLandingController extends Controller
         $data = $request->validate($rules, [
             'title.required' => 'Judul video wajib diisi.',
             'source.required' => 'Sumber video wajib dipilih.',
-            'source.in' => 'Sumber video tidak valid.',
             'youtube_url.required' => 'URL YouTube wajib diisi.',
             'video_file.required' => 'File video wajib dipilih.',
-            'video_file.mimes' => 'Format video harus mp4, mov, m4v, webm, atau mkv.',
             'video_file.max' => 'Ukuran video maksimal 50MB.',
-            'video_poster.mimes' => 'Poster harus berformat jpg, jpeg, png, atau webp.',
             'video_poster.max' => 'Ukuran poster maksimal 5MB.',
         ]);
 
@@ -1685,138 +1797,37 @@ class AdminLandingController extends Controller
             }
             $data['youtube_url'] = $embed;
         } else {
-            // Store file video ke disk 'public'. Catat ukuran & path yang
-            // dihasilkan supaya diagnosa mudah kalau file corrupt / disk penuh.
-            $file = $request->file('video_file');
-            \Illuminate\Support\Facades\Log::info('[videoStore] storing video file', [
-                'size' => $file->getSize(),
-                'mime' => $file->getMimeType(),
-                'ext'  => $file->getClientOriginalExtension(),
-            ]);
             try {
-                $path = $file->store($this->uploadDir() . '/videos', 'public');
+                $path = $request->file('video_file')->store($this->uploadDir() . '/videos', 'public');
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('[videoStore] gagal store file video: ' . $e->getMessage(), [
-                    'size' => $file->getSize(),
-                    'mime' => $file->getMimeType(),
-                    'upload_error' => $file->getError(),
-                    'error_message' => $file->getErrorMessage(),
-                ]);
                 throw new \RuntimeException(
                     'Gagal menyimpan file video. Periksa ukuran (maks 50MB), format, dan ruang disk server. (' . $e->getMessage() . ')',
                     500,
                     $e
                 );
             }
-            \Illuminate\Support\Facades\Log::info('[videoStore] video stored', ['path' => $path]);
             $data['file_path'] = $path;
             if ($request->hasFile('video_poster')) {
                 $data['poster'] = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
             }
-            // Jangan set 'poster' = null di create — biarkan tidak di-set agar
-            // Eloquent fill() tidak overwrite kolom ke null bila nanti
-            // aturan diubah. youtube_url di-null-kan karena source=local.
             $data['youtube_url'] = null;
         }
 
         try {
-            $video = VideoLanding::create($data);
+            VideoLanding::create($data);
         } catch (\Throwable $e) {
-            // DB insert gagal setelah upload sukses → bersihkan file agar tidak jadi yatim.
-            if (! empty($data['file_path'])) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($data['file_path']);
-            }
-            if (! empty($data['poster'])) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($data['poster']);
-            }
-            \Illuminate\Support\Facades\Log::error('Gagal simpan Video: ' . $e->getMessage(), [
-                'source' => $source,
-                'title' => $data['title'] ?? null,
-            ]);
+            if (! empty($data['file_path'])) Storage::disk('public')->delete($data['file_path']);
+            if (! empty($data['poster'])) Storage::disk('public')->delete($data['poster']);
             throw $e;
         }
 
-        \Illuminate\Support\Facades\Log::info('Video berhasil disimpan', [
-            'id' => $video->id ?? null,
-            'title' => $video->title ?? null,
-            'source' => $video->source ?? null,
-            'is_ajax' => $this->wantsJsonResponse($request),
-        ]);
-
-        return $this->saveSuccess($request, 'Video berhasil ditambahkan.', 'app.admin-landing.videos');
+        return $this->saveSuccess($request, 'Video berhasil ditambahkan.', 'app.admin-landing.galleries');
     }
 
-    public function videoEdit($video)
+    private function handleGalleryVideoUpdate(Request $request, int $id)
     {
-        $model = VideoLanding::findOrFail($video);
-
-        return view('admin-landing.video.formulir', [
-            'title' => 'Edit Video',
-            'video' => $model,
-            'action' => route('app.admin-landing.videos.update', $model->id),
-        ]);
-    }
-
-    public function videoUpdate(Request $request, $video)
-    {
-        \Illuminate\Support\Facades\Log::info('[videoUpdate] masuk', [
-            'id' => $video,
-            'method' => $request->method(),
-            'is_ajax' => $request->ajax(),
-            'expects_json' => $request->expectsJson(),
-            'host' => $request->getHost(),
-            'url' => $request->fullUrl(),
-            'all_keys' => array_keys($request->all()),
-            'files' => array_keys($request->allFiles()),
-        ]);
-        try {
-            return $this->handleVideoUpdate($request, $video);
-        } catch (\Illuminate\Validation\ValidationException $ve) {
-            throw $ve;
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('[videoUpdate] exception: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            if ($this->wantsJsonResponse($request)) {
-                return response()->json([
-                    'success' => false,
-                    'msg' => $e->getMessage() ?: 'Terjadi kesalahan saat memperbarui video.',
-                    'error' => class_basename($e),
-                    'debug' => config('app.debug') ? [
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                    ] : null,
-                ], 500);
-            }
-            throw $e;
-        }
-    }
-
-    private function handleVideoUpdate(Request $request, $video)
-    {
-        $model = VideoLanding::findOrFail($video);
-        \Illuminate\Support\Facades\Log::info('[videoUpdate] model loaded', ['id' => $model->id, 'source' => $model->source]);
+        $model = VideoLanding::findOrFail($id);
         $source = $request->input('source', $model->source ?: VideoLanding::SOURCE_YOUTUBE);
-
-        // Diagnosa file upload jika source baru = local.
-        if ($source === VideoLanding::SOURCE_LOCAL) {
-            $f = $request->file('video_file');
-            \Illuminate\Support\Facades\Log::info('[videoUpdate] file diagnostics', [
-                'has_file' => $request->hasFile('video_file'),
-                'is_valid' => $f ? $f->isValid() : null,
-                'upload_error' => $f ? $f->getError() : null,
-                'error_message' => $f ? $f->getErrorMessage() : null,
-                'size_bytes' => $f ? $f->getSize() : null,
-                'client_mime' => $f ? $f->getClientMimeType() : null,
-                'server_mime' => $f ? $f->getMimeType() : null,
-                'client_ext' => $f ? $f->getClientOriginalExtension() : null,
-                'client_name' => $f ? $f->getClientOriginalName() : null,
-                'poster_has' => $request->hasFile('video_poster'),
-                'source_changed' => $model->source !== $source,
-            ]);
-        }
 
         $rules = [
             'title' => ['required', 'string', 'max:200'],
@@ -1827,9 +1838,6 @@ class AdminLandingController extends Controller
         if ($source === VideoLanding::SOURCE_YOUTUBE) {
             $rules['youtube_url'] = ['required', 'string', 'max:500'];
         } else {
-            // Saat UPDATE: jika source tetap local → file boleh null (pakai
-            // yang lama). Jika source BERUBAH youtube→local → file WAJIB
-            // diupload supaya tidak ada baris dengan source=local tanpa file.
             $fileRequired = ($model->source !== VideoLanding::SOURCE_LOCAL);
             $rules['video_file'] = [$fileRequired ? 'required' : 'nullable', 'file', 'max:51200', function ($attr, $value, $fail) {
                 if (! $value instanceof \Illuminate\Http\UploadedFile || ! $value->isValid()) return;
@@ -1841,7 +1849,7 @@ class AdminLandingController extends Controller
                     'application/octet-stream','application/mp4',
                 ], true);
                 if (! $okExt && ! $okMime) {
-                    $fail('Format video harus mp4, mov, m4v, webm, atau mkv. (Terdeteksi ekstensi: '.$ext.', MIME: '.$mime.')');
+                    $fail('Format video harus mp4, mov, m4v, webm, atau mkv.');
                 }
             }];
             $rules['video_poster'] = ['nullable', 'file', 'max:5120', function ($attr, $value, $fail) {
@@ -1859,14 +1867,10 @@ class AdminLandingController extends Controller
         $data = $request->validate($rules, [
             'title.required' => 'Judul video wajib diisi.',
             'source.required' => 'Sumber video wajib dipilih.',
-            'source.in' => 'Sumber video tidak valid.',
             'youtube_url.required' => 'URL YouTube wajib diisi.',
-            'video_file.mimes' => 'Format video harus mp4, mov, m4v, webm, atau mkv.',
             'video_file.max' => 'Ukuran video maksimal 50MB.',
-            'video_poster.mimes' => 'Poster harus berformat jpg, jpeg, png, atau webp.',
             'video_poster.max' => 'Ukuran poster maksimal 5MB.',
         ]);
-        \Illuminate\Support\Facades\Log::info('[videoUpdate] validated', ['keys' => array_keys($data), 'source' => $source]);
 
         $data['source'] = $source;
         $data['is_published'] = $request->boolean('is_published');
@@ -1877,7 +1881,6 @@ class AdminLandingController extends Controller
                 return back()->withErrors(['youtube_url' => 'URL YouTube tidak dikenali.'])->withInput();
             }
             $data['youtube_url'] = $embed;
-            // Jika source BERUBAH dari local ke youtube, bersihkan file lokal lama.
             if ($model->source !== VideoLanding::SOURCE_YOUTUBE) {
                 if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
                     Storage::disk('public')->delete($model->file_path);
@@ -1892,18 +1895,10 @@ class AdminLandingController extends Controller
             $newFilePath = null;
             $newPoster = null;
             if ($request->hasFile('video_file')) {
-                // Upload file baru → hapus file lama (kalau ada) supaya tidak jadi yatim.
                 if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
                     Storage::disk('public')->delete($model->file_path);
                 }
-                $file = $request->file('video_file');
-                \Illuminate\Support\Facades\Log::info('[videoUpdate] storing video file', [
-                    'size' => $file->getSize(),
-                    'mime' => $file->getMimeType(),
-                    'ext'  => $file->getClientOriginalExtension(),
-                ]);
-                $newFilePath = $file->store($this->uploadDir() . '/videos', 'public');
-                \Illuminate\Support\Facades\Log::info('[videoUpdate] video stored', ['path' => $newFilePath]);
+                $newFilePath = $request->file('video_file')->store($this->uploadDir() . '/videos', 'public');
                 $data['file_path'] = $newFilePath;
             }
             if ($request->hasFile('video_poster')) {
@@ -1913,47 +1908,25 @@ class AdminLandingController extends Controller
                 $newPoster = $request->file('video_poster')->store($this->uploadDir() . '/videos/posters', 'public');
                 $data['poster'] = $newPoster;
             }
-            // Jika source BERUBAH dari youtube ke local, bersihkan youtube_url lama.
-            // Kalau tidak upload file DAN source tetap local, biarkan file_path/poster
-            // lama apa adanya (jangan di-null-kan).
             if ($model->source !== $source) {
                 $data['youtube_url'] = null;
             } else {
-                // Source sama (local) dan tidak ada upload baru → unset key supaya fill()
-                // tidak overwrite ke null. file_path & poster tetap nilai lama.
                 unset($data['youtube_url']);
             }
         }
 
         try {
             $model->fill($data)->save();
-            \Illuminate\Support\Facades\Log::info('Video berhasil diperbarui', ['id' => $model->id, 'title' => $model->title, 'source' => $model->source]);
         } catch (\Throwable $e) {
-            // Kalau upload baru berhasil tapi save() gagal, hapus file baru
-            // agar tidak jadi yatim saat DB roll back (atau model tidak konsisten).
             if (! empty($newFilePath) && Storage::disk('public')->exists($newFilePath)) {
                 Storage::disk('public')->delete($newFilePath);
             }
-            \Illuminate\Support\Facades\Log::error('Gagal update Video: ' . $e->getMessage(), ['id' => $model->id]);
             throw $e;
         }
 
-        return $this->saveSuccess($request, 'Video berhasil diperbarui.', 'app.admin-landing.videos');
+        return $this->saveSuccess($request, 'Video berhasil diperbarui.', 'app.admin-landing.galleries');
     }
 
-    public function videoDestroy(Request $request, $video)
-    {
-        $model = VideoLanding::findOrFail($video);
-        if ($model->file_path && Storage::disk('public')->exists($model->file_path)) {
-            Storage::disk('public')->delete($model->file_path);
-        }
-        if ($model->poster && Storage::disk('public')->exists($model->poster)) {
-            Storage::disk('public')->delete($model->poster);
-        }
-        $model->delete();
-
-        return $this->deleteSuccess($request, 'Video berhasil dihapus.', 'app.admin-landing.videos');
-    }
 
     /**
      * Ekstrak ID video YouTube dari berbagai format URL:
