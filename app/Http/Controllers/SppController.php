@@ -116,7 +116,7 @@ $tahun_angkatan = '';
             $target_bulan = $spp->sum('nominal');
             $sd_bulan_ini = $spp->where('status', 'L')->sum('nominal');
             $bulan_lunas = $spp->where('status', 'L')->count();
-            $sumber_dana = Cache::remember('sumber_dana_1.1.01', 3600, fn () =>
+            $sumber_dana = Cache::remember('sumber_dana_1.1.01:' . (tenant('id') ?? 'central'), 3600, fn () =>
                 Rekening::where('kode_akun', 'like', '1.1.01.%')->whereNull('tgl_nonaktif')->get(['kode_akun', 'nama_akun']));
             $tahun_angkatan = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
             $jenis_biaya = JenisPembayaran::orderBy('id')->get(['id', 'nama', 'kode_akun']);

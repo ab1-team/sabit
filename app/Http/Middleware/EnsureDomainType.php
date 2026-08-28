@@ -23,9 +23,12 @@ class EnsureDomainType
 
         $cacheKey = "domain:type:{$host}";
 
+        // Pakai cache::remember supaya tidak query DB tiap request.
+        // Key SELALU berisi data dari central DB (tabel `domains`) sehingga
+        // semua tenant baca entry yang sama. flushHostCache() dipanggil
+        // setiap kali tabel domains berubah.
         $typeActual = Cache::remember($cacheKey, 7200, function () use ($host) {
-            $d = Domain::query()->where('domain', $host)->select('type')->first();
-            return $d?->type;
+            return Domain::query()->where('domain', $host)->value('type');
         });
 
         if (!$typeActual) {

@@ -24,7 +24,7 @@ class SyncLandingHakAkses extends Command
             return self::FAILURE;
         }
 
-        $landingMenuIds = Cache::remember('menu:group:landing', 7200, function () {
+        $landingMenuIds = Cache::remember('menu:group:landing:' . $tenant->id, 7200, function () {
             return DB::table('menu')
                 ->where('group', 'landing')
                 ->where('status', 'aktif')

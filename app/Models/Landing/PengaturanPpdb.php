@@ -36,23 +36,37 @@ class PengaturanPpdb extends Model
         'is_active' => 'boolean',
     ];
 
-    private const CACHE_KEY = 'lp_ppdb_pengaturan:current';
+    private const CACHE_PREFIX = 'lp_ppdb_pengaturan:current:';
     private const CACHE_TTL = 3600;
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(self::CACHE_KEY));
-        static::deleted(fn () => Cache::forget(self::CACHE_KEY));
+        static::saved(fn () => Cache::forget(self::cacheKey()));
+        static::deleted(fn () => Cache::forget(self::cacheKey()));
+    }
+
+    protected static function cacheKey(): string
+    {
+        return self::CACHE_PREFIX . (tenant('id') ?? 'central');
     }
 
     public static function flushCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::cacheKey());
     }
 
     public static function current(): self
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+        $tenantId = tenant('id');
+        if (! $tenantId) {
+            // Tenancy belum aktif — jangan bikin cache entry dengan suffix
+            // 'central' (bisa bocor ke tenant lain jika driver cache shared).
+            return static::query()->where('is_active', true)->first()
+                ?? static::query()->first()
+                ?? new static();
+        }
+
+        return Cache::remember(self::cacheKey(), self::CACHE_TTL, function () {
             return static::query()->where('is_active', true)->first()
                 ?? static::query()->first()
                 ?? new static();

@@ -29,8 +29,7 @@ class AuthController extends Controller
         $user = User::where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return redirect()
-                ->route('login')
+            return redirect(url('/login'))
                 ->withInput(['username' => $request->username])
                 ->with('error', 'Username atau password salah');
         }
@@ -61,7 +60,7 @@ class AuthController extends Controller
         // - User tanpa hak akses Beranda (mis. administrator landing) -> langsung
         //   ke /app/landing agar tidak masuk halaman yang bukan wewenangnya.
         $hakAkses = (array) ($user->hak_akses ?? []);
-        $berandaMenu = Cache::remember('menu:beranda', 3600, fn () =>
+        $berandaMenu = Cache::remember('menu:beranda:' . (tenant('id') ?? 'central'), 3600, fn () =>
             DB::table('menu')->where('nama_menu', 'Beranda')->first());
         $hasBerandaAccess = $berandaMenu && in_array((int) $berandaMenu->id, array_map('intval', $hakAkses), true);
         $landingRoute = $hasBerandaAccess ? 'app.dashboard' : 'app.admin-landing.index';
@@ -101,6 +100,6 @@ class AuthController extends Controller
         session()->forget('auth_portal');
         $request->session()->regenerate();
         $request->session()->regenerateToken();
-        return redirect()->route('login')->with('success', 'Anda telah berhasil keluar');
+        return redirect(url('/login'))->with('success', 'Anda telah berhasil keluar');
     }
 }

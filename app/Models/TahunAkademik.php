@@ -13,12 +13,17 @@ class TahunAkademik extends Model
     protected $table = 'tahun_akademik';
     protected $guarded = ['id'];
 
-    private const CACHE_KEY_ACTIVE = 'tahun_akademik:active';
+    private const CACHE_PREFIX_ACTIVE = 'tahun_akademik:active:';
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(self::CACHE_KEY_ACTIVE));
-        static::deleted(fn () => Cache::forget(self::CACHE_KEY_ACTIVE));
+        static::saved(fn () => Cache::forget(self::activeCacheKey()));
+        static::deleted(fn () => Cache::forget(self::activeCacheKey()));
+    }
+
+    protected static function activeCacheKey(): string
+    {
+        return self::CACHE_PREFIX_ACTIVE . (tenant('id') ?? 'central');
     }
 
     public function siswa()
@@ -33,14 +38,14 @@ class TahunAkademik extends Model
 
     public static function aktif(): ?self
     {
-        return Cache::remember(self::CACHE_KEY_ACTIVE, 3600, function () {
+        return Cache::remember(self::activeCacheKey(), 3600, function () {
             return static::query()->where('status', 'aktif')->first();
         });
     }
 
     public static function flushCache(): void
     {
-        Cache::forget(self::CACHE_KEY_ACTIVE);
+        Cache::forget(self::activeCacheKey());
     }
 
     public function aktifkan(): void

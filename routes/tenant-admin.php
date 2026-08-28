@@ -36,69 +36,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return redirect()->route('login');
-})->name('tenant.home');
+// Catatan: tidak ada Route::get('/') di sini — halaman-publik.beranda yang
+// handle GET /. Middleware domain.type:landing akan reject request di
+// host admin sehingga user diarahkan oleh Authenticate ke /login (route
+// tenant-admin.php di bawah). Hal ini menghindari konflik URI GET /
+// yang sebelumnya menyebabkan link landing publik salah host.
 
-Route::get('/login', [AuthController::class, 'index'])->name('login');
-Route::post('/auth/login', [AuthController::class, 'login'])->name('auth.login');
-
-// Fallback symlink maker (jalankan sekali via browser jika public/storage belum ada)
-Route::get('/link', function () {
-    $target = base_path('storage/app/public');
-    $shortcut = public_path('storage');
-
-    $alreadyLinked = is_link($shortcut)
-        || (DIRECTORY_SEPARATOR === '\\' && file_exists($shortcut) && strtolower(readlink($shortcut) ?: '') !== '');
-
-    if ($alreadyLinked) {
-        return response()->json([
-            'status'  => 'ok',
-            'message' => 'Symlink already exists.',
-            'target'  => $target,
-            'link'    => $shortcut,
-        ]);
-    }
-
-    try {
-        if (is_dir($shortcut) && !is_link($shortcut)) {
-            if (count(scandir($shortcut)) > 2) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'public/storage adalah direktori nyata (bukan symlink) dan berisi file. Hapus atau pindahkan dulu sebelum membuat symlink.',
-                    'link'    => $shortcut,
-                ], 500);
-            }
-            @rmdir($shortcut);
-        }
-
-        if (DIRECTORY_SEPARATOR === '\\') {
-            // Windows: pakai junction (butuh CMD) agar tidak perlu Developer Mode
-            $cmd = sprintf('mklink /J %s %s', escapeshellarg($shortcut), escapeshellarg($target));
-            exec($cmd, $out, $rc);
-            if ($rc !== 0) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Failed to create junction: ' . implode("\n", $out),
-                ], 500);
-            }
-        } else {
-            symlink($target, $shortcut);
-        }
-
-        return response()->json([
-            'status'  => 'ok',
-            'message' => 'Symlink created successfully.',
-            'target'  => $target,
-            'link'    => $shortcut,
-        ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'Failed to create symlink: ' . $e->getMessage(),
-        ], 500);
-    }
-});
+// Catatan: route publik tanpa auth (/, /login, /auth/login, /link)
+// didaftarkan oleh RouteServiceProvider::mapTenantRoutes() dengan
+// Route::domain($adminDomain) supaya match duluan (catch-all {slug} dari
+// routes/tenant-halaman-publik.php tidak mencuri URI ini). File ini hanya
+// berisi route di bawah group auth (Route::group(['middleware' => ['auth']])).
 
 Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('app.dashboard');

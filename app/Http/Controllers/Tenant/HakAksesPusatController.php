@@ -226,18 +226,17 @@ class HakAksesPusatController extends Controller
 
     private function tenantDbName(Tenant $tenant): string
     {
+        $explicit = $tenant->getAttribute('tenancy_db_name');
+        if (! empty($explicit)) {
+            return $explicit;
+        }
+
         $internal = $tenant->getInternal('db_name');
         if (! empty($internal)) {
             return $internal;
         }
 
-        $raw = $tenant->getAttributes()['data'] ?? null;
-        $data = is_string($raw) ? json_decode($raw, true) : (array) ($raw ?? []);
-        if (! empty($data['tenancy_db_name'])) {
-            return $data['tenancy_db_name'];
-        }
-
-        $prefix = config('tenancy.database.prefix', 'sinkrone_sabit_');
+        $prefix = config('tenancy.database.prefix', '');
         $suffix = config('tenancy.database.suffix', '');
 
         return $prefix.$tenant->id.$suffix;

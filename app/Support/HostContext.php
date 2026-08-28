@@ -5,34 +5,27 @@ namespace App\Support;
 class HostContext
 {
     /**
-     * Daftar host yang dianggap pusat/central. Sumber prioritas:
-     *   1. config('tenancy.central_domains') — env CENTRAL_DOMAIN & CENTRAL_BASE_DOMAIN.
-     *   2. fallback hard-coded untuk domain produksi & lokal agar tidak pernah
-     *      salah deteksi walau .env kosong / cache belum dibersihkan.
+     * Daftar host yang dianggap pusat/central.
      *
-     * PENTING untuk production multi-domain:
-     *   - Di .env production WAJIB set CENTRAL_DOMAIN (mis. app.al-maruf.com).
-     *   - Setiap domain sekolah (al-islam.sch.id, smk-pertiwi.sch.id, dll)
-     *     TIDAK masuk sini — didaftarkan via tabel `domains` di central DB.
-     *   - Fallback di bawah ini HANYA untuk development & deployment awal.
-     *     Hapus dari production bila mengganggu (atau override via .env).
+     * Sumber TUNGGAL: config('tenancy.central_domains') — yang dibaca dari
+     * env CENTRAL_DOMAIN & CENTRAL_BASE_DOMAIN di .env.
+     *
+     * Tidak ada fallback hard-coded. Setiap domain sekolah
+     * (al-islam.sch.id, smk-pertiwi.sch.id, dll) TIDAK masuk sini —
+     * didaftarkan via tabel `domains` di central DB.
+     *
+     * PENTING untuk setup:
+     *   - Di .env WAJIB set CENTRAL_DOMAIN & CENTRAL_BASE_DOMAIN
+     *     (mis. CENTRAL_DOMAIN=sabit.test).
+     *   - Tanpa .env, helper ini mengembalikan array kosong dan SEMUA host
+     *     diperlakukan sebagai tenant host — berguna untuk mode development
+     *     path-based (mis. /tenant/{id}/...) tanpa DNS.
      */
     public static function centralHosts(): array
     {
         $configured = (array) config('tenancy.central_domains', []);
 
-        $fallback = [
-            'al-maruf.sch.id',
-            'sabit.test',
-            'localhost',
-        ];
-
-        $merged = array_values(array_unique(array_filter(array_merge(
-            $configured,
-            $fallback
-        ))));
-
-        return $merged;
+        return array_values(array_unique(array_filter($configured)));
     }
 
     /**

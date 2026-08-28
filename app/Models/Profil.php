@@ -14,18 +14,23 @@ class Profil extends Model
     protected $table = 'profil';
     protected $guarded = ['id'];
 
-    private const CACHE_KEY = 'profil:singleton';
+    private const CACHE_PREFIX = 'profil:singleton:';
     private const CACHE_TTL = 3600;
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(self::CACHE_KEY));
-        static::deleted(fn () => Cache::forget(self::CACHE_KEY));
+        static::saved(fn () => Cache::forget(self::cacheKey()));
+        static::deleted(fn () => Cache::forget(self::cacheKey()));
+    }
+
+    protected static function cacheKey(): string
+    {
+        return self::CACHE_PREFIX . (tenant('id') ?? 'central');
     }
 
     protected static function safeFirst(): ?self
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+        return Cache::remember(self::cacheKey(), self::CACHE_TTL, function () {
             try {
                 if (!Schema::hasTable('profil')) {
                     return null;
@@ -39,7 +44,7 @@ class Profil extends Model
 
     public static function flushCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::cacheKey());
     }
 
     protected static function defaultLogo(): string

@@ -51,7 +51,7 @@ class EnsureHakAkses
 
     private function groupMenuIds(string $group): array
     {
-        $cacheKey = "menu:group:{$group}";
+        $cacheKey = self::groupCacheKey($group);
 
         return Cache::remember($cacheKey, 7200, function () use ($group) {
             return DB::table('menu')
@@ -63,9 +63,14 @@ class EnsureHakAkses
         });
     }
 
+    private static function groupCacheKey(string $group): string
+    {
+        return "menu:group:{$group}:" . (tenant('id') ?? 'central');
+    }
+
     public static function flushGroupCache(string $group): void
     {
-        Cache::forget("menu:group:{$group}");
+        Cache::forget(self::groupCacheKey($group));
     }
 
     public static function flushAllGroupCache(): void
@@ -73,7 +78,7 @@ class EnsureHakAkses
         $groups = DB::table('menu')->distinct()->pluck('group')->all();
         foreach ($groups as $g) {
             if ($g !== null) {
-                Cache::forget("menu:group:{$g}");
+                Cache::forget(self::groupCacheKey($g));
             }
         }
     }

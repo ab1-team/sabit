@@ -211,16 +211,38 @@ $centralRoutes = function () {
 // subdomain tenant (mis. demo.sabit.test). Tanpa ini, URI '/login' pusat
 // akan override '/login' sekolah di tenant-admin.php, sehingga sekolah
 // tidak bisa login (route central match duluan karena web.php load duluan).
+$centralHostList = App\Support\HostContext::centralHosts();
+
 if (PHP_SAPI === 'cli') {
-    // Saat CLI, selalu daftarkan (untuk route:list, tinker, dll).
-    Route::group([], $centralRoutes);
+    // Saat CLI murni (route:list, tinker, dll), daftarkan supaya command
+    // bisa resolve route central. Tapi route central HARUS dibatasi
+    // domain ke host central saja — kalau tidak, request simulasi via
+    // $kernel->handle() dalam script CLI akan kecocokkan route GET /
+    // central untuk SEMUA host (tenant ikut kena redirect).
+    if (empty($_SERVER['HTTP_HOST'])) {
+        // Tidak ada host context — pakai daftar host central sebagai filter
+        // agar tidak bocor ke host tenant.
+        foreach ($centralHostList as $h) {
+            Route::domain($h)->group($centralRoutes);
+        }
+    } else {
+        $host = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']);
+        if (App\Support\HostContext::isCentral($host)) {
+            foreach ($centralHostList as $h) {
+                Route::domain($h)->group($centralRoutes);
+            }
+        }
+        // else: skip — biar tenant route yang handle request di host ini.
+    }
 } else {
     $requestHost = $_SERVER['HTTP_HOST'] ?? '';
     // Strip port kalau ada (mis. localhost:8000)
     $host = preg_replace('/:\d+$/', '', $requestHost);
 
     if (App\Support\HostContext::isCentral($host)) {
-        Route::group([], $centralRoutes);
+        foreach ($centralHostList as $h) {
+            Route::domain($h)->group($centralRoutes);
+        }
     }
     // else: skip — biar tenant route yang handle request di host ini.
 }

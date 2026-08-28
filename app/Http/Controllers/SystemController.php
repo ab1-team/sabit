@@ -16,6 +16,7 @@ class SystemController extends Controller
     public function GenerateTunggakan(Request $request)
     {
         $jobId = (string) $request->query('job', uniqid('gen_', true));
+        $cachePrefix = 'piutang_done:' . (tenant('id') ?? 'central') . ':' . $jobId;
 
         $now = Carbon::now();
         $bulanLalu = $now->copy()->subMonthNoOverflow();
@@ -30,7 +31,7 @@ class SystemController extends Controller
             ->groupBy('anggota_kelas');
 
         if ($sppBelumLunas->isEmpty()) {
-            cache()->put('piutang_done:' . $jobId, [
+            cache()->put($cachePrefix, [
                 'inserted' => 0,
                 'skipped' => 0,
                 'bulan' => \App\Utils\Tanggal::namaBulanNew($bulanTarget) . ' ' . $tahunTarget,
@@ -96,7 +97,7 @@ class SystemController extends Controller
             }
         });
 
-        cache()->put('piutang_done:' . $jobId, [
+        cache()->put($cachePrefix, [
             'inserted' => $inserted,
             'skipped' => $skipped,
             'bulan' => $bulanLabel,
@@ -121,7 +122,8 @@ class SystemController extends Controller
     public function piutangStatus(Request $request)
     {
         $jobId = (string) $request->query('job', '');
-        $data = cache()->get('piutang_done:' . $jobId);
+        $cachePrefix = 'piutang_done:' . (tenant('id') ?? 'central') . ':' . $jobId;
+        $data = cache()->get($cachePrefix);
 
         return response()->json([
             'done' => (bool) $data,

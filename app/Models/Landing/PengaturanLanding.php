@@ -12,18 +12,43 @@ class PengaturanLanding extends Model
 {
     protected $table = 'lp_pengaturan';
 
-    private const CACHE_KEY = 'lp_pengaturan:current';
+    private const CACHE_PREFIX = 'lp_pengaturan:current:';
     private const CACHE_TTL = 3600;
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(self::CACHE_KEY));
-        static::deleted(fn () => Cache::forget(self::CACHE_KEY));
+        static::saved(fn (self $model) => Cache::forget(self::cacheKeyFor($model)));
+        static::deleted(fn (self $model) => Cache::forget(self::cacheKeyFor($model)));
     }
 
     public static function flushCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::cacheKeyForCurrentTenant());
+    }
+
+    /**
+     * Cache key di-scope per tenant. Tanpa prefix tenant, key global
+     * ('lp_pengaturan:current') akan dipakai bersama antar tenant pada
+     * driver cache yang tidak mendukung tagging (file/apc/memcached),
+     * sehingga edit di tenant A terbaca oleh tenant B.
+     *
+     * Kalau tenancy belum aktif (mis. CLI tinker atau job tanpa tenant),
+     * fallback ke key dengan suffix 'central' supaya tidak tercampur
+     * dengan entry tenant manapun.
+     */
+    private static function cacheKeyForCurrentTenant(): string
+    {
+        $tenantId = tenant('id');
+        $scope = $tenantId ? (string) $tenantId : 'central';
+
+        return self::CACHE_PREFIX . $scope;
+    }
+
+    private static function cacheKeyFor(self $model): string
+    {
+        $tenantId = tenant('id') ?? 'central';
+
+        return self::CACHE_PREFIX . $tenantId;
     }
 
     protected $fillable = [
@@ -56,7 +81,15 @@ class PengaturanLanding extends Model
 
     public static function current(): self
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+        $tenantId = tenant('id');
+        if (! $tenantId) {
+            // Tenancy belum aktif (mis. CLI/job/console tanpa bootstrap tenant).
+            // Jangan tulis ke cache dengan suffix 'central' karena akan
+            // ter-mix dengan cache tenant manapun yang aktif. Langsung query.
+            return static::query()->first() ?? new static();
+        }
+
+        return Cache::remember(self::cacheKeyForCurrentTenant(), self::CACHE_TTL, function () {
             return static::query()->first() ?? new static();
         });
     }

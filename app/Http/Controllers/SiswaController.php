@@ -259,7 +259,7 @@ class SiswaController extends Controller
             $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
         }
 
-        $cacheKey = "spp_nominal_{$tahun}";
+        $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
 
         return Cache::remember($cacheKey, 3600, function () use ($tahun) {
             $val = DB::table('jenis_biaya')

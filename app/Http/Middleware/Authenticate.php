@@ -10,12 +10,20 @@ class Authenticate extends Middleware
 {
     protected function redirectTo(Request $request): ?string
     {
-        if (HostContext::isCentral($request->getHost())) {
+        $host = $request->getHost();
+
+        if (HostContext::isCentral($host)) {
+            // Host pusat → route login pusat (tenant.login).
             return route('tenant.login');
         }
 
         if (! $request->expectsJson()) {
-            return route('login');
+            // Host tenant admin → pakai url() bukan route('login') supaya
+            // route generator pakai current host (SyncAppUrlFromRequest
+            // middleware sudah sync app.url dengan host request).
+            // route('login') bisa resolve ke first match by name (yang
+            // belum tentu current host bila ada >1 admin domain).
+            return url('/login');
         }
 
         return null;

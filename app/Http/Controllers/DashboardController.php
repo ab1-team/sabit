@@ -30,8 +30,9 @@ class DashboardController extends Controller
         $bulanAkhir = Carbon::now()->endOfMonth();
 
         // ============== STATISTIK SISWA (cache 60 detik untuk hindari full count berulang) ==============
-        $totalSiswa = Cache::remember('dash:total_siswa', 60, fn () => (int) DB::table('siswa')->count());
-        $aktifSiswa = Cache::remember('dash:aktif_siswa', 60, fn () => (int) DB::table('anggota_kelas')
+        $dashScope = (tenant('id') ?? 'central') . ':';
+        $totalSiswa = Cache::remember('dash:' . $dashScope . 'total_siswa', 60, fn () => (int) DB::table('siswa')->count());
+        $aktifSiswa = Cache::remember('dash:' . $dashScope . 'aktif_siswa', 60, fn () => (int) DB::table('anggota_kelas')
             ->where('status', 'aktif')
             ->distinct()
             ->count('id_siswa'));

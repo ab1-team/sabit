@@ -33,7 +33,7 @@ class TenantStorageServiceProvider extends ServiceProvider
 
             if ($tenantId && !is_dir($root)) {
                 @mkdir($root, 0775, true);
-                foreach (['logo', 'siswa', 'users', 'tanda-tangan'] as $sub) {
+                foreach (['logo', 'siswa', 'users', 'tanda-tangan', 'landing', 'posts', 'galleries'] as $sub) {
                     @mkdir($root . DIRECTORY_SEPARATOR . $sub, 0775, true);
                 }
             }

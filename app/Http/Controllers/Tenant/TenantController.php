@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Tenant\BaseSchoolController;
+use App\Http\Middleware\EnsureDomainType;
+use App\Http\Middleware\TenantContext;
 use App\Models\Domain;
 use App\Models\Tenant;
 use App\Models\TahunAkademik;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -159,6 +162,17 @@ public function index(Request $request)
                 return $tenant;
             });
 
+        // Cache 'domain:type:{host}' (lihat EnsureDomainType) TTL 2 jam. Tanpa
+        // flush di sini, request pertama ke domain baru akan di-serve dari
+        // cache lama dan di-abort 404 sebelum sempat lookup ke DB.
+        EnsureDomainType::flushHostCache($landingDomain);
+        EnsureDomainType::flushHostCache($adminDomain);
+        // Drop central tenants_for_select (TenantContext) supaya selector
+        // di sidebar super-admin memuat tenant baru tanpa harus reload+TTL.
+        TenantContext::flushCache();
+        // Drop cache map tenant -> nama_sekolah di modul invoice pusat.
+        Cache::forget('tenant_map_simple');
+
         return redirect()->route('tenant.tenant.index')
             ->with('success', "Tenant {$tenant->id} berhasil dibuat. Landing: {$landingDomain} | Admin: {$adminDomain}");
     }
@@ -192,6 +206,8 @@ public function index(Request $request)
                 ->withErrors(['domain_landing' => 'Domain sudah digunakan tenant lain: ' . $conflict->implode(', ')]);
         }
 
+        $oldDomains = $tenant->domains()->pluck('domain')->all();
+
         DB::connection(config('tenancy.database.central_connection'))
             ->transaction(function () use ($tenant, $data, $landingDomain, $adminDomain) {
                 $tenant->nama_sekolah = $data['nama_sekolah'];
@@ -203,6 +219,21 @@ public function index(Request $request)
                 $this->syncDomain($tenant, Domain::TYPE_ADMIN, $adminDomain);
             });
 
+        // Flush semua cache 'domain:type:{host}' yang menyentuh tenant ini:
+        // domain lama bisa di-rename ke tenant lain, dan domain baru wajib
+        // dilookup ulang dari DB pada request berikutnya.
+        foreach ($oldDomains as $host) {
+            EnsureDomainType::flushHostCache($host);
+        }
+        EnsureDomainType::flushHostCache($landingDomain);
+        EnsureDomainType::flushHostCache($adminDomain);
+        // Drop central tenants_for_select (TenantContext) supaya selector
+        // sidebar merefresh label/domain bila admin mengubah nama_sekolah.
+        TenantContext::flushCache();
+        // Drop cache map tenant -> nama_sekolah di modul invoice pusat
+        // supaya perubahan nama_sekolah langsung tampil.
+        Cache::forget('tenant_map_simple');
+
         return redirect()->route('tenant.tenant.index')
             ->with('success', "Tenant {$tenant->id} berhasil diperbarui.");
     }
@@ -212,11 +243,22 @@ public function index(Request $request)
         $id = $tenant->id;
         $storagePath = storage_path('app/public/tenant/' . $id);
 
+        $hosts = $tenant->domains->pluck('domain')->all();
+
         foreach ($tenant->domains as $domain) {
             $domain->delete();
         }
 
         $tenant->delete();
+
+        foreach ($hosts as $host) {
+            EnsureDomainType::flushHostCache($host);
+        }
+        // Drop central tenants_for_select (TenantContext) supaya tenant yang
+        // baru dihapus tidak muncul lagi di selector.
+        TenantContext::flushCache();
+        // Drop cache map tenant -> nama_sekolah di modul invoice pusat.
+        Cache::forget('tenant_map_simple');
 
         if (is_dir($storagePath)) {
             Storage::disk('public')->deleteDirectory('tenant/' . $id);

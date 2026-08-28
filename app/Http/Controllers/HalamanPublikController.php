@@ -299,9 +299,15 @@ class HalamanPublikController extends Controller
      */
     private function menus(): array
     {
-        $all = Cache::remember('lp_menus_active', 600, function () {
-            return MenuLanding::active()->orderBy('sort_order')->get();
-        });
+        $tenantId = tenant('id');
+        if (! $tenantId) {
+            // Tenancy belum aktif — jangan cache, langsung query.
+            $all = MenuLanding::active()->orderBy('sort_order')->get();
+        } else {
+            $all = Cache::remember('lp_menus_active:' . $tenantId, 600, function () {
+                return MenuLanding::active()->orderBy('sort_order')->get();
+            });
+        }
 
         return [
             'header' => $this->tree($all->where('position', 'header')),

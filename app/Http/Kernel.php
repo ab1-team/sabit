@@ -7,6 +7,33 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 class Kernel extends HttpKernel
 {
     /**
+     * Middleware priority — urutan pipeline. Override dari default Laravel
+     * untuk menempatkan EnsureDomainType & InitializeTenancyByDomain SEBELUM
+     * middleware auth. Tanpa override ini, sorting default membuat middleware
+     * auth (AuthenticatesRequests contract) jalan duluan sehingga request ke
+     * URL admin di host landing di-redirect ke /login sebelum type host
+     * sempat di-validasi.
+     *
+     * @var string[]
+     */
+    protected $middlewarePriority = [
+        \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        \Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains::class,
+        \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+        \App\Http\Middleware\EnsureDomainType::class,
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+        \Illuminate\Contracts\Session\Middleware\AuthenticatesSessions::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \Illuminate\Auth\Middleware\Authorize::class,
+    ];
+
+    /**
      * The application's global HTTP middleware stack.
      *
      * These middleware are run during every request to your application.
