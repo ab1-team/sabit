@@ -198,7 +198,9 @@
 
             formTagihanRequest?.abort();
             dataCustomer = null;
+            const prevIds = lastTransaksiIds;
             resetCetakButton();
+            if (prevIds) lastTransaksiIds = prevIds;
             formTagihanRequest = $.get('/app/spp/Pembayaran-spp/' + idSiswa, extra, function(result) {
                 $('#accordion').html(result.view ?? '');
                 dataCustomer = siswa ? {
@@ -206,6 +208,9 @@
                     rek_debit: result.rek_debit ?? null,
                     rek_kredit: result.rek_kredit ?? null
                 } : null;
+                if (lastTransaksiIds) {
+                    $('#kuitansi, #CetakPadaKartu').removeClass('d-none');
+                }
             }).fail(function(xhr, status) {
                 if (status !== 'abort') {
                     $('#accordion').html(notifAlert({
