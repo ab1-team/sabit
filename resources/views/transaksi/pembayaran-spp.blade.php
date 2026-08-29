@@ -218,6 +218,26 @@
         }
 
         //detail siswa
+        function initSelect2In($root) {
+            if (typeof $.fn.select2 === 'undefined') {
+                console.warn('Select2 belum dimuat');
+                return;
+            }
+            $root.find('select.select2').each(function () {
+                var $el = $(this);
+                if ($el.data('select2')) {
+                    $el.select2('destroy');
+                }
+                $el.select2({
+                    theme: 'bootstrap-5',
+                    width: 'resolve',
+                    allowClear: false,
+                    dropdownParent: $(document.body),
+                    dropdownCssClass: 'select2-above-all-modal'
+                });
+            });
+        }
+
         function loadTransaksiSiswa(mode = 'detail') {
             if (!dataCustomer || !dataCustomer.item) {
                 Swal.fire({
@@ -243,6 +263,7 @@
                 $.get('/app/transaksi/pembayaranSPPDetail/' + idSiswa)
                     .done(function(res) {
                         $(content).html(res);
+                        initSelect2In($(content));
                     })
                     .fail(function() {
                         $(content).html(notifAlert({
@@ -298,6 +319,7 @@
                 $.get(url)
                     .done(function(res) {
                         $(content).html(res);
+                        initSelect2In($(content));
                     })
                     .fail(function() {
                         $(content).html('<div class="alert alert-danger">Gagal memuat detail.</div>');

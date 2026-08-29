@@ -401,6 +401,11 @@
             border-color: #37d17c !important;
             box-shadow: 0 0 0 .25rem rgba(53, 220, 103, 0.25) !important;
         }
+
+        /* Select2 dropdown di atas modal fullscreen */
+        .select2-above-all-modal.select2-dropdown {
+            z-index: 13001 !important;
+        }
         .material-symbols-rounded {
             font-family: 'Material Symbols Rounded' !important;
             font-weight: normal;

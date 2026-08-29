@@ -14,7 +14,7 @@
                     </h6>
                     <div class="d-flex align-items-center gap-2">
                         <label for="filterTahunAkademik" class="form-label mb-0 small text-muted">Tahun Akademik:</label>
-                        <select id="filterTahunAkademik" class="form-select form-select-sm" style="min-width: 160px;">
+                        <select id="filterTahunAkademik" class="form-select form-select-sm select2" style="min-width: 160px;">
                             @forelse ($tahunList ?? [] as $ta)
                                 <option value="{{ $ta }}" @selected($ta === ($tahunDipilih ?? null))>
                                     {{ $ta }}

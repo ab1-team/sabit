@@ -757,8 +757,15 @@ public function pembayaranSPPStore(Request $request)
             ->values();
 
         $tahunAktif = optional(TahunAkademik::aktif())->nama_tahun;
+
+        $tahunDariSiswa = \App\Models\AnggotaKelas::where('id_siswa', $id)
+            ->orderByDesc('id')
+            ->value('tahun_akademik');
+
+        $defaultTa = $tahunAktif ?: ($tahunDariSiswa ?: ($tahunList->first() ?? null));
+
         $tahunDipilih = $request->query('tahun_akademik')
-            ?: ($tahunList->contains($tahunAktif) ? $tahunAktif : ($tahunList->first() ?? null));
+            ?: ($tahunList->contains($defaultTa) ? $defaultTa : ($tahunList->first() ?? null));
 
         $siswa = Siswa::with([
             'kelas',
