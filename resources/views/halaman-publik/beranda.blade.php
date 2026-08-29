@@ -66,7 +66,7 @@
             @if ($heroButtonUrl)
                 <a href="{{ $heroButtonUrl }}" class="lp-btn-light">{{ $heroButtonText }} <i class="bi bi-arrow-right"></i></a>
             @endif
-            <a href="{{ route('halaman-publik.profil') }}" class="lp-btn-outline-light">Profil Sekolah</a>
+            <a href="{{ route('halaman-publik.ppdb') }}" class="lp-btn-outline-light">PPDB</a>
         </div>
         @if (!empty($heroBadges))
             <div class="lp-reveal mt-4 d-flex flex-wrap justify-content-center gap-2" data-delay="4">
