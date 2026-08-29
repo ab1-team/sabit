@@ -58,10 +58,7 @@
                 <td width="30%" class="center">{{ Tanggal::tglIndo($trx->tanggal_transaksi) }}</td>
                 <td style="padding-left:15px;">
                     @if ($trx->spp)
-                        @php
-                            [$tahunSpp, $bulanSpp] = explode('-', $trx->spp->tanggal->format('Y-m-d'));
-                        @endphp
-                        {{ Tanggal::namaBulan($trx->spp->tanggal->format('Y-m-d')) }} {{ $tahunSpp }}
+                        {{ Tanggal::namaBulan($trx->spp->tanggal->format('Y-m-d')) }}
                     @else
                         Daftar Ulang
                     @endif
