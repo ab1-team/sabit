@@ -926,8 +926,13 @@ $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-arsip', $data)
             abort(404, 'Transaksi tidak ditemukan.');
         }
 
+        $jumlahTransaksi = (int) Transaksi::where('siswa_id', $transaksis->first()->siswa_id)
+            ->where('id', '<', $transaksis->first()->id)
+            ->count();
+
 return view('transaksi.map_arsip.view.cetak-pada-kartu', [
-            'transaksis' => $transaksis
+            'transaksis' => $transaksis,
+            'jumlahTransaksi' => $jumlahTransaksi,
         ]);
     }
 
