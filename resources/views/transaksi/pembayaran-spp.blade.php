@@ -202,6 +202,7 @@
             resetCetakButton();
             if (prevIds) lastTransaksiIds = prevIds;
             formTagihanRequest = $.get('/app/spp/Pembayaran-spp/' + idSiswa, extra, function(result) {
+                $('#accordion').empty();
                 $('#accordion').html(result.view ?? '');
                 dataCustomer = siswa ? {
                     item: siswa,
@@ -415,8 +416,6 @@
                                 ? result.id_transaksi.join(',')
                                 : result.id_transaksi;
 
-                            $('#kuitansi').removeClass('d-none');
-                            $('#CetakPadaKartu').removeClass('d-none');
                             $('.SPPsimpan')
                     .prop('disabled', true)
                     .attr('aria-disabled', 'true')
