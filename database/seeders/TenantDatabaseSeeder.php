@@ -115,9 +115,12 @@ $bendaharaMenuIds = array_values(array_diff($allMenuIds, $landingMenuIds));
 
         // Paket data master: ruangan, kelas, jurusan, jenis_transaksi, jenis_biaya,
         // jenis_pembayaran, jenis_laporan, sub_laporan.
+        // Catatan: KelasSeeder tidak dipanggil lagi — tenant baru tidak otomatis
+        // terisi 25 kelas default. User mengisi data kelas lewat halaman Kelas
+        // atau lewat alur Migrasi Siswa (preview → konfirmasi).
         $this->call([
+            KurikulumSeeder::class,
             RuanganSeeder::class,
-            KelasSeeder::class,
             JurusanSeeder::class,
             JenisTransaksiSeeder::class,
             JenisPembayaranSeeder::class,

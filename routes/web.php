@@ -187,6 +187,8 @@ $centralRoutes = function () {
 
         Route::get('/migrasi/siswa', [MigrasiSiswaController::class, 'index'])->name('tenant.migrasi.siswa');
         Route::get('/migrasi/siswa/template', [MigrasiSiswaController::class, 'template'])->name('tenant.migrasi.siswa.template');
+        Route::post('/migrasi/siswa/preview', [MigrasiSiswaController::class, 'preview'])->name('tenant.migrasi.siswa.preview');
+        Route::post('/migrasi/siswa/preview/quick-kurikulum', [MigrasiSiswaController::class, 'previewQuickKurikulum'])->name('tenant.migrasi.siswa.preview-quick-kurikulum');
         Route::post('/migrasi/siswa/import', [MigrasiSiswaController::class, 'import'])->name('tenant.migrasi.siswa.import');
 
         // Hak Akses per Lokasi (pusat kelola hak akses semua tenant)

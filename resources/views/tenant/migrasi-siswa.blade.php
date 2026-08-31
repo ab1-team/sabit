@@ -26,6 +26,25 @@
 
         .swal-wide { width: auto !important; max-width: min(92vw, 640px) !important; }
         .swal-wide ul { padding-left: 1.25rem; }
+        .swal-xwide { width: auto !important; max-width: min(96vw, 860px) !important; }
+        .nk-table th, .nk-table td { padding: 6px 8px; font-size: 12px; text-align: left; vertical-align: middle; }
+        .nk-input { width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .nk-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+        .nk-table { width: 100%; border-collapse: collapse; }
+        .nk-table thead { background: #f8fafc; }
+        .nk-table tbody tr { border-top: 1px solid #e2e8f0; }
+        .nk-table .col-kode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
+        .nk-bulk { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .nk-bulk label { font-size: 12px; font-weight: 600; color: #475569; }
+        .nk-bulk select { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; background: #fff; min-width: 220px; }
+        .nk-bulk .hint { font-size: 11px; color: #64748b; }
+        .nk-add-btn { color: #4f46e5; font-weight: 600; }
+        .swal-narrow { width: auto !important; max-width: min(92vw, 480px) !important; }
+        .nk-inline-form { text-align: left; }
+        .nk-inline-form .field { margin-bottom: 10px; }
+        .nk-inline-form label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+        .nk-inline-form input, .nk-inline-form select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .nk-inline-form .err { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -143,13 +162,339 @@
                 return;
             }
 
+            btnImport.disabled = true;
+            btnImport.querySelector('span').textContent = 'Membaca file...';
+
+            const previewForm = new FormData();
+            previewForm.append('_token', csrf);
+            previewForm.append('file', fileInput.files[0]);
+
+            fetch('{{ route('tenant.migrasi.siswa.preview') }}', {
+                method: 'POST',
+                body: previewForm,
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
+            })
+            .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+            .then(({ ok, data }) => {
+                if (!ok || !data.ok) {
+                    btnImport.disabled = false;
+                    btnImport.querySelector('span').textContent = 'Import Sekarang';
+                    Swal.fire({ icon: 'error', title: 'Gagal Membaca File', text: data.message || 'Terjadi kesalahan.' });
+                    return;
+                }
+                const missing = data.missing_kode_kelas || [];
+                if (missing.length === 0) {
+                    submitImport([]);
+                } else {
+                    showNewKelasModal(missing, data.kurikulum_options || [], []);
+                }
+            })
+            .catch(() => {
+                btnImport.disabled = false;
+                btnImport.querySelector('span').textContent = 'Import Sekarang';
+                Swal.fire({ icon: 'error', title: 'Galat Jaringan', text: 'Tidak dapat terhubung ke server.' });
+            });
+        });
+
+        function showNewKelasModal(missing, kurikulumOptions, prefilled) {
+            const optsHtml = (selected) => ['<option value="">— Pilih Kurikulum —</option>']
+                .concat(kurikulumOptions.map(o =>
+                    `<option value="${escapeHtml(o.value)}" ${o.value === selected ? 'selected' : ''}>${escapeHtml(o.label)}</option>`
+                ))
+                .concat(['<option value="__new__">+ Tambah Kurikulum Baru…</option>'])
+                .join('');
+            const rows = missing.map((m, idx) => {
+                const pref = prefilled.find(p => p.kode_kelas === m.kode_kelas) || {};
+                const tingkatVal = pref.tingkat ?? m.tingkat ?? '';
+                const kodeKurikulumVal = pref.kode_kurikulum ?? m.kode_kurikulum ?? '';
+                const namaKelasVal = pref.nama_kelas ?? m.nama_kelas ?? m.kode_kelas;
+                const userTouchedTingkat = pref.userTouchedTingkat === true;
+                return `
+                    <tr data-idx="${idx}" data-kode="${escapeHtml(m.kode_kelas)}" data-user-touched-tingkat="${userTouchedTingkat ? '1' : '0'}">
+                        <td class="col-kode"><span class="font-mono">${escapeHtml(m.kode_kelas)}</span><div class="text-[10px] text-slate-500">${m.jumlah_siswa} siswa</div></td>
+                        <td><input type="text" class="nk-input nk-nama" value="${escapeHtml(namaKelasVal)}" placeholder="cth: X TKJ 1"></td>
+                        <td><input type="text" class="nk-input nk-tingkat" value="${escapeHtml(tingkatVal)}" placeholder="cth: X" maxlength="10"></td>
+                        <td><select class="nk-input nk-kurikulum">${optsHtml(kodeKurikulumVal)}</select></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const bulkOpts = ['<option value="">— Pilih Kurikulum —</option>']
+                .concat(kurikulumOptions.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`))
+                .concat(['<option value="__new__">+ Tambah Kurikulum Baru…</option>'])
+                .join('');
+
+            const html = `
+                <div class="text-left text-sm">
+                    <p class="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                        Ditemukan <strong>${missing.length}</strong> kode kelas baru di file Excel yang belum ada di tabel kelas tenant ini.
+                        Isi metadata di bawah, lalu klik <strong>Buat &amp; Lanjutkan Import</strong>.
+                    </p>
+                    <div class="nk-bulk">
+                        <label for="nk-bulk-kurikulum">Terapkan Kurikulum ke Semua Baris:</label>
+                        <select id="nk-bulk-kurikulum">${bulkOpts}</select>
+                        <button type="button" id="nk-bulk-apply" class="inline-flex items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">Terapkan</button>
+                        <span class="hint">Akan mengganti kurikulum untuk semua baris di bawah.</span>
+                    </div>
+                    <div class="overflow-auto max-h-[55vh] border border-slate-200 rounded-lg">
+                        <table class="nk-table">
+                            <thead class="sticky top-0">
+                                <tr>
+                                    <th style="width:28%">Kode Kelas</th>
+                                    <th style="width:30%">Nama Kelas</th>
+                                    <th style="width:14%">Tingkat</th>
+                                    <th style="width:28%">Kurikulum</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Konfirmasi Kelas Baru',
+                html,
+                showCancelButton: true,
+                showConfirmButton: true,
+                confirmButtonText: 'Buat & Lanjutkan Import',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'swal-xwide' },
+                width: 860,
+                didOpen: () => {
+                    const popup = Swal.getPopup();
+
+                    // Auto-fill tingkat SELALU dari kode_kelas (token pertama sebelum '-'/'_'/'.'/whitespace).
+                    // Tingkat disimpan sebagai romawi di DB (X, XI, XII) atau angka 1..12, sesuai preferensi.
+                    // Non-destructive: jika user sudah pernah edit input secara manual, auto-fill di-skip.
+                    popup.querySelectorAll('.nk-tingkat').forEach(inp => {
+                        const tr = inp.closest('tr');
+                        if (tr && tr.dataset.userTouchedTingkat === '1') return;
+                        const kode = tr ? (tr.dataset.kode || '') : '';
+                        inp.value = inferTingkatFromKode(kode);
+                    });
+
+                    // Tandai input sebagai "telah disentuh user" begitu ada event input manual,
+                    // supaya auto-fill berikutnya (mis. setelah modal dibuka ulang) tidak menimpa.
+                    popup.querySelectorAll('.nk-tingkat').forEach(inp => {
+                        inp.addEventListener('input', function () {
+                            const tr = inp.closest('tr');
+                            if (tr) tr.dataset.userTouchedTingkat = '1';
+                        });
+                    });
+
+                    // Handler: dropdown "Tambah Kurikulum Baru" di select per-baris
+                    popup.querySelectorAll('.nk-kurikulum').forEach(sel => {
+                        sel.addEventListener('change', function (e) {
+                            if (e.target.value === '__new__') {
+                                e.target.value = '';
+                                openInlineKurikulumModal().then((newK) => {
+                                    if (!newK) return;
+                                    // Tambahkan option ke SEMUA select.nk-kurikulum (sebelum __new__), lalu pilih di select asal
+                                    addKurikulumOptionToAllSelects(popup, newK);
+                                    e.target.value = newK.value;
+                                    e.target.dispatchEvent(new Event('change'));
+                                });
+                            }
+                        });
+                    });
+
+                    // Handler: dropdown "Tambah Kurikulum Baru" di BULK selector — buka modal inline,
+                    // lalu otomatis terapkan kurikulum baru ke semua baris.
+                    const bulkSel = popup.querySelector('#nk-bulk-kurikulum');
+                    const bulkBtn = popup.querySelector('#nk-bulk-apply');
+                    if (bulkSel) {
+                        bulkSel.addEventListener('change', function (e) {
+                            if (e.target.value === '__new__') {
+                                e.target.value = '';
+                                openInlineKurikulumModal().then((newK) => {
+                                    if (!newK) return;
+                                    addKurikulumOptionToAllSelects(popup, newK);
+                                    // Set value di bulk selector + otomatis terapkan ke semua baris
+                                    e.target.value = newK.value;
+                                    popup.querySelectorAll('.nk-kurikulum').forEach(sel => { sel.value = newK.value; });
+                                });
+                            }
+                        });
+                    }
+                    if (bulkBtn && bulkSel) {
+                        bulkBtn.addEventListener('click', function () {
+                            const v = bulkSel.value;
+                            if (!v) {
+                                Swal.showValidationMessage?.('Pilih kurikulum dulu.');
+                                return;
+                            }
+                            popup.querySelectorAll('.nk-kurikulum').forEach(sel => { sel.value = v; });
+                        });
+                    }
+                },
+                preConfirm: () => {
+                    const popup = Swal.getPopup();
+                    const newKelas = [];
+                    let invalid = false;
+                    popup.querySelectorAll('tbody tr').forEach(tr => {
+                        const kode = tr.dataset.kode || '';
+                        const nama = tr.querySelector('.nk-nama').value.trim();
+                        const tingkat = tr.querySelector('.nk-tingkat').value.trim();
+                        const kurikulum = tr.querySelector('.nk-kurikulum').value;
+                        if (!nama || !tingkat || !kurikulum) {
+                            invalid = true;
+                            tr.style.background = '#fef2f2';
+                            return;
+                        }
+                        tr.style.background = '';
+                        newKelas.push({ kode_kelas: kode, nama_kelas: nama, tingkat, kode_kurikulum: kurikulum });
+                    });
+                    if (invalid) {
+                        Swal.showValidationMessage('Semua kolom (Nama, Tingkat, Kurikulum) wajib diisi.');
+                        return false;
+                    }
+                    return newKelas;
+                },
+            }).then(result => {
+                if (result.isConfirmed) {
+                    submitImport(result.value || []);
+                } else {
+                    btnImport.disabled = false;
+                    btnImport.querySelector('span').textContent = 'Import Sekarang';
+                }
+            });
+        }
+
+        function inferTingkatFromKode(kode) {
+            if (!kode) return '';
+            const first = String(kode).split(/[-._\s]/)[0] || '';
+            return first.toUpperCase().trim();
+        }
+
+        function addKurikulumOptionToAllSelects(popup, newK) {
+            popup.querySelectorAll('.nk-kurikulum').forEach(sel => {
+                if (sel.querySelector(`option[value="${CSS.escape(newK.value)}"]`)) return;
+                const opt = document.createElement('option');
+                opt.value = newK.value;
+                opt.textContent = newK.label;
+                // Sisipkan sebelum option "__new__"
+                const newOpt = sel.querySelector('option[value="__new__"]');
+                if (newOpt) sel.insertBefore(opt, newOpt);
+                else sel.appendChild(opt);
+            });
+            // Tambahkan juga ke bulk selector
+            const bulkSel = popup.querySelector('#nk-bulk-kurikulum');
+            if (bulkSel && !bulkSel.querySelector(`option[value="${CSS.escape(newK.value)}"]`)) {
+                const bOpt = document.createElement('option');
+                bOpt.value = newK.value;
+                bOpt.textContent = newK.label;
+                bulkSel.appendChild(bOpt);
+            }
+        }
+
+        function openInlineKurikulumModal() {
+            return new Promise((resolve) => {
+                let resolved = false;
+                const finish = (v) => { if (!resolved) { resolved = true; resolve(v); } };
+
+                const html = `
+                    <div class="nk-inline-form">
+                        <div class="err" id="nk-inline-err"></div>
+                        <div class="field">
+                            <label for="nk-inline-nama">Nama Kurikulum <span style="color:#e11d48">*</span></label>
+                            <input type="text" id="nk-inline-nama" placeholder="Contoh: Kurikulum 2013" autocomplete="off">
+                        </div>
+                        <div class="field">
+                            <label for="nk-inline-kode">Kode Kurikulum</label>
+                            <input type="text" id="nk-inline-kode" placeholder="K13, MERDEKA" autocomplete="off">
+                            <div style="font-size:11px; color:#64748b; margin-top:3px;">Opsional. Harus unik di tenant ini.</div>
+                        </div>
+                        <div class="field">
+                            <label for="nk-inline-status">Status</label>
+                            <select id="nk-inline-status">
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Tambah Kurikulum Baru',
+                    html,
+                    showCancelButton: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Simpan & Pilih',
+                    cancelButtonText: 'Batal',
+                    customClass: { popup: 'swal-narrow' },
+                    width: 480,
+                    didOpen: () => {
+                        setTimeout(() => document.getElementById('nk-inline-nama')?.focus(), 30);
+                    },
+                    preConfirm: () => {
+                        const nama = document.getElementById('nk-inline-nama').value.trim();
+                        const kode = document.getElementById('nk-inline-kode').value.trim();
+                        const status = document.getElementById('nk-inline-status').value;
+                        if (!nama) {
+                            Swal.showValidationMessage('Nama kurikulum wajib diisi.');
+                            return false;
+                        }
+                        return { nama, kode, status };
+                    },
+                }).then(async (result) => {
+                    if (!result.isConfirmed || !result.value) {
+                        finish(null);
+                        return;
+                    }
+                    const { nama, kode, status } = result.value;
+                    const body = new FormData();
+                    body.append('nama_kurikulum', nama);
+                    if (kode) body.append('kode_kurikulum', kode);
+                    body.append('status', status);
+
+                    try {
+                        const resp = await fetch('{{ route('tenant.migrasi.siswa.preview-quick-kurikulum') }}', {
+                            method: 'POST',
+                            body,
+                            headers: {
+                                'X-CSRF-TOKEN': csrf,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok || !data.ok) {
+                            let msg = data.message || 'Gagal menambah kurikulum.';
+                            if (data.errors) {
+                                const flat = Object.values(data.errors).flat();
+                                if (flat.length) msg = flat.join(' ');
+                            }
+                            Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
+                            finish(null);
+                            return;
+                        }
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 2200 });
+                        finish(data.data);
+                    } catch (e) {
+                        Swal.fire({ icon: 'error', title: 'Galat Jaringan', text: 'Tidak dapat terhubung ke server.' });
+                        finish(null);
+                    }
+                });
+            });
+        }
+
+        function submitImport(newKelas) {
+            btnImport.disabled = true;
+            btnImport.querySelector('span').textContent = 'Mengimpor...';
             const formData = new FormData();
             formData.append('_token', csrf);
             formData.append('file', fileInput.files[0]);
+            const tahunId = document.getElementById('filter-tahun').value;
+            const statusVal = document.getElementById('filter-status').value;
             formData.append('tahun_akademik_id', tahunId);
-            formData.append('status', document.getElementById('filter-status').value);
-
-            btnImport.disabled = true;
+            formData.append('status', statusVal);
+            newKelas.forEach((k, i) => {
+                formData.append(`new_kelas[${i}][kode_kelas]`, k.kode_kelas);
+                formData.append(`new_kelas[${i}][nama_kelas]`, k.nama_kelas);
+                formData.append(`new_kelas[${i}][tingkat]`, k.tingkat);
+                formData.append(`new_kelas[${i}][kode_kurikulum]`, k.kode_kurikulum);
+            });
 
             fetch('{{ route('tenant.migrasi.siswa.import') }}', {
                 method: 'POST',
@@ -159,6 +504,7 @@
             .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
             .then(({ ok, data }) => {
                 btnImport.disabled = false;
+                btnImport.querySelector('span').textContent = 'Import Sekarang';
                 if (ok && data.ok) {
                     let html = (data.message || 'File berhasil diupload.');
                     if (data.failures && data.failures.length) {
@@ -176,15 +522,20 @@
                     if (!data.summary || data.summary.failed === 0) {
                         resetForm();
                     }
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan.' });
-                    }
-                })
-                .catch(() => {
-                    btnImport.disabled = false;
-                    Swal.fire({ icon: 'error', title: 'Galat Jaringan', text: 'Tidak dapat terhubung ke server.' });
-                });
-        });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan.' });
+                }
+            })
+            .catch(() => {
+                btnImport.disabled = false;
+                btnImport.querySelector('span').textContent = 'Import Sekarang';
+                Swal.fire({ icon: 'error', title: 'Galat Jaringan', text: 'Tidak dapat terhubung ke server.' });
+            });
+        }
+
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
 
         document.getElementById('filter-tahun').addEventListener('change', function () {
             const params = new URLSearchParams(window.location.search);
