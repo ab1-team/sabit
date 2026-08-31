@@ -338,6 +338,31 @@
         }
 
         .lp-gal-page { padding: .5rem .75rem; }
+
+        /* Indikator kompres foto saat user pilih file besar */
+        .lp-compress-indicator {
+            display: none;
+            align-items: center;
+            gap: .4rem;
+            font-size: .72rem;
+            color: #1d4ed8;
+            margin-top: .35rem;
+        }
+        .lp-compress-indicator.is-busy { display: inline-flex; }
+        .lp-compress-indicator .material-symbols-rounded {
+            font-size: 14px;
+            animation: lp-spin 1s linear infinite;
+        }
+        @keyframes lp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .lp-compress-result {
+            display: none;
+            font-size: .7rem;
+            color: #475569;
+            margin-top: .15rem;
+        }
+        .lp-compress-result.is-shown { display: block; }
+        .lp-compress-result.is-saved { color: #15803d; }
+        .lp-compress-result.is-skipped { color: #94a3b8; }
         @media (max-width: 575.98px) {
             .lp-gal-page { padding: .5rem .5rem; }
         }
@@ -488,6 +513,11 @@
                             </label>
                             <input type="file" name="image" class="d-none" accept="image/*"
                                    id="imageInput">
+                            <div class="lp-compress-indicator" id="imageCompressIndicator">
+                                <span class="material-symbols-rounded">progress_activity</span>
+                                <span>Mengompres foto…</span>
+                            </div>
+                            <div class="lp-compress-result" id="imageCompressResult"></div>
                             @if ($isEdit && !empty($fd['image_path']))
                                 <div class="small text-muted mt-1">File saat ini: <code>{{ $fd['image_path'] }}</code></div>
                             @endif
@@ -614,22 +644,131 @@
     });
 
     // === Foto preview ===
+    var lpCompressIndicator = document.getElementById('imageCompressIndicator');
+    var lpCompressResult   = document.getElementById('imageCompressResult');
+    var LP_PHOTO_MAX_BYTES  = 4 * 1024 * 1024;   // kompres hanya jika > 4MB (batas validasi server)
+    var LP_PHOTO_MAX_SIDE   = 1920;              // lebar/tinggi maksimum (px) — jaga kualitas
+    var LP_PHOTO_QUALITY    = 0.88;              // quality JPEG ringan, tidak agresif
+
+    function lpShowCompressBusy(label) {
+        if (lpCompressIndicator) {
+            lpCompressIndicator.classList.add('is-busy');
+            var txt = lpCompressIndicator.querySelector('span:last-child');
+            if (txt && label) txt.textContent = label;
+        }
+    }
+    function lpHideCompressBusy() {
+        if (lpCompressIndicator) lpCompressIndicator.classList.remove('is-busy');
+    }
+    function lpShowCompressResult(msg, kind) {
+        if (!lpCompressResult) return;
+        lpCompressResult.textContent = msg;
+        lpCompressResult.classList.remove('is-saved', 'is-skipped');
+        if (kind === 'saved') lpCompressResult.classList.add('is-saved');
+        else if (kind === 'skipped') lpCompressResult.classList.add('is-skipped');
+        lpCompressResult.classList.add('is-shown');
+    }
+    function lpHideCompressResult() {
+        if (lpCompressResult) {
+            lpCompressResult.classList.remove('is-shown');
+            lpCompressResult.textContent = '';
+        }
+    }
+
+    /**
+     * Kompres gambar di browser — RINGAN, hanya untuk foto > 4MB.
+     * - Hanya JPEG/PNG/WEBP (format lain dilewati).
+     * - 1 pass: resize ke max-side 1920px + JPEG quality 0.88.
+     * - Tidak agresif: tujuan hanya menurunkan dimensi foto HP yang terlalu besar,
+     *   BUKAN merusak kualitas foto yang sudah wajar.
+     * - Mengembalikan Promise<File>. Bila gagal/tidak didukung → return file asli.
+     */
+    function lpCompressImage(file) {
+        return new Promise(function (resolve) {
+            if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+                return resolve(file);
+            }
+            if (!document.createElement('canvas').getContext) {
+                return resolve(file);
+            }
+            // Kalau ≤ 4MB, pakai file asli — kualitas tetap bagus.
+            if (file.size <= LP_PHOTO_MAX_BYTES) {
+                return resolve(file);
+            }
+            var url = URL.createObjectURL(file);
+            var img = new Image();
+            img.onload = function () {
+                try {
+                    var w0 = img.naturalWidth || img.width;
+                    var h0 = img.naturalHeight || img.height;
+                    if (!w0 || !h0) { URL.revokeObjectURL(url); return resolve(file); }
+
+                    // Resize ke max-side 1920px (rasio dipertahankan).
+                    var ratio = Math.min(1, LP_PHOTO_MAX_SIDE / Math.max(w0, h0));
+                    var w = Math.max(1, Math.round(w0 * ratio));
+                    var h = Math.max(1, Math.round(h0 * ratio));
+
+                    var c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    var ctx = c.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // PNG tidak support quality → tetap JPEG (ukuran lebih kecil, foto ala HP biasanya tidak butuh lossless).
+                    var outMime = (file.type === 'image/png') ? 'image/jpeg' : (file.type || 'image/jpeg');
+                    var dataUrl = c.toDataURL(outMime, LP_PHOTO_QUALITY);
+                    var bin = atob(dataUrl.split(',')[1]);
+                    var arr = new Uint8Array(bin.length);
+                    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                    var blob = new Blob([arr], { type: outMime });
+
+                    URL.revokeObjectURL(url);
+
+                    // Jika hasil kompres tidak lebih kecil dari asli, pakai asli.
+                    if (!blob || blob.size >= file.size) {
+                        resolve(file);
+                        return;
+                    }
+
+                    var origName = (file.name || 'image').replace(/\.[^.]+$/, '') +
+                        (outMime === 'image/jpeg' ? '.jpg' : '.png');
+                    var compressed = new File([blob], origName, {
+                        type: blob.type,
+                        lastModified: Date.now(),
+                    });
+                    resolve(compressed);
+                } catch (err) {
+                    URL.revokeObjectURL(url);
+                    resolve(file);
+                }
+            };
+            img.onerror = function () {
+                URL.revokeObjectURL(url);
+                resolve(file);
+            };
+            img.src = url;
+        });
+    }
+
     if (imageInput) {
         imageInput.addEventListener('change', function (e) {
             var file = e.target.files && e.target.files[0];
             if (!file) return;
+
+            // Preview lokal instan dari file asli (responsif).
             var reader = new FileReader();
             reader.onload = function (ev) {
                 if (imagePreviewImg) {
                     imagePreviewImg.src = ev.target.result;
                     imagePreviewImg.style.position = 'absolute';
                 } else {
-                    var img = document.createElement('img');
-                    img.src = ev.target.result;
-                    img.alt = 'Foto';
-                    img.id = 'imagePreviewImg';
-                    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:cover;';
-                    imagePreviewBox.insertBefore(img, imagePreviewBox.firstChild);
+                    var imgEl = document.createElement('img');
+                    imgEl.src = ev.target.result;
+                    imgEl.alt = 'Foto';
+                    imgEl.id = 'imagePreviewImg';
+                    imgEl.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:cover;';
+                    imagePreviewBox.insertBefore(imgEl, imagePreviewBox.firstChild);
                 }
                 var empty = document.getElementById('imagePreviewEmpty');
                 if (empty) empty.remove();
@@ -637,6 +776,44 @@
                 if (title) title.remove();
             };
             reader.readAsDataURL(file);
+
+            // Kompres hanya kalau perlu (> 4MB).
+            if (file.size <= LP_PHOTO_MAX_BYTES) {
+                lpHideCompressBusy();
+                lpShowCompressResult(
+                    'Foto dipakai apa adanya (' + Math.round(file.size / 1024) + ' KB) — kualitas original dipertahankan.',
+                    'skipped'
+                );
+                return;
+            }
+
+            lpShowCompressBusy('Mengompres foto…');
+            lpHideCompressResult();
+
+            lpCompressImage(file).then(function (compressed) {
+                lpHideCompressBusy();
+                if (compressed === file) {
+                    // Tidak dikompres (gambar sudah kecil atau bukan image/*)
+                    lpShowCompressResult('File dipakai apa adanya (' + Math.round(file.size / 1024) + ' KB).', 'skipped');
+                    return;
+                }
+                // Ganti isi FileList dengan versi terkompres.
+                try {
+                    var dt = new DataTransfer();
+                    dt.items.add(compressed);
+                    imageInput.files = dt.files;
+                } catch (err) {
+                    // DataTransfer gagal di browser lama → fallback tidak tersedia,
+                    // upload tetap jalan dengan file asli (Laravel akan validasi max:4096).
+                }
+                var beforeKb = Math.round(file.size / 1024);
+                var afterKb  = Math.round(compressed.size / 1024);
+                var pct = Math.round((1 - compressed.size / file.size) * 100);
+                lpShowCompressResult(
+                    'Dikompres: ' + beforeKb + ' KB → ' + afterKb + ' KB (' + (pct > 0 ? '−' : '+') + Math.abs(pct) + '%).',
+                    'saved'
+                );
+            });
         });
     }
 

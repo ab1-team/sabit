@@ -176,13 +176,25 @@
                         // Server mengirim HTML/text — biasanya halaman error Laravel
                         // atau halaman login (session expired). Tampilkan notifikasi
                         // dan reload supaya user kembali ke form dengan pesan yang jelas.
+                        var rawTitle = 'Respon server tidak valid';
+                        var rawText  = 'Status ' + out.status + '. Cek log Laravel (storage/logs/laravel.log) untuk detail.';
+                        if (out.status === 413) {
+                            rawTitle = 'File terlalu besar untuk server';
+                            rawText  = 'Server menolak request (HTTP 413). Kemungkinan file video/foto melampaui batas upload server. Coba kompres foto jadi ≤ 2MB atau gunakan URL YouTube untuk video.';
+                        } else if (out.status === 502 || out.status === 503 || out.status === 504) {
+                            rawTitle = 'Server sedang sibuk';
+                            rawText  = 'Status ' + out.status + '. Coba lagi beberapa saat.';
+                        } else if (out.status === 401 || out.status === 419) {
+                            rawTitle = 'Sesi berakhir';
+                            rawText  = 'Silakan login ulang dan coba simpan kembali.';
+                        }
                         notify({
                             icon: 'error',
-                            title: 'Respon server tidak valid',
-                            text: 'Status ' + out.status + '. Cek log Laravel (storage/logs/laravel.log) untuk detail.',
+                            title: rawTitle,
+                            text: rawText,
                             toast: true,
                             position: 'top-end',
-                            timer: 5000,
+                            timer: 6000,
                             timerProgressBar: true,
                             showConfirmButton: false,
                         });
