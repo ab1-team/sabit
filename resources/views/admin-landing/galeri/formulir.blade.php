@@ -646,10 +646,9 @@
     // === Foto preview ===
     var lpCompressIndicator = document.getElementById('imageCompressIndicator');
     var lpCompressResult   = document.getElementById('imageCompressResult');
-    var LP_PHOTO_MAX_BYTES  = 2 * 1024 * 1024;   // target akhir: ≤ 2MB
-    var LP_PHOTO_MAX_SIDE   = 1920;              // lebar/tinggi maksimum (px)
-    var LP_PHOTO_MIN_QUALITY = 0.6;
-    var LP_PHOTO_START_QUALITY = 0.85;
+    var LP_PHOTO_MAX_BYTES  = 4 * 1024 * 1024;   // kompres hanya jika > 4MB (batas validasi server)
+    var LP_PHOTO_MAX_SIDE   = 1920;              // lebar/tinggi maksimum (px) — jaga kualitas
+    var LP_PHOTO_QUALITY    = 0.88;              // quality JPEG ringan, tidak agresif
 
     function lpShowCompressBusy(label) {
         if (lpCompressIndicator) {
@@ -677,9 +676,11 @@
     }
 
     /**
-     * Kompres gambar di browser sampai ≤ targetBytes.
+     * Kompres gambar di browser — RINGAN, hanya untuk foto > 4MB.
      * - Hanya JPEG/PNG/WEBP (format lain dilewati).
-     * - Turunkan quality dulu, lalu perkecil dimensi jika masih > target.
+     * - 1 pass: resize ke max-side 1920px + JPEG quality 0.88.
+     * - Tidak agresif: tujuan hanya menurunkan dimensi foto HP yang terlalu besar,
+     *   BUKAN merusak kualitas foto yang sudah wajar.
      * - Mengembalikan Promise<File>. Bila gagal/tidak didukung → return file asli.
      */
     function lpCompressImage(file) {
@@ -687,10 +688,10 @@
             if (!file || !file.type || file.type.indexOf('image/') !== 0) {
                 return resolve(file);
             }
-            if (!window.createImageBitmap && !document.createElement('canvas').getContext) {
+            if (!document.createElement('canvas').getContext) {
                 return resolve(file);
             }
-            // Kalau sudah kecil, tidak perlu kompres (hemat CPU HP).
+            // Kalau ≤ 4MB, pakai file asli — kualitas tetap bagus.
             if (file.size <= LP_PHOTO_MAX_BYTES) {
                 return resolve(file);
             }
@@ -702,57 +703,38 @@
                     var h0 = img.naturalHeight || img.height;
                     if (!w0 || !h0) { URL.revokeObjectURL(url); return resolve(file); }
 
-                    function tryAt(width, height, quality) {
-                        var c = document.createElement('canvas');
-                        c.width = width; c.height = height;
-                        var ctx = c.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        var mime = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
-                        // PNG tidak disupport quality; tetap JPEG untuk hasil kecil.
-                        var outMime = (mime === 'image/png') ? 'image/jpeg' : mime;
-                        var cnvBlob = null;
-                        try {
-                            cnvBlob = c.toDataURL ? null : null;
-                            var dataUrl = c.toDataURL(outMime, quality);
-                            var bin = atob(dataUrl.split(',')[1]);
-                            var arr = new Uint8Array(bin.length);
-                            for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-                            return new Blob([arr], { type: outMime });
-                        } catch (e) {
-                            return null;
-                        }
-                    }
-
+                    // Resize ke max-side 1920px (rasio dipertahankan).
                     var ratio = Math.min(1, LP_PHOTO_MAX_SIDE / Math.max(w0, h0));
                     var w = Math.max(1, Math.round(w0 * ratio));
                     var h = Math.max(1, Math.round(h0 * ratio));
 
-                    var blob = tryAt(w, h, LP_PHOTO_START_QUALITY);
-                    var origName = (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg';
+                    var c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    var ctx = c.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, w, h);
 
-                    // Turunkan quality dulu.
-                    var q = LP_PHOTO_START_QUALITY;
-                    while (blob && blob.size > LP_PHOTO_MAX_BYTES && q > LP_PHOTO_MIN_QUALITY + 0.01) {
-                        q -= 0.1;
-                        blob = tryAt(w, h, Math.max(LP_PHOTO_MIN_QUALITY, q));
-                    }
-                    // Masih kebesaran → perkecil dimensi bertahap.
-                    while (blob && blob.size > LP_PHOTO_MAX_BYTES && w > 640 && h > 360) {
-                        w = Math.round(w * 0.85);
-                        h = Math.round(h * 0.85);
-                        blob = tryAt(w, h, LP_PHOTO_MIN_QUALITY);
-                    }
+                    // PNG tidak support quality → tetap JPEG (ukuran lebih kecil, foto ala HP biasanya tidak butuh lossless).
+                    var outMime = (file.type === 'image/png') ? 'image/jpeg' : (file.type || 'image/jpeg');
+                    var dataUrl = c.toDataURL(outMime, LP_PHOTO_QUALITY);
+                    var bin = atob(dataUrl.split(',')[1]);
+                    var arr = new Uint8Array(bin.length);
+                    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                    var blob = new Blob([arr], { type: outMime });
 
                     URL.revokeObjectURL(url);
 
+                    // Jika hasil kompres tidak lebih kecil dari asli, pakai asli.
                     if (!blob || blob.size >= file.size) {
-                        // Kompresi tidak menghasilkan file lebih kecil → pakai asli.
                         resolve(file);
                         return;
                     }
 
+                    var origName = (file.name || 'image').replace(/\.[^.]+$/, '') +
+                        (outMime === 'image/jpeg' ? '.jpg' : '.png');
                     var compressed = new File([blob], origName, {
-                        type: blob.type || 'image/jpeg',
+                        type: blob.type,
                         lastModified: Date.now(),
                     });
                     resolve(compressed);
@@ -795,10 +777,13 @@
             };
             reader.readAsDataURL(file);
 
-            // Kompres hanya kalau perlu (> target).
+            // Kompres hanya kalau perlu (> 4MB).
             if (file.size <= LP_PHOTO_MAX_BYTES) {
                 lpHideCompressBusy();
-                lpShowCompressResult('Ukuran sudah optimal (' + Math.round(file.size / 1024) + ' KB).', 'skipped');
+                lpShowCompressResult(
+                    'Foto dipakai apa adanya (' + Math.round(file.size / 1024) + ' KB) — kualitas original dipertahankan.',
+                    'skipped'
+                );
                 return;
             }
 
