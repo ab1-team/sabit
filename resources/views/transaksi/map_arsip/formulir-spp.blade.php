@@ -327,28 +327,32 @@
                         </div>
                     </div>
                     <div class="d-flex
-                            flex-column flex-md-row
-                            align-items-stretch align-items-md-center
+                            flex-wrap flex-md-row
+                            align-items-center
                             justify-content-md-end
                             gap-2
                             p-2 pb-1">
                     <button type="button" id="kuitansi"
-                        class="btn btn-outline-secondary btn-sm d-none w-100 w-md-auto">
+                        class="btn btn-outline-secondary btn-sm d-none"
+                        style="min-width:110px;min-height:34px;">
                         Kwitansi
                     </button>
                     <button type="button" id="CetakPadaKartu"
-                        class="btn btn-outline-info btn-sm d-none w-100 w-md-auto">
+                        class="btn btn-outline-info btn-sm d-none"
+                        style="min-width:160px;min-height:34px;">
                         Cetak Pada Kartu
                     </button>
                     <button type="submit" id="Tunai"
                         data-sumber="1.1.01.01"
-                        class="btn btn-warning w-100 mb-0 w-md-auto SPPsimpan"
+                        class="btn btn-warning btn-sm SPPsimpan"
+                        style="min-width:110px;min-height:34px;"
                         @disabled(!$siswa->exists)>
                         Tunai
                     </button>
                     <button type="submit" id="TransferBank"
                         data-sumber="1.1.01.03"
-                        class="btn btn-info w-100 w-md-auto mb-0 SPPsimpan"
+                        class="btn btn-info btn-sm SPPsimpan"
+                        style="min-width:160px;min-height:34px;"
                         @disabled(!$siswa->exists)>
                         Transfer Bank
                     </button>
