@@ -13,7 +13,7 @@ class JenisBiayaSeeder extends Seeder
         $idJp = $row ? $row->id : 1;
 
         $rows = [
-            ['id_jp' => $idJp, 'angkatan' => date('Y'), 'total_beban' => '3000000'],
+            ['id_jp' => $idJp, 'angkatan' => date('Y'), 'total_beban' => '250000'],
         ];
 
         $data = [];
