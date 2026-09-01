@@ -756,13 +756,20 @@ public function pembayaranSPPStore(Request $request)
             ->filter()
             ->values();
 
+        $tahunSekarang = Carbon::now()->year;
+
+        $tahunCocokTahunIni = $tahunList->first(function ($nama) use ($tahunSekarang) {
+            return (bool) preg_match('/(^|\/)' . $tahunSekarang . '($|\/)/', $nama);
+        });
+
         $tahunAktif = optional(TahunAkademik::aktif())->nama_tahun;
 
         $tahunDariSiswa = \App\Models\AnggotaKelas::where('id_siswa', $id)
             ->orderByDesc('id')
             ->value('tahun_akademik');
 
-        $defaultTa = $tahunAktif ?: ($tahunDariSiswa ?: ($tahunList->first() ?? null));
+        $defaultTa = $tahunCocokTahunIni
+            ?: ($tahunAktif ?: ($tahunDariSiswa ?: ($tahunList->first() ?? null)));
 
         $tahunDipilih = $request->query('tahun_akademik')
             ?: ($tahunList->contains($defaultTa) ? $defaultTa : ($tahunList->first() ?? null));
