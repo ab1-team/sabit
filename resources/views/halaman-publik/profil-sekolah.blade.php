@@ -160,6 +160,9 @@
         font-size: 0.98rem;
         line-height: 1.7;
         max-width: 720px;
+        text-align: justify;
+        text-justify: inter-word;
+        hyphens: auto;
     }
     .lp-hero-card .lp-hero-body p { margin: 0 0 .85rem; }
     .lp-hero-card .lp-hero-body p:last-child { margin-bottom: 0; }
