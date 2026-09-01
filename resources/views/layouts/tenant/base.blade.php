@@ -882,6 +882,37 @@
                 damping: .5
             })
         }
+        (function () {
+            var mc = document.querySelector('.main-content');
+            if (!mc) return;
+            var lockWheel = function (e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.preventDefault();
+            };
+            var lockKeys = function (e) {
+                var k = e.key;
+                if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'PageUp' || k === 'PageDown' ||
+                    k === 'Home' || k === 'End' || k === ' ' || k === 'Spacebar') {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                }
+            };
+            document.addEventListener('show.bs.modal', function () {
+                mc.style.overflow = 'hidden';
+                mc.style.height = '100vh';
+                mc.addEventListener('wheel', lockWheel, { capture: true, passive: false });
+                mc.addEventListener('keydown', lockKeys, { capture: true });
+            });
+            document.addEventListener('hidden.bs.modal', function () {
+                mc.style.overflow = '';
+                mc.style.height = '';
+                mc.removeEventListener('wheel', lockWheel, { capture: true });
+                mc.removeEventListener('keydown', lockKeys, { capture: true });
+                mc.scrollTop = 0;
+            });
+        })();
     </script>
     <script>
         $(document).ready(function() {

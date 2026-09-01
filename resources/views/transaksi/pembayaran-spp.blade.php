@@ -229,6 +229,8 @@
                 console.warn('Select2 belum dimuat');
                 return;
             }
+            var $modal = $root.closest('.modal');
+            var dropdownParent = $modal.length ? $modal : $(document.body);
             $root.find('select.select2').each(function () {
                 var $el = $(this);
                 if ($el.data('select2')) {
@@ -238,7 +240,7 @@
                     theme: 'bootstrap-5',
                     width: 'resolve',
                     allowClear: false,
-                    dropdownParent: $(document.body),
+                    dropdownParent: dropdownParent,
                     dropdownCssClass: 'select2-above-all-modal'
                 });
             });
@@ -314,6 +316,11 @@
                 let content = '#detailContent';
                 let siswaId = $('#detailContent [data-siswa-id]').first().data('siswa-id') || null;
                 if (!siswaId) return;
+                $('#detail .select2').each(function () {
+                    if ($(this).data('select2')) $(this).select2('close');
+                });
+                var $modalBody = $('#detail .modal-body');
+                var prevScroll = $modalBody.length ? $modalBody.scrollTop() : 0;
                 $(content).html(`
                     <div class="text-center py-5">
                         <div class="spinner-border text-danger"></div>
@@ -326,6 +333,7 @@
                     .done(function(res) {
                         $(content).html(res);
                         initSelect2In($(content));
+                        $modalBody.scrollTop(prevScroll);
                     })
                     .fail(function() {
                         $(content).html('<div class="alert alert-danger">Gagal memuat detail.</div>');
