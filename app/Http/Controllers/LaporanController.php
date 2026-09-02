@@ -82,9 +82,11 @@ class LaporanController extends Controller
             ]);
         }
 
-        if ($file == 'buku_besar') {
+if ($file == 'buku_besar') {
 
-            $rekening = Rekening::orderBy('kode_akun', 'ASC')->get();
+            $rekening = Rekening::where('kode_akun', 'NOT LIKE', '%.00')
+                ->orderBy('kode_akun', 'ASC')
+                ->get();
             $sub_laporan = [];
 
             foreach ($rekening as $rek) {
