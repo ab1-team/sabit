@@ -119,7 +119,7 @@ class LaporanController extends Controller
                 $tahunAkademikNama = TahunAkademik::whereKey($tahunAkademikId)->value('nama_tahun');
             }
 
-            $kodeKelasList = AnggotaKelas::where('status', 'aktif')
+            $kodeKelasList = AnggotaKelas::query()
                 ->when($tahunAkademikNama, function ($q) use ($tahunAkademikNama) {
                     $q->where('tahun_akademik', $tahunAkademikNama);
                 })
@@ -748,7 +748,6 @@ $data = [
         }
 
         $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn'])
-            ->where('status', 'aktif')
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
                 $q->where('kode_kelas', $data['sub_laporan']);
             })
@@ -928,7 +927,6 @@ $data = [
                     $q->where('tahun_akademik', $tahun->nama_tahun);
                 }
             })
-            ->where('status', 'aktif')
             ->orderBy('id')
             ->get();
 
