@@ -287,13 +287,27 @@ $('#laporan').on('change', function() {
             const file = $('#laporan').val();
             if (!file) return;
 
+            const taId = $(this).val();
+            if (taId) {
+                const opt = $(this).find(':selected');
+                const nama = opt.text().trim();
+                const m = nama.match(/^(\d{4})\s*\/\s*(\d{4})$/);
+                if (m) {
+                    const startYear = m[1];
+                    const tglAwal = startYear + '-07-01';
+                    const tglAkhir = (parseInt(startYear) + 1) + '-06-30';
+                    $('input[name="tgl_awal"]').val(tglAwal).trigger('change');
+                    $('input[name="tgl_akhir"]').val(tglAkhir).trigger('change');
+                }
+            }
+
             $.ajax({
                 url: '/app/pelaporan/sub_laporan/' + file,
                 type: 'GET',
                 data: {
                     tahun: $('select[name="tahun"]').val(),
                     bulan: $('select[name="bulan"]').val(),
-                    tahun_akademik_id: $(this).val()
+                    tahun_akademik_id: taId
                 },
                 success: function(res) {
                     $('#subLaporan').html(res);

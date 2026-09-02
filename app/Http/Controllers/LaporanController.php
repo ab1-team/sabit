@@ -27,6 +27,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanController extends Controller
 {
+    private static array $aggCache = [];
     private function respond(string $viewHtml, array $data, ?string $filename = null)
     {
         if (request('action') === 'excel') {
@@ -696,7 +697,7 @@ $data['catatan'] = $calk ? $calk->catatan : '';
         return $this->respond($view, $data, 'calk.xls');
     }
 
-    public function pembayaran_spp(Request $request)
+public function pembayaran_spp(Request $request)
     {
 $request->validate([
             'tgl_awal'          => 'required|date',
@@ -713,10 +714,21 @@ $data = [
             'title'             => 'Laporan Pembayaran SPP',
         ];
 
-        if (empty($data['tahun_akademik_id'])) {
+if (empty($data['tahun_akademik_id'])) {
             $taAktif = TahunAkademik::aktif();
             if ($taAktif) {
                 $data['tahun_akademik_id'] = $taAktif->id;
+            }
+        }
+
+        $namaTahunAkademik = null;
+        if (!empty($data['tahun_akademik_id'])) {
+            static $taCache = [];
+            if (isset($taCache[$data['tahun_akademik_id']])) {
+                $namaTahunAkademik = $taCache[$data['tahun_akademik_id']];
+            } else {
+                $namaTahunAkademik = TahunAkademik::whereKey($data['tahun_akademik_id'])->value('nama_tahun');
+                $taCache[$data['tahun_akademik_id']] = $namaTahunAkademik;
             }
         }
 
@@ -749,69 +761,52 @@ $data = [
             $cursor->addMonth();
         }
 
-        $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn'])
+        $akQuery = DB::table('anggota_kelas as ak')
+            ->select('ak.*', 's.nama as siswa_nama', 's.nisn as siswa_nisn')
+            ->leftJoin('siswa as s', 's.id', '=', 'ak.id_siswa')
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
-                $q->where('kode_kelas', $data['sub_laporan']);
+                $q->where('ak.kode_kelas', $data['sub_laporan']);
             })
-            ->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
-                $tahun = TahunAkademik::find($data['tahun_akademik_id']);
-                if ($tahun) {
-                    $q->where('tahun_akademik', $tahun->nama_tahun);
-                }
+            ->when($namaTahunAkademik, function ($q) use ($namaTahunAkademik) {
+                $q->where('ak.tahun_akademik', $namaTahunAkademik);
             })
-            ->orderBy('kode_kelas')
-            ->orderBy('id')
-            ->get();
+            ->orderBy('ak.kode_kelas')
+            ->orderBy('ak.id');
 
-        $akIds = $anggotaKelas->pluck('id')->all();
-
-        $sppByKey = [];
-        if (!empty($akIds)) {
-            $sppAll = DB::table('spp')
-                ->whereIn('anggota_kelas', $akIds)
-                ->whereBetween('tanggal', [$tglAwal, $tglAkhir])
-                ->get(['anggota_kelas', 'tanggal', 'nominal', 'status']);
-
-            foreach ($sppAll as $s) {
-                $key = (int) $s->anggota_kelas;
-                $sppByKey[$key][substr((string) $s->tanggal, 0, 7)] = $s;
-            }
-
-            $sppAggregate = DB::table('spp')
-                ->whereIn('spp.anggota_kelas', $akIds)
-                ->whereBetween('spp.tanggal', [$tglAwal, $tglAkhir])
-                ->groupBy('spp.anggota_kelas', 'spp.status')
-                ->selectRaw('spp.anggota_kelas, spp.status, SUM(spp.nominal) as total')
-                ->get();
-        } else {
-            $sppAggregate = collect();
-        }
+        $anggotaKelas = $akQuery->get();
 
         $aggByAk = [];
-        foreach ($sppAggregate as $a) {
-            $aggByAk[(int) $a->anggota_kelas][$a->status] = (float) $a->total;
+        if ($anggotaKelas->isNotEmpty()) {
+            $cacheKey = 'lap:sppa:' . md5(($namaTahunAkademik ?? '') . '|' . ($data['sub_laporan'] ?? '') . '|' . $tglAwal->toDateString() . '|' . $tglAkhir->toDateString());
+
+            if (!isset(self::$aggCache[$cacheKey])) {
+                self::$aggCache[$cacheKey] = DB::table('spp')
+                    ->join('anggota_kelas as ak', 'ak.id', '=', 'spp.anggota_kelas')
+                    ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
+                        $q->where('ak.kode_kelas', $data['sub_laporan']);
+                    })
+                    ->when($namaTahunAkademik, function ($q) use ($namaTahunAkademik) {
+                        $q->where('ak.tahun_akademik', $namaTahunAkademik);
+                    })
+                    ->whereBetween('spp.tanggal', [$tglAwal, $tglAkhir])
+                    ->select('spp.anggota_kelas', 'spp.status', DB::raw('SUM(CAST(spp.nominal AS UNSIGNED)) as total'))
+                    ->groupBy('spp.anggota_kelas', 'spp.status')
+                    ->get()
+                    ->toArray();
+            }
+            $rows = self::$aggCache[$cacheKey];
+
+            foreach ($rows as $r) {
+                $key = (int) $r->anggota_kelas;
+                $aggByAk[$key][$r->status] = (float) $r->total;
+            }
         }
 
-        $anggotaKelas->transform(function ($row) use ($bulanList, $sppByKey, $aggByAk) {
+        $anggotaKelas->transform(function ($row) use (&$aggByAk) {
             $row->per_bulan = (int) ($row->spp_nominal ?? 0);
 
-            $sppRows = $sppByKey[$row->id] ?? [];
-
-            $row->bulan_list = collect($bulanList)->map(function ($bln) use ($sppRows, $row) {
-                $key = $bln->format('Y-m');
-                $s = $sppRows[$key] ?? null;
-                $nominalTagihan = (int) ($s->nominal ?? $row->per_bulan);
-                $lunas = $s && $s->status === 'L';
-                return (object) [
-                    'bulan'   => $bln,
-                    'tagihan' => $nominalTagihan,
-                    'bayar'   => $lunas ? $nominalTagihan : 0,
-                    'status'  => $s ? ($lunas ? 'L' : 'B') : null,
-                ];
-            });
-
             // Total tagihan = jumlah semua baris spp (Lunas maupun Belum). Pembayaran = hanya yang Lunas.
-// Sisa Pembayaran = Tagihan - Pembayaran (>=0; berarti "sisa yang belum dibayar").
+            // Sisa = Tagihan - Pembayaran (>=0; berarti "sisa yang belum dibayar").
             $row->target_sd_saat_ini = ($aggByAk[$row->id]['B'] ?? 0) + ($aggByAk[$row->id]['L'] ?? 0);
             $row->sd_periode_ini    = $aggByAk[$row->id]['L'] ?? 0;
             $row->sisa = $row->target_sd_saat_ini - $row->sd_periode_ini;
@@ -900,10 +895,21 @@ $data = [
             'title'             => $title,
         ];
 
-        if (empty($data['tahun_akademik_id'])) {
+if (empty($data['tahun_akademik_id'])) {
             $taAktif = TahunAkademik::aktif();
             if ($taAktif) {
                 $data['tahun_akademik_id'] = $taAktif->id;
+            }
+        }
+
+        $namaTahunAkademik = null;
+        if (!empty($data['tahun_akademik_id'])) {
+            static $taCache2 = [];
+            if (isset($taCache2[$data['tahun_akademik_id']])) {
+                $namaTahunAkademik = $taCache2[$data['tahun_akademik_id']];
+            } else {
+                $namaTahunAkademik = TahunAkademik::whereKey($data['tahun_akademik_id'])->value('nama_tahun');
+                $taCache2[$data['tahun_akademik_id']] = $namaTahunAkademik;
             }
         }
 
@@ -919,48 +925,57 @@ $data = [
             'akhir' => $tglAkhir->locale('id'),
         ];
 
-        $anggotaKelas = AnggotaKelas::with(['siswa:id,nama,nisn,tahun_akademik', 'tahunAkademik:id,nama_tahun'])
+        $anggotaKelas = DB::table('anggota_kelas as ak')
+            ->select('ak.*', 's.id as siswa_id', 's.nama as siswa_nama', 's.nisn as siswa_nisn')
+            ->leftJoin('siswa as s', 's.id', '=', 'ak.id_siswa')
             ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
-                $q->where('kode_kelas', $data['sub_laporan']);
+                $q->where('ak.kode_kelas', $data['sub_laporan']);
             })
-            ->when(!empty($data['tahun_akademik_id']), function ($q) use ($data) {
-                $tahun = TahunAkademik::find($data['tahun_akademik_id']);
-                if ($tahun) {
-                    $q->where('tahun_akademik', $tahun->nama_tahun);
-                }
+            ->when($namaTahunAkademik, function ($q) use ($namaTahunAkademik) {
+                $q->where('ak.tahun_akademik', $namaTahunAkademik);
             })
-            ->orderBy('id')
+            ->orderBy('ak.id')
             ->get();
 
-        $siswaIds = $anggotaKelas->pluck('siswa.id')->filter()->unique()->values()->all();
+        $siswaIds = $anggotaKelas->pluck('siswa_id')->filter()->unique()->values()->all();
 
         $trxBySiswa = [];
         if (!empty($siswaIds)) {
-            $rows = DB::table('transaksi')
-                ->whereIn('siswa_id', $siswaIds)
-                ->where('rekening_kredit', $kodeAkun)
-                ->whereBetween('tanggal_transaksi', [$tglAwal, $tglAkhir])
-                ->whereNull('deleted_at')
-                ->orderByDesc('tanggal_transaksi')
-                ->get(['siswa_id', 'tanggal_transaksi', 'jumlah']);
+            $cacheKey = 'lap:trxa:' . md5($kodeAkun . '|' . ($namaTahunAkademik ?? '') . '|' . ($data['sub_laporan'] ?? '') . '|' . $tglAwal->toDateString() . '|' . $tglAkhir->toDateString());
+
+            if (!isset(self::$aggCache[$cacheKey])) {
+                self::$aggCache[$cacheKey] = DB::table('transaksi')
+                    ->join('siswa as s', 's.id', '=', 'transaksi.siswa_id')
+                    ->join('anggota_kelas as ak', 'ak.id_siswa', '=', 's.id')
+                    ->where('transaksi.rekening_kredit', $kodeAkun)
+                    ->whereBetween('transaksi.tanggal_transaksi', [$tglAwal, $tglAkhir])
+                    ->whereNull('transaksi.deleted_at')
+                    ->when(!empty($data['sub_laporan']), function ($q) use ($data) {
+                        $q->where('ak.kode_kelas', $data['sub_laporan']);
+                    })
+                    ->when($namaTahunAkademik, function ($q) use ($namaTahunAkademik) {
+                        $q->where('ak.tahun_akademik', $namaTahunAkademik);
+                    })
+                    ->selectRaw('transaksi.siswa_id, MAX(transaksi.tanggal_transaksi) as max_tgl, SUM(transaksi.jumlah) as total')
+                    ->groupBy('transaksi.siswa_id')
+                    ->get()
+                    ->toArray();
+            }
+            $rows = self::$aggCache[$cacheKey];
 
             foreach ($rows as $r) {
                 $sid = (int) $r->siswa_id;
-                if (!isset($trxBySiswa[$sid])) {
-                    $trxBySiswa[$sid] = ['max' => $r->tanggal_transaksi, 'sum' => 0];
-                }
-                $trxBySiswa[$sid]['sum'] += (float) $r->jumlah;
+                $trxBySiswa[$sid] = ['max' => $r->max_tgl, 'sum' => (float) $r->total];
             }
         }
 
-        $anggotaKelas->transform(function ($row) use ($trxBySiswa) {
-            $sid = $row->siswa?->id ?? 0;
+        foreach ($anggotaKelas as $row) {
+            $sid = (int) $row->siswa_id;
             $stat = $trxBySiswa[$sid] ?? null;
             $row->tgl_bayar_terakhir = $stat['max'] ?? null;
             $row->realisasi = $stat['sum'] ?? 0;
             $row->sudah_bayar = $stat !== null;
-            return $row;
-        });
+        }
 
         $data['anggotaKelas'] = $anggotaKelas;
 
@@ -974,15 +989,14 @@ $data = [
         return $this->respond($view, $data, str_replace('.pdf', '.xls', $filename));
     }
 
-    private function nominalJenisBiaya(AnggotaKelas $row, int $idJp): float
+    private function nominalJenisBiaya($row, int $idJp): float
     {
-        $siswa = $row->siswa;
-        if (!$siswa) {
+        if (!isset($row->siswa_tahun_akademik)) {
             return 0;
         }
 
         $biaya = JenisBiaya::where('id_jp', $idJp)
-            ->where('angkatan', (string) $siswa->tahun_akademik)
+            ->where('angkatan', (string) $row->siswa_tahun_akademik)
             ->first();
 
         return (float) ($biaya->total_beban ?? 0);

@@ -47,11 +47,11 @@
                     </td>
 
                     <td style="border:1px solid #000; text-align:center;">
-                        {{ $row->siswa->nisn ?? '-' }}
+                        {{ $row->siswa_nisn ?? ($row->siswa->nisn ?? '-') }}
                     </td>
 
                     <td style="border:1px solid #000;">
-                        {{ $row->siswa->nama ?? '-' }}
+                        {{ $row->siswa_nama ?? ($row->siswa->nama ?? '-') }}
                     </td>
 
                     <td style="border:1px solid #000; text-align:center;">
