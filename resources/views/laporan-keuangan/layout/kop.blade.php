@@ -6,16 +6,20 @@
                     style="display:block; margin:0 auto;">
             @endif
         </td>
-        <td style="padding:0; vertical-align:middle; text-align:center;">
+        <td style="padding:0; vertical-align:middle; text-align:left;">
             <div style="font-weight:bold; font-size:18px; line-height:1.15; margin:0;">
                 {{ strtoupper($profil->nama ?? 'SISTEM AKADEMIK') }}
             </div>
-            <div style="font-weight:bold; font-size:14px; line-height:1.15; margin:2px 0 0 0;">
-                {{ strtoupper($title ?? 'LAPORAN KEUANGAN') }}
-            </div>
             <div style="font-size:10px; color:#555; line-height:1.15; margin:2px 0 0 0;">
-                <i>{{ $profil->alamat ?? 'alamat' }}</i>
+                <i>{{ $profil->alamat ?? '-' }}</i>
             </div>
+            @if (!empty($profil->telpon) || !empty($profil->email))
+                <div style="font-size:10px; color:#555; line-height:1.15; margin:2px 0 0 0;">
+                    @if (!empty($profil->telpon))Telp. {{ $profil->telpon }}@endif
+                    @if (!empty($profil->telpon) && !empty($profil->email)) &middot; @endif
+                    @if (!empty($profil->email))Email: {{ $profil->email }}@endif
+                </div>
+            @endif
         </td>
     </tr>
 </table>

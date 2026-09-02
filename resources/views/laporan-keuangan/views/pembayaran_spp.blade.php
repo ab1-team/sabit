@@ -10,6 +10,9 @@
                     @if (!empty($kelas))
                         &mdash; Kelas {{ $kelas->kode_kelas }}
                     @endif
+                    @if (!empty($namaTahunAkademik))
+                        &mdash; Tahun Akademik {{ $namaTahunAkademik }}
+                    @endif
                 </div>
                 <div style="font-size:12px; margin:2px 0 0 0; padding:0; line-height:1.2;">
                     Periode

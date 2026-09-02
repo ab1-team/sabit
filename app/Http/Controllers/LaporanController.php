@@ -163,12 +163,15 @@ if ($file == 'buku_besar') {
         $laporan = $request->laporan;
         $data    = $request->all();
 
-        // ================= LOGO =================
+// ================= LOGO =================
         $logoPath = \App\Models\Profil::logoPath();
         if (file_exists($logoPath)) {
             $data['logo'] = base64_encode(file_get_contents($logoPath));
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
+
+        // ================= PROFIL =================
+        $data['profil'] = Profil::first();
 
         // ================= SIMPAN CALK =================
         if ($laporan === 'calk' && $request->action !== 'excel') {
@@ -814,8 +817,10 @@ if (empty($data['tahun_akademik_id'])) {
             return $row;
         });
 
-        $data['anggotaKelas'] = $anggotaKelas;
-        $data['bulanList']    = $bulanList;
+$data['anggotaKelas']     = $anggotaKelas;
+        $data['bulanList']        = $bulanList;
+        $data['namaTahunAkademik'] = $namaTahunAkademik;
+        $data['profil'] = Profil::first();
 
         $logoPath = \App\Models\Profil::logoPath();
         if (file_exists($logoPath)) {
@@ -978,6 +983,7 @@ if (empty($data['tahun_akademik_id'])) {
         }
 
         $data['anggotaKelas'] = $anggotaKelas;
+        $data['profil'] = Profil::first();
 
         $logoPath = \App\Models\Profil::logoPath();
         if (file_exists($logoPath)) {
