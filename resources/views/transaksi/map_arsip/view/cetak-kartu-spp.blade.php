@@ -1,158 +1,197 @@
 @php
     use App\Utils\Angka;
+
+    $ttdPath = public_path('storage/ttd/bendahara.png');
+    $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
 @endphp
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Kartu SPP - {{ $siswa->nama }}</title>
-    <style>
-        @page { margin: 20mm 15mm; }
+    <style type="text/css">
+        <!--
+        .style6 {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 8px;
+        }
 
-        body {
-            font-family: Arial, sans-serif;
+        .style9 {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 9px;
+        }
+
+        .style1 {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 18px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .top {
+            border-top: 1px solid #000000;
+        }
+
+        .bottom {
+            border-bottom: 1px solid #000000;
+        }
+
+        .left {
+            border-left: 1px solid #000000;
+        }
+
+        .right {
+            border-right: 1px solid #000000;
+        }
+
+        .style27 {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .style2 {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
             font-size: 12px;
+            font-weight: bold;
+        }
+
+        .ttd-wrap {
+            position: relative;
+        }
+
+        .ttd-title {
+            position: relative;
+            z-index: 2;
             margin: 0;
         }
 
-        .header {
-            display: table;
-            width: 100%;
-            border-bottom: 2px solid #000;
-            padding-bottom: 6px;
+        .ttd-img {
+            display: block;
+            position: relative;
+            z-index: -1;
+            margin: -20px auto -30px;
+            width: 110px;
+            height: auto;
+            max-height: 80px;
         }
-        .header .logo,
-        .header .info {
-            display: table-cell;
-            vertical-align: middle;
-        }
-        .header .logo { width: 80px; }
-        .header .logo img { width: 70px; height: auto; }
-        .header .info { text-align: center; }
-        .header .info .l1 { font-weight: bold; font-size: 13px; }
-        .header .info .l2 { font-weight: bold; font-size: 16px; margin: 2px 0; }
-        .header .info .l3 { font-size: 11px; }
-        .header .info .l4 { font-size: 11px; }
 
-        .title {
-            text-align: center;
+        .ttd-nama {
+            position: relative;
+            z-index: 2;
             font-weight: bold;
-            font-size: 16px;
-            border-top: 2px solid #000;
-            border-bottom: 1px solid #000;
-            padding: 6px 0;
-            margin-top: 6px;
-            letter-spacing: 2px;
+            line-height: 1;
+            margin: 0;
         }
-
-        .identitas {
-            margin-top: 10px;
-            font-size: 12px;
-        }
-        .identitas table { width: 100%; border: none; }
-        .identitas td { padding: 2px 0; vertical-align: top; }
-        .identitas td:first-child { width: 110px; }
-
-        table.data {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-        }
-        table.data th,
-        table.data td {
-            border: 1px solid #000;
-            padding: 6px;
-        }
-        table.data th { text-align: center; font-weight: bold; }
-        table.data td.no { width: 30px; text-align: center; }
-        table.data td.tgl { width: 100px; text-align: center; }
-        table.data td.sign { width: 90px; }
-        table.data td.empty-row { height: 240px; vertical-align: top; }
-
-        .keterangan {
-            margin-top: 12px;
-            font-size: 11px;
-        }
-        .keterangan ol { margin: 0; padding-left: 18px; }
-
-        .ttd {
-            margin-top: 18px;
-            width: 100%;
-            border: none;
-        }
-        .ttd td { border: none; vertical-align: top; }
-        .ttd .kanan { width: 220px; text-align: center; padding-left: auto; }
-        .ttd .kanan .jabatan { font-weight: bold; }
-        .ttd .kanan .space { height: 70px; }
-        .ttd .kanan .nama { font-weight: bold; }
+        -->
     </style>
 </head>
-<body>
 
-    <div class="header">
-        <div class="logo">
-            @if (!empty($logo))
-                <img src="data:image/{{ $logo_type }};base64,{{ $logo }}" alt="logo">
-            @endif
-        </div>
-        <div class="info">
-            <div class="l1">{{ strtoupper($profil->nama ?? '') }}</div>
-            <div class="l3">{{ $profil->alamat ?? '' }}</div>
-            <div class="l4">Telp. {{ $profil->telpon ?? '' }}</div>
-        </div>
-    </div>
+<body onload="window.print()">
 
-    <div class="title">KARTU SPP</div>
-
-    <div class="identitas">
-        <table>
-            <tr><td>Nama Siswa</td><td>: <strong>{{ strtoupper($siswa->nama) }}</strong></td></tr>
-            <tr><td>Kelas</td><td>: {{ $anggotaAktif->kode_kelas ?? $siswa->kode_kelas }}</td></tr>
-            <tr><td>Ta.Pel</td><td>: {{ $tahun_pel }}</td></tr>
-            <tr><td>Nominal</td><td>: {{ Angka::format($spp_perbulan ?? 0, 0) }}</td></tr>
-        </table>
-    </div>
-
-    <table class="data">
-        <thead>
-            <tr>
-                <th>NO</th>
-                <th>TANGGAL</th>
-                <th>KETERANGAN</th>
-                <th>JUMLAH</th>
-                <th>SIGN</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="no empty-row">&nbsp;</td>
-                <td class="tgl empty-row">&nbsp;</td>
-                <td class="empty-row">&nbsp;</td>
-                <td class="empty-row">&nbsp;</td>
-                <td class="sign empty-row">&nbsp;</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="keterangan">
-        <strong>Keterangan:</strong>
-        <ol>
-            <li>Pembayaran paling lambat tanggal 10 tiap bulan, dimulai bulan Juli.</li>
-            <li>Bawalah kartu dan Mintalah kwitansi setiap kali pembayaran.</li>
-            <li>Cek status pembayaran melalui aplikasi SABIT di www.sabit.sditat.sch.id</li>
-        </ol>
-    </div>
-
-    <table class="ttd">
-        <tr>
-            <td></td>
-            <td class="kanan">
-                <div class="jabatan">Bendahara</div>
-                <div class="space">&nbsp;</div>
-                <div class="nama">MASLAKHATUL UMAH</div>
+    <table width="100%" border="0" align="center" cellpadding="5" cellspacing="0">
+        <tr align="center">
+            <td colspan="3" class="style6">
+                @if (!empty($logo))
+                    <img src="data:image/{{ $logo_type }};base64,{{ $logo }}"
+                        style="width:60px; float:left;" /><br>
+                @endif
+                <div class="style27">
+                    <b>SEKOLAH DASAR ISLAM TERPADU (SDIT)</b><br>
+                    <span class="style2">{{ strtoupper($profil->nama ?? '') }}</span><br>
+                    <span class="style9">
+                        {{ $profil->alamat ?? '' }} <br>Telp. {{ $profil->telpon ?? '' }}</span>
+                </div>
             </td>
         </tr>
     </table>
 
+    <div class="style1 top bottom">KARTU SPP</div>
+
+    <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr>
+            <td width="20%" class="style9">Nama Siswa</td>
+            <td class="style27">: {{ strtoupper($siswa->nama) }}</td>
+        </tr>
+        <tr>
+            <td class="style9">Kelas</td>
+            <td class="style27">: {{ $anggotaAktif->kode_kelas ?? $siswa->kode_kelas }}</td>
+        </tr>
+        <tr>
+            <td class="style9">Ta.Pel</td>
+            <td class="style27">: {{ $tahun_pel }}</td>
+        </tr>
+        <tr>
+            <td class="style9">Nominal</td>
+            <td class="style27">: {{ Angka::format($spp_perbulan ?? 0, 0) }}</td>
+        </tr>
+    </table>
+
+    <table width="100%" border="0" align="center" cellpadding="5" cellspacing="0">
+        <tr>
+            <th width="7%" class="style9 top left">NO</th>
+            <th width="30%" class="style9 left top">TANGGAL</th>
+            <th class="style9 left top">KETERANGAN</th>
+            <th width="20%" class="style9 left top">JUMLAH</th>
+            <th width="15%" class="style9 left right top">SIGN</th>
+        </tr>
+
+        <tr>
+            <th height="29" class="style9 top left bottom">
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+            </th>
+            <th class="style9 left top bottom">&nbsp;</th>
+            <th class="style9 left top bottom">
+                <p>&nbsp;</p>
+            </th>
+            <th class="style9 left top bottom">
+                <p>&nbsp;</p>
+            </th>
+            <th class="style9 left top bottom right">
+                <p>&nbsp;</p>
+            </th>
+        </tr>
+    </table>
+
+    <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr>
+            <td height="15" class="style6" colspan="2">
+                <ol><b>Keterangan:</b>
+                    <li>Pembayaran paling lambat tanggal 10 tiap bulan, dimulai bulan Juli.</li>
+                    <li>Bawalah kartu dan Mintalah kwitansi setiap kali pembayaran</li>
+                    <li>Cek status pembayaran melalui aplikasi SAbIT di www.sabit.sditat.sch.id</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <th width="40%">
+            </th>
+            <th class="style9">
+                <div class="ttd-wrap">
+                    <p align="center" class="ttd-title">Bendahara</p>
+                    @if ($ttdBase64)
+                        <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="" class="ttd-img">
+                    @else
+                        <br><br><br><br>
+                    @endif
+                    <div class="ttd-nama">MASLAKHATUL UMAH</div>
+                </div>
+            </th>
+        </tr>
+    </table>
+
 </body>
+
 </html>
