@@ -84,13 +84,21 @@
             line-height: 1;
             margin: 0;
         }
+
+        body {
+            margin: 0;
+        }
+
+        table.kop {
+            margin-top: -6px;
+        }
         -->
     </style>
 </head>
 
 <body onload="window.print()">
 
-    <table width="100%" border="0" align="center" cellpadding="5" cellspacing="0">
+    <table class="kop" width="100%" border="0" align="center" cellpadding="5" cellspacing="0">
         <tr align="center">
             <td colspan="3" class="style6">
                 @if (!empty($logo))
@@ -134,7 +142,7 @@
             <th width="30%" class="style9 left top">TANGGAL</th>
             <th class="style9 left top">KETERANGAN</th>
             <th width="20%" class="style9 left top">JUMLAH</th>
-            <th width="15%" class="style9 left right top">SIGN</th>
+            <th width="15%" class="style9 left right top" style="border-right:2px solid #000;">SIGN</th>
         </tr>
 
         <tr>
@@ -159,7 +167,7 @@
             <th class="style9 left top bottom">
                 <p>&nbsp;</p>
             </th>
-            <th class="style9 left top bottom right">
+            <th class="style9 left top bottom right" style="border-right:2px solid #000;">
                 <p>&nbsp;</p>
             </th>
         </tr>
