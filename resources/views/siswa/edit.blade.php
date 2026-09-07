@@ -373,8 +373,11 @@
                                             <option value="" disabled {{ old('kelas') ? '' : 'selected' }}>
                                                 Pilih Kelas</option>
                                             @foreach ($kelas as $kls)
+                                                @php
+                                                    $selectedValue = old('kelas', $siswa->kode_kelas . '|' . optional($siswa->anggotaKelas->where('status', 'aktif')->first())->tingkat);
+                                                @endphp
                                                 <option value="{{ $kls->kode_kelas }}|{{ $kls->tingkat }}"
-                                                    {{ old('kelas', $siswa->kode_kelas . '|' . optional($siswa->anggotaKelas->where('status', 'aktif')->first())->tingkat) == $kls->kode_kelas . '|' . $kls->tingkat ? 'selected' : '' }}>
+                                                    {{ $selectedValue == $kls->kode_kelas . '|' . $kls->tingkat ? 'selected' : '' }}>
                                                     {{ $kls->kode_kelas }} - {{ $kls->nama_kelas }}
                                                 </option>
                                             @endforeach

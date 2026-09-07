@@ -340,6 +340,8 @@ class SiswaController extends Controller
         $tahunAkademmik = TahunAkademik::orderByDesc('nama_tahun')->get(['id', 'nama_tahun']);
         $nominalSpp     = $this->nominalSppDefault();
 
+        $siswa->load('anggotaKelas');
+
         return view('siswa.edit', compact('title', 'kelas', 'siswa', 'ruang', 'tahunAkademmik', 'nominalSpp'));
     }
 
