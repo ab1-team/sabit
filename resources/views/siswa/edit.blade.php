@@ -739,11 +739,24 @@
                     }
                 },
                 error: function(xhr) {
-                    Swal.fire('Galat', 'Cek kembali input yang anda masukkan', 'error');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Data belum lengkap',
+                        html: 'Inputan berikut masih kosong / tidak valid:<ul class="text-start">'
+                            + Object.keys(xhr.responseJSON?.errors ?? {})
+                                .map(function(field) {
+                                    var label = $('[name="' + field + '"]')
+                                        .closest('.input-group')
+                                        .find('.form-label').text().trim();
+                                    return '<li>' + (label || field) + '</li>';
+                                }).join('')
+                            + '</ul>'
+                    });
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         $.each(errors, function(key, value) {
                             $('[name="' + key + '"]').addClass('is-invalid');
+                            $('[name="' + key + '"]').closest('.input-group').addClass('is-invalid');
                         });
                     }
                 }
