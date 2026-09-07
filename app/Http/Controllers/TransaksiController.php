@@ -940,11 +940,27 @@ $pdf = Pdf::loadView('transaksi.map_arsip.view.cetak-arsip', $data)
             abort(404, 'Transaksi tidak ditemukan.');
         }
 
-        $jumlahTransaksi = (int) Transaksi::where('siswa_id', $transaksis->first()->siswa_id)
-            ->where('id', '<', $transaksis->first()->id)
+        $first = $transaksis->first();
+        $bln = (int) $first->tanggal_transaksi->format('n');
+        $thn = (int) $first->tanggal_transaksi->format('Y');
+        $taStart = $bln >= 7 ? $thn : $thn - 1;
+        $taStartDate = \Carbon\Carbon::create($taStart, 7, 1)->startOfDay();
+        $taEndDate   = \Carbon\Carbon::create($taStart + 1, 6, 30)->endOfDay();
+
+        $jumlahTransaksi = (int) Transaksi::where('siswa_id', $first->siswa_id)
+            ->where('id', '<', $first->id)
+            ->whereBetween('tanggal_transaksi', [$taStartDate, $taEndDate])
+            ->whereNotNull('kode_spp')
+            ->where('kode_spp', '!=', '')
+            ->where('kode_spp', '!=', '0')
+            ->whereExists(function ($q) {
+                $q->select(\DB::raw(1))
+                  ->from('spp')
+                  ->whereColumn('spp.kode', 'transaksi.kode_spp');
+            })
             ->count();
 
-return view('transaksi.map_arsip.view.cetak-pada-kartu', [
+        return view('transaksi.map_arsip.view.cetak-pada-kartu', [
             'transaksis' => $transaksis,
             'jumlahTransaksi' => $jumlahTransaksi,
         ]);
