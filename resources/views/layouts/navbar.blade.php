@@ -7,7 +7,7 @@
 <div class="container-fluid py-1 px-3">
     <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4 d-flex flex-wrap" id="navbar">
         <ul class="navbar-nav d-flex align-items-center justify-content-end ms-auto order-0 order-md-2">
-            <li class="nav-item px-2 d-flex align-items-center lp-sidenav-burger-wrap">
+            <li class="nav-item px-2 d-flex align-items-center">
                 <button type="button" class="lp-sidenav-burger" id="lpSidenavBurger" aria-label="Buka menu" aria-expanded="false">
                     <span class="material-symbols-rounded">menu</span>
                 </button>
