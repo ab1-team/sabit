@@ -377,7 +377,7 @@ class SiswaController extends Controller
         return $pdf->stream('Riwayat_pembayaran.pdf');
     }
 
-    public function  edit(Siswa $siswa)
+    public function edit(Siswa $siswa)
     {
         $title          = "Edit Siswa";
         $kelas          = Kelas::orderBy('kode_kelas')->get(['id', 'kode_kelas', 'nama_kelas', 'tingkat']);
