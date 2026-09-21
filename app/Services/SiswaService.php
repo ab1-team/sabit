@@ -8,6 +8,7 @@ use App\Models\Spp;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SiswaService
 {
@@ -193,19 +194,27 @@ class SiswaService
 
     public function resolveDefaultSppNominal(?string $namaTahun): int
     {
-        if (!$namaTahun) {
-            $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+        try {
+            if (!$namaTahun) {
+                $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+            }
+
+            $cacheKey = 'spp_nominal_' . $namaTahun . ':' . (tenant('id') ?? 'central');
+
+            return (int) (Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
+                $val = DB::table('jenis_biaya')
+                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                    ->where('jenis_biaya.angkatan', $namaTahun)
+                    ->value('jenis_biaya.total_beban');
+                return $val ?? 0;
+            }) ?? 0);
+        } catch (\Throwable $e) {
+            Log::warning('SiswaService::resolveDefaultSppNominal fallback to 0', [
+                'error' => $e->getMessage(),
+                'tahun' => $namaTahun,
+            ]);
+            return 0;
         }
-
-        $cacheKey = 'spp_nominal_' . $namaTahun . ':' . (tenant('id') ?? 'central');
-
-        return Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
-            $val = DB::table('jenis_biaya')
-                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                ->where('jenis_biaya.angkatan', $namaTahun)
-                ->value('jenis_biaya.total_beban');
-            return (int) ($val ?? 0);
-        });
     }
 }

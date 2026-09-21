@@ -249,14 +249,57 @@ class SiswaController extends Controller
 
     /**
      * Resolve nominal SPP default untuk tahun akademik tertentu.
-     * Delegate ke SiswaService::resolveDefaultSppNominal() — satu-satunya
-     * sumber logika. Defensive try-catch supaya halaman edit tetap load
-     * normal meskipun service/cache/db bermasalah.
+     * Strategi: pakai SiswaService kalau method tersedia, fallback ke query
+     * inline kalau tidak. Final safety net kembalikan 0.
+     *
+     * Mengapa ada fallback inline padahal sudah pakai service?
+     * Karena SiswaService mungkin masih versi lama di production (commit
+     * f260aa0 belum masuk ke server) sehingga method resolveDefaultSppNominal
+     * belum ada. Fallback inline identik dengan logika service menjamin
+     * halaman edit tetap load normal tanpa 500.
      */
     public function nominalSppByTahun(?string $tahun): int
     {
+        // Layer 1: SiswaService (state ideal)
         try {
-            return $this->service->resolveDefaultSppNominal($tahun);
+            if ($this->service
+                && method_exists($this->service, 'resolveDefaultSppNominal')
+                && is_callable([$this->service, 'resolveDefaultSppNominal'])) {
+                return (int) $this->service->resolveDefaultSppNominal($tahun);
+            }
+        } catch (\Throwable $e) {
+            // abaikan, lanjut ke fallback
+        }
+
+        // Layer 2: query inline (safety net)
+        return $this->nominalSppByTahunInline($tahun);
+    }
+
+    /**
+     * Fallback inline yang identik dengan SiswaService::resolveDefaultSppNominal.
+     * Dipakai permanen agar halaman edit tidak pernah crash 500 meskipun
+     * SiswaService belum ter-deploy / masih versi lama di production.
+     */
+    private function nominalSppByTahunInline(?string $tahun): int
+    {
+        if (!$tahun) {
+            try {
+                $tahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+            } catch (\Throwable $e) {
+                $tahun = date('Y');
+            }
+        }
+
+        try {
+            $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
+            return (int) (\Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($tahun) {
+                $val = \Illuminate\Support\Facades\DB::table('jenis_biaya')
+                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                    ->where('jenis_biaya.angkatan', $tahun)
+                    ->value('jenis_biaya.total_beban');
+                return $val ?? 0;
+            }) ?? 0);
         } catch (\Throwable $e) {
             return 0;
         }
