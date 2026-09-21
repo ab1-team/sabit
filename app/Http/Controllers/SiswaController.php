@@ -318,7 +318,7 @@ class SiswaController extends Controller
         return $pdf->stream('Riwayat_pembayaran.pdf');
     }
 
-    public function edit(Siswa $siswa)
+    public function edit(Request $request, Siswa $siswa)
     {
         $title          = "Edit Siswa";
         $kelas          = Kelas::orderBy('kode_kelas')->get(['id', 'kode_kelas', 'nama_kelas', 'tingkat']);
@@ -328,7 +328,41 @@ class SiswaController extends Controller
 
         $siswa->load('anggotaKelas');
 
-        return view('siswa.edit', compact('title', 'kelas', 'siswa', 'ruang', 'tahunAkademmik', 'nominalSpp'));
+        $filterTahun = $request->query('tahun_akademik');
+        $filterKelas = $request->query('kelas');
+
+        $anggotaTerpilih = $siswa->anggotaKelas
+            ->when($filterTahun, fn ($c) => $c->where('tahun_akademik', $filterTahun))
+            ->sortByDesc('id')
+            ->first();
+
+        if (!$anggotaTerpilih) {
+            $anggotaTerpilih = $siswa->anggotaKelas
+                ->where('status', 'aktif')
+                ->sortByDesc('id')
+                ->first();
+        }
+
+        $selectedTahun     = $filterTahun ?: optional($anggotaTerpilih)->tahun_akademik;
+        $selectedKodeKelas = optional($anggotaTerpilih)->kode_kelas;
+        $selectedTingkat   = optional($anggotaTerpilih)->tingkat;
+        $selectedRuangan   = $siswa->ruang;
+
+        $selectedSppNominal = optional($anggotaTerpilih)->spp_nominal ?? 0;
+
+        return view('siswa.edit', compact(
+            'title',
+            'kelas',
+            'siswa',
+            'ruang',
+            'tahunAkademmik',
+            'nominalSpp',
+            'selectedTahun',
+            'selectedKodeKelas',
+            'selectedTingkat',
+            'selectedRuangan',
+            'selectedSppNominal'
+        ));
     }
 
     public function update(SiswaRequest $request, Siswa $siswa)

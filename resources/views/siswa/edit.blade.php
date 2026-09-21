@@ -356,11 +356,11 @@
                                         <select name="tahun_akademik" id="tahun_akademik"
                                             class="form-select select2">
                                             <option value="" disabled
-                                                {{ old('tahun_akademik', $siswa->tahun_akademik) ? '' : 'selected' }}>
+                                                {{ old('tahun_akademik', $selectedTahun) ? '' : 'selected' }}>
                                                 Tahun Ajaran</option>
                                             @foreach ($tahunAkademmik as $tA)
                                                 <option value="{{ $tA->nama_tahun }}"
-                                                    {{ old('tahun_akademik', $siswa->tahun_akademik) == $tA->nama_tahun ? 'selected' : '' }}>
+                                                    {{ old('tahun_akademik', $selectedTahun) == $tA->nama_tahun ? 'selected' : '' }}>
                                                     {{ $tA->nama_tahun }} - {{ ucfirst($tA->keterangan) }}
                                                 </option>
                                             @endforeach
@@ -370,11 +370,11 @@
                                 <div class="col-md-3">
                                     <div class="input-group input-group-outline mb-3">
                                         <select name="kelas" id="kelas" class="form-select select2">
-                                            <option value="" disabled {{ old('kelas') ? '' : 'selected' }}>
+                                            <option value="" disabled {{ old('kelas', $selectedKodeKelas . '|' . $selectedTingkat) ? '' : 'selected' }}>
                                                 Pilih Kelas</option>
                                             @foreach ($kelas as $kls)
                                                 @php
-                                                    $selectedValue = old('kelas', $siswa->kode_kelas . '|' . optional($siswa->anggotaKelas->where('status', 'aktif')->first())->tingkat);
+                                                    $selectedValue = old('kelas', $selectedKodeKelas . '|' . $selectedTingkat);
                                                 @endphp
                                                 <option value="{{ $kls->kode_kelas }}|{{ $kls->tingkat }}"
                                                     {{ $selectedValue == $kls->kode_kelas . '|' . $kls->tingkat ? 'selected' : '' }}>
@@ -388,11 +388,11 @@
                                     <div class="input-group input-group-outline mb-3">
                                         <select name="ruangan" id="ruangan" class="form-select select2">
                                             <option value="" disabled
-                                                {{ old('ruangan', $siswa->ruang) ? '' : 'selected' }}>
+                                                {{ old('ruangan', $selectedRuangan) ? '' : 'selected' }}>
                                                 Pilih Ruangan</option>
                                             @foreach ($ruang as $R)
                                                 <option value="{{ $R->kode_ruangan }}"
-                                                    {{ old('ruangan', $siswa->ruang) == $R->kode_ruangan ? 'selected' : '' }}>
+                                                    {{ old('ruangan', $selectedRuangan) == $R->kode_ruangan ? 'selected' : '' }}>
                                                     {{ $R->kode_ruangan }} - {{ $R->nama_ruangan }}
                                                 </option>
                                             @endforeach
@@ -404,7 +404,7 @@
                                         <label class="form-label">Nominal SPP / Bulan (ribu)</label>
                                         <input type="text" name="spp_nominal" id="spp_nominal"
                                             class="form-control nominal text-end"
-                                            value="{{ old('spp_nominal', isset($siswa->anggotaKelas) ? \App\Utils\Angka::format(optional($siswa->anggotaKelas->where('status','aktif')->first())->spp_nominal ?? 0, 2) : '0') }}">
+                                            value="{{ old('spp_nominal', \App\Utils\Angka::format($selectedSppNominal ?? 0, 2)) }}">
                                     </div>
                                 </div>
                             </div>
