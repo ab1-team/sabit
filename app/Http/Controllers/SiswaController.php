@@ -255,20 +255,7 @@ class SiswaController extends Controller
 
     public function nominalSppByTahun(?string $tahun): int
     {
-        if (!$tahun) {
-            $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
-        }
-
-        $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
-
-        return Cache::remember($cacheKey, 3600, function () use ($tahun) {
-            $val = DB::table('jenis_biaya')
-                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                ->where('jenis_biaya.angkatan', $tahun)
-                ->value('jenis_biaya.total_beban');
-            return (int) ($val ?? 0);
-        });
+        return $this->service->resolveDefaultSppNominal($tahun);
     }
 
     public function getNominalSpp(Request $request)
