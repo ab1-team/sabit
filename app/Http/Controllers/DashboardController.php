@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JenisBiaya;
 use App\Models\Siswa;
+use App\Models\TahunAkademik;
 use App\Models\Transaksi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -149,36 +150,51 @@ class DashboardController extends Controller
         return view('dashboard.partials.siswa-aktif', ['rows' => $rows]);
     }
 
-    public function siswaMenunggakTable()
+    public function siswaMenunggakTable(Request $request)
     {
-        [$rows] = $this->hitungTunggakanSpp(true);
-        return view('dashboard.partials.siswa-menunggak', ['rows' => $rows]);
+        $tahunAkademiks = TahunAkademik::query()
+            ->orderByDesc('nama_tahun')
+            ->get(['nama_tahun']);
+
+        $selectedTa = $request->query('ta');
+        if ($selectedTa !== null && $selectedTa !== '' && $selectedTa !== 'all') {
+            if (!$tahunAkademiks->contains('nama_tahun', $selectedTa)) {
+                $selectedTa = null;
+            }
+        } else {
+            $selectedTa = null;
+        }
+
+        [$rows] = $this->hitungTunggakanSpp(true, $selectedTa);
+
+        return view('dashboard.partials.siswa-menunggak', [
+            'rows'          => $rows,
+            'tahunAkademiks' => $tahunAkademiks,
+            'selectedTa'    => $selectedTa,
+        ]);
     }
 
     /**
      * Hitung tunggakan SPP — GROUP BY di MySQL.
      *
-     * @param bool $withBulan Jika true, enumerasi bulan per siswa (dipakai
-     *                        hanya oleh popup detail; index tidak butuh ini).
+     * @param bool   $withBulan Jika true, enumerasi bulan per siswa (dipakai
+     *                          hanya oleh popup detail; index tidak butuh ini).
+     * @param string|null $tahunAkademik Jika diisi, hanya siswa dengan
+     *                                    siswa.tahun_akademik = nilai tersebut.
      */
-    private function hitungTunggakanSpp(bool $withBulan = true): array
+    private function hitungTunggakanSpp(bool $withBulan = true, ?string $tahunAkademik = null): array
     {
-        $now      = Carbon::now();
-        $tahunIni = (int) $now->format('Y');
-        $bulanIni = (int) $now->format('m');
+        // Batas atas: bulan berjalan sudah GENAP (bukan bulan ini yang sedang berjalan).
+        // SPP untuk bulan berjalan belum jatuh tempo, jadi tidak dihitung sebagai tunggakan.
+        $batasAtas = Carbon::now()->startOfMonth()->toDateString();
 
 $rows = DB::table('spp')
             ->join('anggota_kelas as ak', 'ak.id', '=', 'spp.anggota_kelas')
             ->join('siswa', 'siswa.id', '=', 'ak.id_siswa')
             ->where('ak.status', 'aktif')
             ->where('spp.status', 'B')
-            ->where(function ($q) use ($tahunIni, $bulanIni) {
-                $q->whereYear('spp.tanggal', '<', $tahunIni)
-                    ->orWhere(function ($q2) use ($tahunIni, $bulanIni) {
-                        $q2->whereYear('spp.tanggal', '=', $tahunIni)
-                            ->whereMonth('spp.tanggal', '<', $bulanIni);
-                    });
-            })
+            ->where('spp.tanggal', '<', $batasAtas)
+            ->when($tahunAkademik, fn ($q) => $q->where('siswa.tahun_akademik', $tahunAkademik))
             ->groupBy('ak.id_siswa', 'siswa.nisn', 'siswa.nama', 'ak.kode_kelas', 'ak.spp_nominal')
             ->selectRaw('
                 ak.id_siswa,
@@ -190,7 +206,9 @@ $rows = DB::table('spp')
             ')
             ->get();
 
-        $result = $rows->map(function ($r) use ($withBulan) {
+        $bulanPerSiswa = $withBulan ? $this->bulanTunggakanBatch($rows->pluck('id_siswa'), $batasAtas) : collect();
+
+        $result = $rows->map(function ($r) use ($bulanPerSiswa) {
             $nominal     = (float) ($r->spp_nominal ?? 0);
             $jumlahBulan = (int) $r->jumlah_bulan;
 
@@ -200,9 +218,7 @@ $rows = DB::table('spp')
                 'jumlah_bulan'      => $jumlahBulan,
                 'nominal_per_bulan' => $nominal,
                 'total_tunggakan'   => $nominal * $jumlahBulan,
-                'bulan_tunggakan'   => $withBulan
-                    ? $this->bulanTunggakanPerSiswa((int) $r->id_siswa)
-                    : collect(),
+                'bulan_tunggakan'   => $bulanPerSiswa[(int) $r->id_siswa] ?? collect(),
             ];
         })->values();
 
@@ -212,30 +228,42 @@ $rows = DB::table('spp')
     }
 
     /**
-     * Ambil list bulan tunggakan unik untuk popup detail.
+     * Ambil list bulan tunggakan unik untuk popup detail — batched (1 query total),
+     * dikelompokkan per id_siswa sehingga tidak terjadi N+1.
+     *
+     * @return array<int, \Illuminate\Support\Collection>
      */
-    private function bulanTunggakanPerSiswa(int $idSiswa)
+    private function bulanTunggakanBatch($idSiswaList, string $batasAtas): array
     {
-        $now      = Carbon::now();
-        $tahunIni = (int) $now->format('Y');
-        $bulanIni = (int) $now->format('m');
+        if ($idSiswaList->isEmpty()) {
+            return [];
+        }
 
-return DB::table('spp')
+        $raw = DB::table('spp')
             ->join('anggota_kelas as ak', 'ak.id', '=', 'spp.anggota_kelas')
-            ->where('ak.id_siswa', $idSiswa)
+            ->whereIn('ak.id_siswa', $idSiswaList->all())
             ->where('ak.status', 'aktif')
             ->where('spp.status', 'B')
-            ->where(function ($q) use ($tahunIni, $bulanIni) {
-                $q->whereYear('spp.tanggal', '<', $tahunIni)
-                    ->orWhere(function ($q2) use ($tahunIni, $bulanIni) {
-                        $q2->whereYear('spp.tanggal', $tahunIni)
-                            ->whereMonth('spp.tanggal', '<', $bulanIni);
-                    });
-            })
+            ->where('spp.tanggal', '<', $batasAtas)
             ->orderBy('spp.tanggal')
+            ->select('ak.id_siswa', 'spp.tanggal')
             ->distinct()
-            ->pluck('spp.tanggal')
-            ->map(fn ($d) => Carbon::parse($d)->startOfMonth())
-            ->values();
+            ->get();
+
+        $grouped = [];
+        foreach ($raw as $r) {
+            $sid = (int) $r->id_siswa;
+            $grouped[$sid][] = Carbon::parse($r->tanggal)->startOfMonth();
+        }
+
+        $result = [];
+        foreach ($grouped as $sid => $items) {
+            $result[$sid] = collect($items)
+                ->unique(fn ($d) => $d->format('Y-m'))
+                ->sortBy(fn ($d) => $d->format('Y-m'))
+                ->values();
+        }
+
+        return $result;
     }
 }

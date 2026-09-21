@@ -70,6 +70,19 @@
     }
 </style>
 
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <label for="filterTaMenunggak" class="form-label mb-0 fw-semibold text-secondary" style="font-size:12px;">Tahun Akademik</label>
+    <select id="filterTaMenunggak" data-filter-select="ta" data-select2-width="180px" class="form-select form-select-sm select2" style="width: 180px;">
+        <option value="all">Semua TA</option>
+        @foreach ($tahunAkademiks as $ta)
+            <option value="{{ $ta->nama_tahun }}" {{ ($selectedTa ?? '') === $ta->nama_tahun ? 'selected' : '' }}>
+                {{ $ta->nama_tahun }}
+            </option>
+        @endforeach
+    </select>
+    <span class="text-muted" style="font-size:11px;">Filter siswa berdasarkan tahun akademik saat masuk.</span>
+</div>
+
 <div class="table-responsive" style="max-height: 60vh;">
     <table id="tblSiswaMenunggak" class="table table-bordered table-striped table-sm align-middle mb-0">
         <thead>

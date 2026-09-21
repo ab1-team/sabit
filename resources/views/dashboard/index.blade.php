@@ -509,17 +509,59 @@ makePie('pieBulanIni',  {{ (float) $pemasukanBulanIni }}, Math.max({{ (float) $p
 makePie('pieTunggakan', {{ (float) $totalTunggakanSpp }},   Math.max({{ (float) $totalTunggakanSpp }}, 1),   '#ef4444', '#fecaca');
 
 $(document).ready(function () {
-    const loadPartial = function (modalId, bodyId, url) {
+    const initSelect2In = function ($root) {
+        if (typeof $.fn.select2 === 'undefined') {
+            console.warn('Select2 belum dimuat');
+            return;
+        }
+        var $modal = $root.closest('.modal');
+        var dropdownParent = $modal.length ? $modal : $(document.body);
+        $root.find('select.select2').each(function () {
+            var $el = $(this);
+            if ($el.data('select2')) {
+                $el.select2('destroy');
+            }
+            var fixedWidth = $el.data('select2-width');
+            $el.select2({
+                theme: 'bootstrap-5',
+                width: fixedWidth ? fixedWidth : 'resolve',
+                allowClear: false,
+                dropdownParent: dropdownParent,
+                dropdownCssClass: 'select2-above-all-modal'
+            });
+        });
+    };
+
+    const loadPartial = function (modalId, bodyId, baseUrl, extraQuery) {
         const $modal = $(modalId);
-        $modal.on('shown.bs.modal', function () {
-            const $body = $(bodyId);
-            if ($body.data('loaded')) return;
+        const $body  = $(bodyId);
+        const buildUrl = function (extra) {
+            const params = $.extend({}, extraQuery || {}, extra || {});
+            const qs = $.param(params);
+            return qs ? (baseUrl + '?' + qs) : baseUrl;
+        };
+        const fetch = function (extra) {
             $body.html('<div class="text-center text-muted py-5">Memuat...</div>');
-            $.get(url, function (html) {
+            $.get(buildUrl(extra), function (html) {
                 $body.html(html).data('loaded', true);
+                initSelect2In($body);
             }).fail(function () {
                 $body.html('<div class="text-center text-danger py-5">Gagal memuat data.</div>');
             });
+        };
+        $modal.on('shown.bs.modal', function () {
+            if ($body.data('loaded')) return;
+            fetch();
+        });
+        $modal.on('hidden.bs.modal', function () {
+            $body.empty().removeData('loaded');
+        });
+        $body.on('change', '[data-filter-select]', function () {
+            const key = $(this).data('filter-select');
+            const val = $(this).val();
+            const extra = {};
+            extra[key] = val;
+            fetch(extra);
         });
     };
 
