@@ -265,10 +265,25 @@ class SiswaController extends Controller
             if ($this->service
                 && method_exists($this->service, 'resolveDefaultSppNominal')
                 && is_callable([$this->service, 'resolveDefaultSppNominal'])) {
+                \Illuminate\Support\Facades\Log::debug('nominalSppByTahun: pakai SiswaService', [
+                    'tahun' => $tahun,
+                    'service_class' => get_class($this->service),
+                    'service_file' => (new \ReflectionClass($this->service))->getFileName(),
+                ]);
                 return (int) $this->service->resolveDefaultSppNominal($tahun);
             }
+            \Illuminate\Support\Facades\Log::warning('nominalSppByTahun: SiswaService tidak punya method, pakai inline', [
+                'tahun' => $tahun,
+                'service_class' => $this->service ? get_class($this->service) : 'null',
+                'service_file' => $this->service ? (new \ReflectionClass($this->service))->getFileName() : 'n/a',
+                'method_exists' => $this->service ? method_exists($this->service, 'resolveDefaultSppNominal') : false,
+                'is_callable' => $this->service ? is_callable([$this->service, 'resolveDefaultSppNominal']) : false,
+            ]);
         } catch (\Throwable $e) {
-            // abaikan, lanjut ke fallback
+            \Illuminate\Support\Facades\Log::error('nominalSppByTahun: SiswaService error, pakai inline', [
+                'tahun' => $tahun,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         // Layer 2: query inline (safety net)
