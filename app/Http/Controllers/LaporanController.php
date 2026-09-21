@@ -774,6 +774,7 @@ if (empty($data['tahun_akademik_id'])) {
                 $q->where('ak.tahun_akademik', $namaTahunAkademik);
             })
             ->orderBy('ak.kode_kelas')
+            ->orderBy('s.nama')
             ->orderBy('ak.id');
 
         $anggotaKelas = $akQuery->get();
@@ -817,7 +818,21 @@ if (empty($data['tahun_akademik_id'])) {
             return $row;
         });
 
-$data['anggotaKelas']     = $anggotaKelas;
+$totals = [
+            'per_bulan'          => 0,
+            'target_sd_saat_ini' => 0,
+            'sd_periode_ini'     => 0,
+            'sisa'               => 0,
+        ];
+        foreach ($anggotaKelas as $row) {
+            $totals['per_bulan']          += (int) ($row->per_bulan ?? 0);
+            $totals['target_sd_saat_ini'] += (int) ($row->target_sd_saat_ini ?? 0);
+            $totals['sd_periode_ini']     += (int) ($row->sd_periode_ini ?? 0);
+            $totals['sisa']               += (int) ($row->sisa ?? 0);
+        }
+
+$data['totals'] = $totals;
+        $data['anggotaKelas']     = $anggotaKelas;
         $data['bulanList']        = $bulanList;
         $data['namaTahunAkademik'] = $namaTahunAkademik;
         $data['profil'] = Profil::first();

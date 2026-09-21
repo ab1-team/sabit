@@ -83,6 +83,16 @@
                     <td colspan="{{ 4 + $nBulan + 4 }}" style="border:1px solid #000; text-align:center; font-style:italic;">Tidak ada data</td>
                 </tr>
             @endforelse
+            @if (isset($totals) && $anggotaKelas->count() > 0)
+                <tr style="font-weight:bold; background:#f0f0f0;">
+                    <td colspan="3" style="border:1px solid #000; text-align:center;">JUMLAH</td>
+                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['per_bulan'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['target_sd_saat_ini'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['sd_periode_ini'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['sisa'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000;"></td>
+                </tr>
+            @endif
         </tbody>
     </table>
 @endsection
