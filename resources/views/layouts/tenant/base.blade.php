@@ -794,7 +794,6 @@
         const icon = document.getElementById('iconSettings');
         const fpPanel = document.querySelector('.fixed-plugin');
         const fpButton = document.querySelector('.fixed-plugin-button');
-        const fpButtonNav = document.querySelector('.fixed-plugin-button-nav');
         let angle = 0;
         let spinning = true;
         function rotate() {
@@ -806,38 +805,17 @@
         } rotate();
         fpButton.addEventListener('mouseenter', () => spinning = false);
         fpButton.addEventListener('mouseleave', () => spinning = true);
-        // Hapus handler bawaan Material Dashboard (.onclick =) yang dipasang
-        // setelah script ini dengan meng-clone node, supaya tidak double-toggle.
-        if (fpButton && fpButton.parentNode) {
-            const fpClone = fpButton.cloneNode(true);
-            fpButton.parentNode.replaceChild(fpClone, fpButton);
-        }
-        const fpButtonFresh = document.querySelector('.fixed-plugin-button');
-        fpButtonFresh.addEventListener('click', function (e) {
+        fpButton.addEventListener('click', function (e) {
             e.stopPropagation();
-            e.preventDefault();
             fpPanel.classList.toggle('show');
         });
-        if (fpButtonNav) {
-            // Sama: bersihkan handler bawaan pada icon settings di navbar.
-            const navClone = fpButtonNav.cloneNode(true);
-            fpButtonNav.parentNode.replaceChild(navClone, fpButtonNav);
-        }
-        const fpButtonNavFresh = document.querySelector('.fixed-plugin-button-nav');
-        if (fpButtonNavFresh) {
-            fpButtonNavFresh.addEventListener('click', function (e) {
-                e.stopPropagation();
-                e.preventDefault();
-                fpPanel.classList.toggle('show');
-            });
-        }
         document.querySelectorAll('.fixed-plugin-close-button').forEach(btn => {
             btn.addEventListener('click', () => fpPanel.classList.remove('show'));
         });
         document.addEventListener('click', function (e) {
-            if (e.target.closest('.fixed-plugin')) return;
-            if (fpButtonNavFresh && (e.target === fpButtonNavFresh || fpButtonNavFresh.contains(e.target))) return;
-            fpPanel.classList.remove('show');
+            if (!e.target.closest('.fixed-plugin')) {
+                fpPanel.classList.remove('show');
+            }
         });
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
