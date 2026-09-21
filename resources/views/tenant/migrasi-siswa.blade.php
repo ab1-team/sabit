@@ -182,12 +182,30 @@
                     Swal.fire({ icon: 'error', title: 'Gagal Membaca File', text: data.message || 'Terjadi kesalahan.' });
                     return;
                 }
-                const missing = data.missing_kode_kelas || [];
-                if (missing.length === 0) {
-                    submitImport([]);
-                } else {
-                    showNewKelasModal(missing, data.kurikulum_options || [], []);
-                }
+                const collected = { ruangan: [], jurusan: [], kelas: [] };
+                const chain = (next) => Promise.resolve(next());
+                chain(() => {
+                    const missing = data.missing_kode_ruangan || [];
+                    return missing.length === 0 ? null : showNewRuanganModal(missing);
+                })
+                .then((ruangan) => {
+                    if (ruangan) collected.ruangan = ruangan;
+                    const missing = data.missing_kode_jurusan || [];
+                    return missing.length === 0 ? null : showNewJurusanModal(missing);
+                })
+                .then((jurusan) => {
+                    if (jurusan) collected.jurusan = jurusan;
+                    const missing = data.missing_kode_kelas || [];
+                    return missing.length === 0 ? null : showNewKelasModal(missing, data.kurikulum_options || [], []);
+                })
+                .then((kelas) => {
+                    if (kelas) collected.kelas = kelas;
+                    submitImport(collected);
+                })
+                .catch(() => {
+                    btnImport.disabled = false;
+                    btnImport.querySelector('span').textContent = 'Import Sekarang';
+                });
             })
             .catch(() => {
                 btnImport.disabled = false;
@@ -195,6 +213,149 @@
                 Swal.fire({ icon: 'error', title: 'Galat Jaringan', text: 'Tidak dapat terhubung ke server.' });
             });
         });
+
+        function showNewRuanganModal(missing) {
+            return new Promise((resolve) => {
+                const rows = missing.map((m, idx) => `
+                    <tr data-idx="${idx}" data-kode="${escapeHtml(m.kode_ruangan)}">
+                        <td class="col-kode"><span class="font-mono">${escapeHtml(m.kode_ruangan)}</span><div class="text-[10px] text-slate-500">${m.jumlah_siswa} siswa</div></td>
+                        <td><input type="text" class="nk-input nk-nama" value="${escapeHtml(m.nama_ruangan)}" placeholder="cth: Ruang 101"></td>
+                        <td><input type="text" class="nk-input nk-gedung" value="${escapeHtml(m.kode_gedung || '')}" placeholder="cth: G-A"></td>
+                    </tr>
+                `).join('');
+
+                const html = `
+                    <div class="text-left text-sm">
+                        <p class="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                            Ditemukan <strong>${missing.length}</strong> kode ruangan baru. Isi nama ruang untuk dipakai di tabel ruangan.
+                        </p>
+                        <div class="overflow-auto max-h-[55vh] border border-slate-200 rounded-lg">
+                            <table class="nk-table">
+                                <thead class="sticky top-0">
+                                    <tr>
+                                        <th style="width:40%">Kode Ruangan</th>
+                                        <th style="width:35%">Nama Ruangan</th>
+                                        <th style="width:25%">Kode Gedung</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Konfirmasi Ruangan Baru',
+                    html,
+                    showCancelButton: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Buat &amp; Lanjutkan',
+                    cancelButtonText: 'Batal',
+                    customClass: { popup: 'swal-xwide' },
+                    width: 720,
+                    preConfirm: () => {
+                        const popup = Swal.getPopup();
+                        const items = [];
+                        let invalid = false;
+                        popup.querySelectorAll('tbody tr').forEach(tr => {
+                            const kode = tr.dataset.kode || '';
+                            const nama = tr.querySelector('.nk-nama').value.trim();
+                            const gedung = tr.querySelector('.nk-gedung').value.trim();
+                            if (!nama) {
+                                invalid = true;
+                                tr.style.background = '#fef2f2';
+                                return;
+                            }
+                            tr.style.background = '';
+                            items.push({ kode_ruangan: kode, nama_ruangan: nama, kode_gedung: gedung || '-' });
+                        });
+                        if (invalid) {
+                            Swal.showValidationMessage('Nama ruangan wajib diisi untuk semua baris.');
+                            return false;
+                        }
+                        return items;
+                    },
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        resolve(result.value || []);
+                    } else {
+                        btnImport.disabled = false;
+                        btnImport.querySelector('span').textContent = 'Import Sekarang';
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function showNewJurusanModal(missing) {
+            return new Promise((resolve) => {
+                const rows = missing.map((m, idx) => `
+                    <tr data-idx="${idx}" data-kode="${escapeHtml(m.kode_jurusan)}">
+                        <td class="col-kode"><span class="font-mono">${escapeHtml(m.kode_jurusan)}</span><div class="text-[10px] text-slate-500">${m.jumlah_siswa} siswa</div></td>
+                        <td><input type="text" class="nk-input nk-nama" value="${escapeHtml(m.nama)}" placeholder="cth: Teknik Komputer Jaringan"></td>
+                    </tr>
+                `).join('');
+
+                const html = `
+                    <div class="text-left text-sm">
+                        <p class="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                            Ditemukan <strong>${missing.length}</strong> kode jurusan baru. Isi nama untuk dipakai di tabel jurusan.
+                        </p>
+                        <div class="overflow-auto max-h-[55vh] border border-slate-200 rounded-lg">
+                            <table class="nk-table">
+                                <thead class="sticky top-0">
+                                    <tr>
+                                        <th style="width:35%">Kode Jurusan</th>
+                                        <th style="width:65%">Nama Jurusan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Konfirmasi Jurusan Baru',
+                    html,
+                    showCancelButton: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Buat &amp; Lanjutkan',
+                    cancelButtonText: 'Batal',
+                    customClass: { popup: 'swal-xwide' },
+                    width: 640,
+                    preConfirm: () => {
+                        const popup = Swal.getPopup();
+                        const items = [];
+                        let invalid = false;
+                        popup.querySelectorAll('tbody tr').forEach(tr => {
+                            const kode = tr.dataset.kode || '';
+                            const nama = tr.querySelector('.nk-nama').value.trim();
+                            if (!nama) {
+                                invalid = true;
+                                tr.style.background = '#fef2f2';
+                                return;
+                            }
+                            tr.style.background = '';
+                            items.push({ kode_jurusan: kode, nama });
+                        });
+                        if (invalid) {
+                            Swal.showValidationMessage('Nama jurusan wajib diisi untuk semua baris.');
+                            return false;
+                        }
+                        return items;
+                    },
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        resolve(result.value || []);
+                    } else {
+                        btnImport.disabled = false;
+                        btnImport.querySelector('span').textContent = 'Import Sekarang';
+                        resolve(null);
+                    }
+                });
+            });
+        }
 
         function showNewKelasModal(missing, kurikulumOptions, prefilled) {
             const optsHtml = (selected) => ['<option value="">— Pilih Kurikulum —</option>']
@@ -479,7 +640,7 @@
             });
         }
 
-        function submitImport(newKelas) {
+        function submitImport(collected) {
             btnImport.disabled = true;
             btnImport.querySelector('span').textContent = 'Mengimpor...';
             const formData = new FormData();
@@ -489,11 +650,25 @@
             const statusVal = document.getElementById('filter-status').value;
             formData.append('tahun_akademik_id', tahunId);
             formData.append('status', statusVal);
+
+            const newRuangan = collected && collected.ruangan ? collected.ruangan : [];
+            const newJurusan = collected && collected.jurusan ? collected.jurusan : [];
+            const newKelas = collected && collected.kelas ? collected.kelas : [];
+
             newKelas.forEach((k, i) => {
                 formData.append(`new_kelas[${i}][kode_kelas]`, k.kode_kelas);
                 formData.append(`new_kelas[${i}][nama_kelas]`, k.nama_kelas);
                 formData.append(`new_kelas[${i}][tingkat]`, k.tingkat);
                 formData.append(`new_kelas[${i}][kode_kurikulum]`, k.kode_kurikulum);
+            });
+            newRuangan.forEach((r, i) => {
+                formData.append(`new_ruangan[${i}][kode_ruangan]`, r.kode_ruangan);
+                formData.append(`new_ruangan[${i}][nama_ruangan]`, r.nama_ruangan);
+                formData.append(`new_ruangan[${i}][kode_gedung]`, r.kode_gedung || '-');
+            });
+            newJurusan.forEach((j, i) => {
+                formData.append(`new_jurusan[${i}][kode_jurusan]`, j.kode_jurusan);
+                formData.append(`new_jurusan[${i}][nama]`, j.nama);
             });
 
             fetch('{{ route('tenant.migrasi.siswa.import') }}', {

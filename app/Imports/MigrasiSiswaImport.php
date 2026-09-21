@@ -3,10 +3,13 @@
 namespace App\Imports;
 
 use App\Models\AnggotaKelas;
+use App\Models\Jurusan;
 use App\Models\Kelas;
+use App\Models\Ruangan;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Services\SiswaService;
+use App\Utils\Angka;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
@@ -43,9 +46,11 @@ class MigrasiSiswaImport implements
         protected int $tahunAkademikId,
         protected string $statusDefault = 'aktif',
         ?string $tanggalMasukDefault = null,
-        protected ?int $userId = null
+        protected ?int $userId = null,
+        protected ?SiswaService $service = null,
     ) {
         $this->tanggalMasukDefault = $tanggalMasukDefault ?: now()->format('Y-m-d');
+        $this->service = $service ?? app(SiswaService::class);
     }
 
     public function collection(Collection $rows)
@@ -101,7 +106,7 @@ class MigrasiSiswaImport implements
 
     private function processRow(array $row, int $rowNum, string $namaTahun, $kelasMap, $existingMap): void
     {
-        $required = ['nik', 'nama', 'jenis_kelamin', 'nipd', 'nisn', 'no_kk', 'tanggal_lahir', 'kode_kelas'];
+        $required = ['nik', 'nama', 'jenis_kelamin', 'nipd', 'nisn', 'no_kk', 'tanggal_lahir', 'kode_kelas', 'kode_ruangan'];
         foreach ($required as $f) {
             if (empty($row[$f])) {
                 throw new \RuntimeException("Kolom '{$f}' wajib diisi.");
@@ -123,10 +128,33 @@ class MigrasiSiswaImport implements
         if (!$kelas) {
             throw new \RuntimeException("Kode kelas '{$kodeKelas}' tidak ditemukan di tabel kelas.");
         }
-        $tingkat = $row['tingkat'] ?? $kelas->tingkat ?? null;
+        $tingkat = $kelas->tingkat ?? null;
 
-        $ruang = trim((string) ($row['ruang'] ?? ''));
-        $kodeJurusan = $kelas->kode_kurikulum ?? null;
+        $kodeRuangan = trim((string) $row['kode_ruangan']);
+        if (!Ruangan::where('kode_ruangan', $kodeRuangan)->exists()) {
+            throw new \RuntimeException("Kode ruangan '{$kodeRuangan}' tidak ditemukan di tabel ruangan.");
+        }
+
+        $kodeJurusan = trim((string) ($row['kode_jurusan'] ?? ''));
+        if ($kodeJurusan !== '' && !Jurusan::where('kode_jurusan', $kodeJurusan)->exists()) {
+            throw new \RuntimeException("Kode jurusan '{$kodeJurusan}' tidak ditemukan di tabel jurusan.");
+        }
+        if ($kodeJurusan === '') {
+            $kodeJurusan = null;
+        }
+
+        $statusAwal = strtolower(trim((string) ($row['status_awal'] ?? 'baru')));
+        if (!in_array($statusAwal, ['baru', 'pindahan'], true)) {
+            throw new \RuntimeException("status_awal harus 'baru' atau 'pindahan'.");
+        }
+
+        $tglMasuk = $this->parseDate($row['tgl_masuk'] ?? null);
+        if (!$tglMasuk) {
+            $tglMasuk = $this->tanggalMasukDefault;
+        }
+
+        $sppInput = Angka::parseInt($row['spp_nominal'] ?? 0);
+        $sppNominal = $sppInput > 0 ? $sppInput : $this->service->resolveDefaultSppNominal($namaTahun);
 
         $nisn = trim((string) $row['nisn']);
         $existing = $existingMap[$nisn] ?? null;
@@ -165,11 +193,11 @@ class MigrasiSiswaImport implements
             'hp' => $this->valOrDash($row, 'hp'),
             'email' => $this->valOrDash($row, 'email'),
             'tahun_akademik' => $namaTahun,
-            'status_awal' => 'baru',
+            'status_awal' => $statusAwal,
             'status_siswa' => $statusSiswa,
             'kode_kelas' => $kodeKelas,
             'kode_jurusan' => $kodeJurusan,
-            'ruang' => $ruang !== '' ? $ruang : '-',
+            'ruang' => $kodeRuangan,
             'tingkat' => $tingkat,
             'nama_ayah' => $this->valOrDash($row, 'nama_ayah'),
             'tahun_lahir_ayah' => $this->valOrDash($row, 'tahun_lahir_ayah'),
@@ -196,7 +224,7 @@ class MigrasiSiswaImport implements
             'penerima_kps' => '-',
             'no_kps' => '-',
             'foto' => 'default.png',
-            'tgl_masuk' => $this->tanggalMasukDefault,
+            'tgl_masuk' => $tglMasuk,
             'id_user' => $this->userId ?? auth()->id() ?? 0,
         ];
 
@@ -216,17 +244,19 @@ class MigrasiSiswaImport implements
             'kode_kelas' => $kodeKelas,
         ], [
             'tingkat' => $tingkat,
-            'tgl_masuk' => $this->tanggalMasukDefault,
-            'tgl_keluar' => Carbon::parse($this->tanggalMasukDefault)->addYear()->format('Y-m-d'),
+            'spp_nominal' => $sppNominal > 0 ? (string) $sppNominal : null,
+            'tgl_masuk' => $tglMasuk,
+            'tgl_keluar' => Carbon::parse($tglMasuk)->addYear()->format('Y-m-d'),
             'status' => 'aktif',
         ]);
 
-        $this->generateSppBulanan($anggota);
+        $this->generateSppBulanan($anggota, $sppNominal, $tglMasuk);
     }
 
-    private function generateSppBulanan(AnggotaKelas $anggota): void
+    private function generateSppBulanan(AnggotaKelas $anggota, int $nominal, ?string $tglMasuk = null): void
     {
-        $tahunMasuk = Carbon::parse($anggota->tgl_masuk)->year;
+        $tglMasuk = $tglMasuk ?: ($anggota->tgl_masuk instanceof \DateTimeInterface ? $anggota->tgl_masuk->format('Y-m-d') : (string) $anggota->tgl_masuk);
+        $tahunMasuk = Carbon::parse($tglMasuk)->year;
         $mulai = Carbon::create($tahunMasuk, 7, 1);
         $akhir = $mulai->copy()->addYear()->subDay();
 
@@ -238,6 +268,7 @@ class MigrasiSiswaImport implements
             ->all();
 
         $rows = [];
+        $nominalStr = (string) $nominal;
         while ($mulai->lte($akhir)) {
             $tgl = $mulai->format('Y-m-d');
             if (!isset($existingTanggal[$tgl])) {
@@ -245,7 +276,7 @@ class MigrasiSiswaImport implements
                     'anggota_kelas' => $anggota->id,
                     'tanggal' => $tgl,
                     'kode' => $mulai->format('ym') . $anggota->id_siswa,
-                    'nominal' => '0',
+                    'nominal' => $nominalStr,
                     'status' => 'B',
                     'created_at' => now(),
                     'updated_at' => now(),

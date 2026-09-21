@@ -6,8 +6,10 @@ use App\Exports\MigrasiSiswaTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Imports\MigrasiSiswaImport;
 use App\Imports\KodeKelasOnlyImport;
+use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Kurikulum;
+use App\Models\Ruangan;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,14 +56,9 @@ class MigrasiSiswaController extends Controller
             $selectedTahun = $request->query('tahun_akademik_id');
             $selectedJurusan = $request->query('jurusan_id');
 
-            $kelas = collect();
-            if ($selectedTahun) {
-                $kelas = DB::table('kelas')
-                    ->where('tahun_akademik_id', $selectedTahun)
-                    ->when($selectedJurusan, fn($q) => $q->where('jurusan_id', $selectedJurusan))
-                    ->orderBy('nama_kelas')
-                    ->get(['id', 'nama_kelas', 'tingkat']);
-            }
+            $kelas = DB::table('kelas')
+                ->orderBy('nama_kelas')
+                ->get(['id', 'kode_kelas', 'nama_kelas', 'tingkat']);
         } finally {
             $tenancy->end();
         }
@@ -97,6 +94,13 @@ class MigrasiSiswaController extends Controller
             'new_kelas.*.nama_kelas' => 'required_with:new_kelas|string|max:120',
             'new_kelas.*.tingkat' => 'required_with:new_kelas|string|max:20',
             'new_kelas.*.kode_kurikulum' => 'required_with:new_kelas',
+            'new_ruangan' => 'sometimes|array',
+            'new_ruangan.*.kode_ruangan' => 'required_with:new_ruangan|string|max:50',
+            'new_ruangan.*.nama_ruangan' => 'required_with:new_ruangan|string|max:120',
+            'new_ruangan.*.kode_gedung' => 'nullable|string|max:50',
+            'new_jurusan' => 'sometimes|array',
+            'new_jurusan.*.kode_jurusan' => 'required_with:new_jurusan|string|max:50',
+            'new_jurusan.*.nama' => 'required_with:new_jurusan|string|max:120',
         ], [
             'file.required' => 'File Excel wajib diunggah.',
             'file.mimes' => 'Format file harus .xlsx, .xls, atau .csv.',
@@ -145,6 +149,58 @@ class MigrasiSiswaController extends Controller
                             return response()->json([
                                 'ok' => false,
                                 'message' => "Gagal membuat kelas '{$row['kode_kelas']}': " . $e->getMessage(),
+                            ], 422);
+                        }
+                    }
+                }
+
+                $newRuangan = $request->input('new_ruangan', []);
+                if (!empty($newRuangan)) {
+                    $existingCodes = Ruangan::whereIn('kode_ruangan', array_column($newRuangan, 'kode_ruangan'))
+                        ->pluck('kode_ruangan')
+                        ->all();
+                    foreach ($newRuangan as $row) {
+                        if (in_array($row['kode_ruangan'], $existingCodes, true)) {
+                            continue;
+                        }
+                        try {
+                            Ruangan::create([
+                                'kode_gedung' => $row['kode_gedung'] ?? '-',
+                                'kode_ruangan' => $row['kode_ruangan'],
+                                'nama_ruangan' => $row['nama_ruangan'],
+                                'kapasitas_belajar' => '-',
+                                'kapasitas_ujian' => '-',
+                                'keterangan' => '-',
+                                'status' => 'aktif',
+                            ]);
+                        } catch (\Throwable $e) {
+                            return response()->json([
+                                'ok' => false,
+                                'message' => "Gagal membuat ruangan '{$row['kode_ruangan']}': " . $e->getMessage(),
+                            ], 422);
+                        }
+                    }
+                }
+
+                $newJurusan = $request->input('new_jurusan', []);
+                if (!empty($newJurusan)) {
+                    $existingCodes = Jurusan::whereIn('kode_jurusan', array_column($newJurusan, 'kode_jurusan'))
+                        ->pluck('kode_jurusan')
+                        ->all();
+                    foreach ($newJurusan as $row) {
+                        if (in_array($row['kode_jurusan'], $existingCodes, true)) {
+                            continue;
+                        }
+                        try {
+                            Jurusan::create([
+                                'kode_jurusan' => $row['kode_jurusan'],
+                                'nama' => $row['nama'],
+                                'status' => 'aktif',
+                            ]);
+                        } catch (\Throwable $e) {
+                            return response()->json([
+                                'ok' => false,
+                                'message' => "Gagal membuat jurusan '{$row['kode_jurusan']}': " . $e->getMessage(),
                             ], 422);
                         }
                     }
@@ -219,62 +275,127 @@ class MigrasiSiswaController extends Controller
             ], 404);
         }
 
-        try {
-            $tenancy->initialize($tenantModel);
+try {
+                $tenancy->initialize($tenantModel);
 
-            try {
-                $rows = Excel::toArray(new KodeKelasOnlyImport, $request->file('file'));
-                $kodeKelasList = collect($rows[0] ?? [])
-                    ->map(fn ($r) => trim((string) ($r['kode_kelas'] ?? '')))
-                    ->filter()
-                    ->unique()
-                    ->values()
-                    ->all();
+                try {
+                    $rows = Excel::toArray(new KodeKelasOnlyImport, $request->file('file'));
+                    $allRows = collect($rows[0] ?? []);
 
-                if (empty($kodeKelasList)) {
+                    $kodeKelasList = $allRows
+                        ->map(fn ($r) => trim((string) ($r['kode_kelas'] ?? '')))
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    $kodeRuanganList = $allRows
+                        ->map(fn ($r) => trim((string) ($r['kode_ruangan'] ?? '')))
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    $kodeJurusanList = $allRows
+                        ->map(fn ($r) => trim((string) ($r['kode_jurusan'] ?? '')))
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    if (empty($kodeKelasList) && empty($kodeRuanganList) && empty($kodeJurusanList)) {
+                        return response()->json([
+                            'ok' => true,
+                            'all_kode_kelas' => [],
+                            'missing_kode_kelas' => [],
+                            'all_kode_ruangan' => [],
+                            'missing_kode_ruangan' => [],
+                            'all_kode_jurusan' => [],
+                            'missing_kode_jurusan' => [],
+                            'kurikulum_options' => $this->kurikulumOptions(),
+                        ]);
+                    }
+
+                    $kelasTingkat = !empty($kodeKelasList)
+                        ? Kelas::whereIn('kode_kelas', $kodeKelasList)
+                            ->get(['kode_kelas', 'nama_kelas', 'tingkat', 'kode_kurikulum'])
+                            ->keyBy('kode_kelas')
+                        : collect();
+
+                    $missingKelas = [];
+                    foreach ($kodeKelasList as $kode) {
+                        if (!$kelasTingkat->has($kode)) {
+                            $parsed = $this->parseKodeKelas($kode);
+                            $missingKelas[] = [
+                                'kode_kelas' => $kode,
+                                'nama_kelas' => $kode,
+                                'tingkat' => $parsed['tingkat'] ?? '',
+                                'kode_kurikulum' => $parsed['kode_kurikulum'] ?? '',
+                                'jumlah_siswa' => (int) $allRows
+                                    ->filter(fn ($r) => trim((string) ($r['kode_kelas'] ?? '')) === $kode)
+                                    ->count(),
+                            ];
+                        }
+                    }
+
+                    $ruanganTingkat = !empty($kodeRuanganList)
+                        ? Ruangan::whereIn('kode_ruangan', $kodeRuanganList)
+                            ->get(['kode_ruangan', 'nama_ruangan'])
+                            ->keyBy('kode_ruangan')
+                        : collect();
+
+                    $missingRuangan = [];
+                    foreach ($kodeRuanganList as $kode) {
+                        if (!$ruanganTingkat->has($kode)) {
+                            $missingRuangan[] = [
+                                'kode_ruangan' => $kode,
+                                'nama_ruangan' => $kode,
+                                'kode_gedung' => '',
+                                'jumlah_siswa' => (int) $allRows
+                                    ->filter(fn ($r) => trim((string) ($r['kode_ruangan'] ?? '')) === $kode)
+                                    ->count(),
+                            ];
+                        }
+                    }
+
+                    $jurusanTingkat = !empty($kodeJurusanList)
+                        ? Jurusan::whereIn('kode_jurusan', $kodeJurusanList)
+                            ->get(['kode_jurusan', 'nama'])
+                            ->keyBy('kode_jurusan')
+                        : collect();
+
+                    $missingJurusan = [];
+                    foreach ($kodeJurusanList as $kode) {
+                        if (!$jurusanTingkat->has($kode)) {
+                            $missingJurusan[] = [
+                                'kode_jurusan' => $kode,
+                                'nama' => $kode,
+                                'jumlah_siswa' => (int) $allRows
+                                    ->filter(fn ($r) => trim((string) ($r['kode_jurusan'] ?? '')) === $kode)
+                                    ->count(),
+                            ];
+                        }
+                    }
+
                     return response()->json([
                         'ok' => true,
-                        'all_kode_kelas' => [],
-                        'missing_kode_kelas' => [],
+                        'all_kode_kelas' => $kodeKelasList,
+                        'missing_kode_kelas' => $missingKelas,
+                        'all_kode_ruangan' => $kodeRuanganList,
+                        'missing_kode_ruangan' => $missingRuangan,
+                        'all_kode_jurusan' => $kodeJurusanList,
+                        'missing_kode_jurusan' => $missingJurusan,
                         'kurikulum_options' => $this->kurikulumOptions(),
                     ]);
+                } finally {
+                    $tenancy->end();
                 }
-
-                $kelasTingkat = Kelas::whereIn('kode_kelas', $kodeKelasList)
-                    ->get(['kode_kelas', 'nama_kelas', 'tingkat', 'kode_kurikulum'])
-                    ->keyBy('kode_kelas');
-
-                $missing = [];
-                foreach ($kodeKelasList as $kode) {
-                    if (!$kelasTingkat->has($kode)) {
-                        $parsed = $this->parseKodeKelas($kode);
-                        $missing[] = [
-                            'kode_kelas' => $kode,
-                            'nama_kelas' => $kode,
-                            'tingkat' => $parsed['tingkat'] ?? '',
-                            'kode_kurikulum' => $parsed['kode_kurikulum'] ?? '',
-                            'jumlah_siswa' => (int) collect($rows[0] ?? [])
-                                ->filter(fn ($r) => trim((string) ($r['kode_kelas'] ?? '')) === $kode)
-                                ->count(),
-                        ];
-                    }
-                }
-
+            } catch (\Throwable $e) {
                 return response()->json([
-                    'ok' => true,
-                    'all_kode_kelas' => $kodeKelasList,
-                    'missing_kode_kelas' => $missing,
-                    'kurikulum_options' => $this->kurikulumOptions(),
-                ]);
-            } finally {
-                $tenancy->end();
+                    'ok' => false,
+                    'message' => 'Gagal membaca file: ' . $e->getMessage(),
+                ], 500);
             }
-        } catch (\Throwable $e) {
-            return response()->json([
-                'ok' => false,
-                'message' => 'Gagal membaca file: ' . $e->getMessage(),
-            ], 500);
-        }
     }
 
     public function previewQuickKurikulum(Request $request)
@@ -346,6 +467,74 @@ class MigrasiSiswaController extends Controller
             return response()->json([
                 'ok' => false,
                 'message' => 'Gagal menambah kurikulum: ' . $e->getMessage(),
+            ], 500);
+        } finally {
+            $tenancy->end();
+        }
+    }
+
+    public function previewQuickJurusan(Request $request)
+    {
+        if (!$request->ajax() && !$request->wantsJson()) {
+            return response()->json(['ok' => false, 'message' => 'Hanya menerima AJAX.'], 400);
+        }
+
+        $tid = $this->currentTenantId($request);
+        if (!$tid) {
+            return response()->json(['ok' => false, 'message' => 'Sekolah belum dipilih.'], 422);
+        }
+
+        $tenantModel = Tenant::find($tid);
+        if (!$tenantModel) {
+            return response()->json(['ok' => false, 'message' => 'Tenant tidak ditemukan.'], 404);
+        }
+
+        $tenancy = app(\Stancl\Tenancy\Tenancy::class);
+        try {
+            $tenancy->initialize($tenantModel);
+
+            $data = $request->validate([
+                'kode_jurusan' => ['required', 'string', 'max:50'],
+                'nama'         => ['required', 'string', 'max:120'],
+                'status'       => ['nullable', 'in:aktif,nonaktif'],
+            ], [
+                'kode_jurusan.required' => 'Kode jurusan wajib diisi.',
+                'nama.required'         => 'Nama jurusan wajib diisi.',
+            ]);
+
+            $data['status'] = $data['status'] ?? 'aktif';
+
+            $dup = Jurusan::where('kode_jurusan', $data['kode_jurusan'])->exists();
+            if ($dup) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => "Kode jurusan '{$data['kode_jurusan']}' sudah dipakai.",
+                ], 422);
+            }
+
+            $j = Jurusan::create($data);
+
+            return response()->json([
+                'ok' => true,
+                'message' => "Jurusan {$j->nama} ditambah.",
+                'data' => [
+                    'id' => $j->id,
+                    'kode_jurusan' => $j->kode_jurusan,
+                    'nama' => $j->nama,
+                    'label' => $j->nama . ' (' . $j->kode_jurusan . ')',
+                    'value' => $j->kode_jurusan,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'Data tidak valid.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Gagal menambah jurusan: ' . $e->getMessage(),
             ], 500);
         } finally {
             $tenancy->end();

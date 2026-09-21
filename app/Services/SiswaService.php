@@ -6,6 +6,7 @@ use App\Models\AnggotaKelas;
 use App\Models\Siswa;
 use App\Models\Spp;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SiswaService
@@ -188,5 +189,23 @@ class SiswaService
             }
         }
         return (string) $data['tahun_akademik'];
+    }
+
+    public function resolveDefaultSppNominal(?string $namaTahun): int
+    {
+        if (!$namaTahun) {
+            $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+        }
+
+        $cacheKey = 'spp_nominal_' . $namaTahun . ':' . (tenant('id') ?? 'central');
+
+        return Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
+            $val = DB::table('jenis_biaya')
+                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                ->where('jenis_biaya.angkatan', $namaTahun)
+                ->value('jenis_biaya.total_beban');
+            return (int) ($val ?? 0);
+        });
     }
 }
