@@ -255,27 +255,61 @@ class SiswaController extends Controller
 
     public function nominalSppByTahun(?string $tahun): int
     {
-        // Delegate ke SiswaService. Fallback inline digunakan agar halaman
-        // tidak crash 500 ketika SiswaService versi lama (belum punya
-        // resolveDefaultSppNominal) masih tertanam di cache/opcache
-        // production sebelum deploy ulang.
-        if (method_exists($this->service, 'resolveDefaultSppNominal')) {
-            return $this->service->resolveDefaultSppNominal($tahun);
+        // Pakai SiswaService bila tersedia (state ideal), fallback ke query
+        // inline agar halaman edit tetap load normal ketika SiswaService
+        // versi lama masih tertanam di production (opcache / deploy
+        // belum sinkron). query inline dijaga identik dengan logika
+        // SiswaService::resolveDefaultSppNominal().
+        try {
+            if ($this->service
+                && method_exists($this->service, 'resolveDefaultSppNominal')
+                && is_callable([$this->service, 'resolveDefaultSppNominal'])) {
+                return $this->service->resolveDefaultSppNominal($tahun);
+            }
+        } catch (\Throwable $e) {
+            // abaikan, lanjut fallback
         }
 
+        return $this->nominalSppByTahunInline($tahun);
+    }
+
+    /**
+     * Implementasi inline identik dengan SiswaService::resolveDefaultSppNominal().
+     * Dipakai sebagai fallback agar halaman tidak pernah crash 500 meskipun
+     * SiswaService belum ter-deploy / masih versi lama di production.
+     */
+    private function nominalSppByTahunInline(?string $tahun): int
+    {
         if (!$tahun) {
-            $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+            try {
+                $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+            } catch (\Throwable $e) {
+                $tahun = date('Y');
+            }
         }
 
         $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
 
-        return Cache::remember($cacheKey, 3600, function () use ($tahun) {
-            return (int) (JenisBiaya::query()
-                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                ->where('jenis_biaya.angkatan', $tahun)
-                ->value('jenis_biaya.total_beban') ?? 0);
-        });
+        try {
+            return Cache::remember($cacheKey, 3600, function () use ($tahun) {
+                return (int) (JenisBiaya::query()
+                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                    ->where('jenis_biaya.angkatan', $tahun)
+                    ->value('jenis_biaya.total_beban') ?? 0);
+            });
+        } catch (\Throwable $e) {
+            try {
+                $val = DB::table('jenis_biaya')
+                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                    ->where('jenis_biaya.angkatan', $tahun)
+                    ->value('jenis_biaya.total_beban');
+                return (int) ($val ?? 0);
+            } catch (\Throwable $e2) {
+                return 0;
+            }
+        }
     }
 
     public function getNominalSpp(Request $request)
