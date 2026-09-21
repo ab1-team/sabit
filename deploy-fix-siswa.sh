@@ -115,10 +115,60 @@ echo "[6.4] Case-sensitive cek (Linux sensitive):"
 ACTUAL_FILE=$(find app/Services -iname "siswaservice.php" 2>/dev/null | head -1)
 EXPECTED_FILE="app/Services/SiswaService.php"
 if [ "$ACTUAL_FILE" = "$EXPECTED_FILE" ]; then
-    echo "  ✅ Case-sensitive OK"
+    echo "  ✅ Filename case-sensitive OK: $ACTUAL_FILE"
 else
     echo "  ❌ Case mismatch! actual=$ACTUAL_FILE expected=$EXPECTED_FILE"
 fi
+
+echo ""
+echo "[6.4b] Cek deklarasi CLASS di dalam file (PHP case-sensitive):"
+ACTUAL_CLASS=$(grep -E "^class\s+SiswaService\b" app/Services/SiswaService.php 2>/dev/null | awk '{print $2}' | tr -d ':' | head -1)
+EXPECTED_CLASS="SiswaService"
+if [ "$ACTUAL_CLASS" = "$EXPECTED_CLASS" ]; then
+    echo "  ✅ Class declaration OK: class $ACTUAL_CLASS"
+else
+    echo "  ❌ Class declaration salah! actual='$ACTUAL_CLASS' expected='$EXPECTED_CLASS'"
+fi
+
+ACTUAL_CTRL_CLASS=$(grep -E "^class\s+SiswaController\b" app/Http/Controllers/SiswaController.php 2>/dev/null | awk '{print $2}' | tr -d ':' | head -1)
+EXPECTED_CTRL_CLASS="SiswaController"
+if [ "$ACTUAL_CTRL_CLASS" = "$EXPECTED_CTRL_CLASS" ]; then
+    echo "  ✅ Controller class OK: class $ACTUAL_CTRL_CLASS"
+else
+    echo "  ❌ Controller class salah! actual='$ACTUAL_CTRL_CLASS' expected='$EXPECTED_CTRL_CLASS'"
+fi
+
+echo ""
+echo "[6.4c] Cek apakah ada file SiswaService/siswaservice ganda di app/:"
+find app/ -iname "siswaservice.php" -not -path "*/vendor/*" 2>/dev/null | while read f; do
+    echo "  found: $f"
+done
+
+echo ""
+echo "[6.4d] PSR-4 sanity check untuk semua class SiswaService-related:"
+check_psr4() {
+    local class_name="$1"
+    local expected_path="$2"
+    if [ -f "$expected_path" ]; then
+        local actual_class=$(grep -E "^class\s+${class_name}\b" "$expected_path" 2>/dev/null | awk '{print $2}' | tr -d ':' | head -1)
+        if [ "$actual_class" = "$class_name" ]; then
+            echo "  ✅ $class_name @ $expected_path"
+        else
+            echo "  ❌ $class_name @ $expected_path — but actual class declaration: '$actual_class'"
+        fi
+    else
+        echo "  ❌ $class_name — file not found: $expected_path"
+    fi
+}
+check_psr4 "SiswaService"          "app/Services/SiswaService.php"
+check_psr4 "SiswaController"       "app/Http/Controllers/SiswaController.php"
+check_psr4 "SiswaRequest"          "app/Http/Requests/SiswaRequest.php"
+check_psr4 "Siswa"                 "app/Models/Siswa.php"
+check_psr4 "MigrasiSiswaImport"    "app/Imports/MigrasiSiswaImport.php"
+check_psr4 "MigrasiSiswaController" "app/Http/Controllers/Tenant/MigrasiSiswaController.php"
+check_psr4 "MigrasiSiswaTemplateExport" "app/Exports/MigrasiSiswaTemplateExport.php"
+check_psr4 "JenisBiaya"            "app/Models/JenisBiaya.php"
+check_psr4 "TahunAkademik"         "app/Models/TahunAkademik.php"
 
 echo ""
 echo "[6.5] Class di autoload:"
