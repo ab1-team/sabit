@@ -545,9 +545,10 @@
             transition: opacity .25s ease;
         }
 
-        /* Tombol hamburger di pojok kiri navbar mobile */
+        /* Tombol hamburger di pojok kiri navbar — hanya di mobile/tablet */
+        .lp-sidenav-burger-wrap { display: none; }
         .lp-sidenav-burger {
-            display: inline-flex;
+            display: none;
             align-items: center;
             justify-content: center;
             width: 38px;
@@ -563,6 +564,10 @@
         }
         .lp-sidenav-burger:hover { background: rgba(15, 23, 42, .06); }
         .lp-sidenav-burger .material-symbols-rounded { font-size: 22px; }
+        @media (max-width: 1199.98px) {
+            .lp-sidenav-burger-wrap { display: flex; }
+            .lp-sidenav-burger { display: inline-flex; }
+        }
 
         /* Mobile (<1200px): drawer overlay */
         @media (max-width: 1199.98px) {
