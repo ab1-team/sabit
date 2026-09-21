@@ -260,33 +260,29 @@ class SiswaController extends Controller
      */
     public function nominalSppByTahun(?string $tahun): int
     {
-        // Layer 1: SiswaService (state ideal)
+        // EMERGENCY FIX: siswa 1453/1335 edit masih error 'undefined method
+        // resolveDefaultSppNominal'. Untuk memastikan 100% aman, kita TIDAK
+        // PERNAH memanggil SiswaService dari method ini — langsung pakai
+        // query inline yang identik dengan logika service.
+
+        // Tulis ke file log khusus supaya bisa dicek langsung.
         try {
-            if ($this->service
-                && method_exists($this->service, 'resolveDefaultSppNominal')
-                && is_callable([$this->service, 'resolveDefaultSppNominal'])) {
-                \Illuminate\Support\Facades\Log::debug('nominalSppByTahun: pakai SiswaService', [
-                    'tahun' => $tahun,
-                    'service_class' => get_class($this->service),
-                    'service_file' => (new \ReflectionClass($this->service))->getFileName(),
-                ]);
-                return (int) $this->service->resolveDefaultSppNominal($tahun);
-            }
-            \Illuminate\Support\Facades\Log::warning('nominalSppByTahun: SiswaService tidak punya method, pakai inline', [
+            $logFile = storage_path('logs/debug-siswa.log');
+            $logData = [
+                'time' => date('Y-m-d H:i:s'),
                 'tahun' => $tahun,
+                'service_loaded' => $this->service ? 'yes' : 'no',
                 'service_class' => $this->service ? get_class($this->service) : 'null',
                 'service_file' => $this->service ? (new \ReflectionClass($this->service))->getFileName() : 'n/a',
                 'method_exists' => $this->service ? method_exists($this->service, 'resolveDefaultSppNominal') : false,
-                'is_callable' => $this->service ? is_callable([$this->service, 'resolveDefaultSppNominal']) : false,
-            ]);
+                'controller_file' => __FILE__,
+                'using_path' => 'INLINE_100%_NO_SERVICE',
+            ];
+            file_put_contents($logFile, json_encode($logData) . PHP_EOL, FILE_APPEND);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('nominalSppByTahun: SiswaService error, pakai inline', [
-                'tahun' => $tahun,
-                'error' => $e->getMessage(),
-            ]);
+            // abaikan error logging
         }
 
-        // Layer 2: query inline (safety net)
         return $this->nominalSppByTahunInline($tahun);
     }
 
