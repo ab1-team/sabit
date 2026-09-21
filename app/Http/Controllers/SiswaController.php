@@ -255,7 +255,27 @@ class SiswaController extends Controller
 
     public function nominalSppByTahun(?string $tahun): int
     {
-        return $this->service->resolveDefaultSppNominal($tahun);
+        // Delegate ke SiswaService. Fallback inline digunakan agar halaman
+        // tidak crash 500 ketika SiswaService versi lama (belum punya
+        // resolveDefaultSppNominal) masih tertanam di cache/opcache
+        // production sebelum deploy ulang.
+        if (method_exists($this->service, 'resolveDefaultSppNominal')) {
+            return $this->service->resolveDefaultSppNominal($tahun);
+        }
+
+        if (!$tahun) {
+            $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+        }
+
+        $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
+
+        return Cache::remember($cacheKey, 3600, function () use ($tahun) {
+            return (int) (JenisBiaya::query()
+                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                ->where('jenis_biaya.angkatan', $tahun)
+                ->value('jenis_biaya.total_beban') ?? 0);
+        });
     }
 
     public function getNominalSpp(Request $request)
