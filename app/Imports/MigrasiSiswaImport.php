@@ -50,11 +50,7 @@ class MigrasiSiswaImport implements
         protected ?SiswaService $service = null,
     ) {
         $this->tanggalMasukDefault = $tanggalMasukDefault ?: now()->format('Y-m-d');
-        try {
-            $this->service = $service ?? app(SiswaService::class);
-        } catch (\Throwable $e) {
-            $this->service = null;
-        }
+        $this->service = $service ?? app(SiswaService::class);
     }
 
     public function collection(Collection $rows)
@@ -158,11 +154,7 @@ class MigrasiSiswaImport implements
         }
 
         $sppInput = Angka::parseInt($row['spp_nominal'] ?? 0);
-        if ($sppInput > 0) {
-            $sppNominal = $sppInput;
-        } else {
-            $sppNominal = $this->resolveSppNominalSafe($namaTahun);
-        }
+        $sppNominal = $sppInput > 0 ? $sppInput : $this->service->resolveDefaultSppNominal($namaTahun);
 
         $nisn = trim((string) $row['nisn']);
         $existing = $existingMap[$nisn] ?? null;
@@ -369,34 +361,4 @@ class MigrasiSiswaImport implements
     public function getUpdated(): int { return $this->updated; }
     public function getFailed(): int { return $this->failed; }
     public function getFailures(): array { return $this->failures; }
-
-    /**
-     * Resolve SPP nominal tanpa bergantung pada SiswaService.
-     * Dipakai permanen untuk menghindari 'Call to undefined method'.
-     * Identik dengan SiswaService::resolveDefaultSppNominal.
-     */
-    private function resolveSppNominalSafe(?string $namaTahun): int
-    {
-        if (!$namaTahun) {
-            try {
-                $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
-            } catch (\Throwable $e) {
-                $namaTahun = date('Y');
-            }
-        }
-
-        try {
-            $cacheKey = "spp_nominal_{$namaTahun}:" . (tenant('id') ?? 'central');
-            return (int) (\Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
-                $val = DB::table('jenis_biaya')
-                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                    ->where('jenis_biaya.angkatan', $namaTahun)
-                    ->value('jenis_biaya.total_beban');
-                return $val ?? 0;
-            }) ?? 0);
-        } catch (\Throwable $e) {
-            return 0;
-        }
-    }
 }

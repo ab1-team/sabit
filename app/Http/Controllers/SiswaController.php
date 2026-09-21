@@ -249,71 +249,12 @@ class SiswaController extends Controller
 
     /**
      * Resolve nominal SPP default untuk tahun akademik tertentu.
-     * Strategi: pakai SiswaService kalau method tersedia, fallback ke query
-     * inline kalau tidak. Final safety net kembalikan 0.
-     *
-     * Mengapa ada fallback inline padahal sudah pakai service?
-     * Karena SiswaService mungkin masih versi lama di production (commit
-     * f260aa0 belum masuk ke server) sehingga method resolveDefaultSppNominal
-     * belum ada. Fallback inline identik dengan logika service menjamin
-     * halaman edit tetap load normal tanpa 500.
+     * Delegate murni ke SiswaService::resolveDefaultSppNominal().
+     * Method service dijamin bullet-proof (tidak pernah error).
      */
     public function nominalSppByTahun(?string $tahun): int
     {
-        // EMERGENCY FIX: siswa 1453/1335 edit masih error 'undefined method
-        // resolveDefaultSppNominal'. Untuk memastikan 100% aman, kita TIDAK
-        // PERNAH memanggil SiswaService dari method ini — langsung pakai
-        // query inline yang identik dengan logika service.
-
-        // Tulis ke file log khusus supaya bisa dicek langsung.
-        try {
-            $logFile = storage_path('logs/debug-siswa.log');
-            $logData = [
-                'time' => date('Y-m-d H:i:s'),
-                'tahun' => $tahun,
-                'service_loaded' => $this->service ? 'yes' : 'no',
-                'service_class' => $this->service ? get_class($this->service) : 'null',
-                'service_file' => $this->service ? (new \ReflectionClass($this->service))->getFileName() : 'n/a',
-                'method_exists' => $this->service ? method_exists($this->service, 'resolveDefaultSppNominal') : false,
-                'controller_file' => __FILE__,
-                'using_path' => 'INLINE_100%_NO_SERVICE',
-            ];
-            file_put_contents($logFile, json_encode($logData) . PHP_EOL, FILE_APPEND);
-        } catch (\Throwable $e) {
-            // abaikan error logging
-        }
-
-        return $this->nominalSppByTahunInline($tahun);
-    }
-
-    /**
-     * Fallback inline yang identik dengan SiswaService::resolveDefaultSppNominal.
-     * Dipakai permanen agar halaman edit tidak pernah crash 500 meskipun
-     * SiswaService belum ter-deploy / masih versi lama di production.
-     */
-    private function nominalSppByTahunInline(?string $tahun): int
-    {
-        if (!$tahun) {
-            try {
-                $tahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
-            } catch (\Throwable $e) {
-                $tahun = date('Y');
-            }
-        }
-
-        try {
-            $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
-            return (int) (\Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($tahun) {
-                $val = \Illuminate\Support\Facades\DB::table('jenis_biaya')
-                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                    ->where('jenis_biaya.angkatan', $tahun)
-                    ->value('jenis_biaya.total_beban');
-                return $val ?? 0;
-            }) ?? 0);
-        } catch (\Throwable $e) {
-            return 0;
-        }
+        return (int) $this->service->resolveDefaultSppNominal($tahun);
     }
 
     public function getNominalSpp(Request $request)

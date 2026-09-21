@@ -8,7 +8,6 @@ use App\Models\Spp;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class SiswaService
 {
@@ -192,28 +191,57 @@ class SiswaService
         return (string) $data['tahun_akademik'];
     }
 
+    /**
+     * Resolve default nominal SPP untuk tahun akademik tertentu.
+     * Bullet-proof: return int (tidak pernah throw exception).
+     * Lapisan fallback:
+     *   1. Tahun aktif dari DB; fallback ke tahun sekarang.
+     *   2. Cache::remember (skip kalau cache error).
+     *   3. DB::table query (skip kalau DB error).
+     *   4. Return 0 sebagai safety net terakhir.
+     */
     public function resolveDefaultSppNominal(?string $namaTahun): int
     {
         try {
             if (!$namaTahun) {
-                $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+                try {
+                    $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
+                } catch (\Throwable $e) {
+                    $namaTahun = date('Y');
+                }
             }
 
-            $cacheKey = 'spp_nominal_' . $namaTahun . ':' . (tenant('id') ?? 'central');
+            $cacheKey = 'spp_nominal_' . $namaTahun . ':' . (function_exists('tenant') ? (tenant('id') ?? 'central') : 'central');
 
-            return (int) (Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
-                $val = DB::table('jenis_biaya')
-                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                    ->where('jenis_biaya.angkatan', $namaTahun)
-                    ->value('jenis_biaya.total_beban');
-                return $val ?? 0;
-            }) ?? 0);
+            // Lapisan 2: cache + Eloquent
+            try {
+                return (int) (Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
+                    return $this->fetchNominalSppFromDb($namaTahun);
+                }) ?? 0);
+            } catch (\Throwable $e) {
+                // cache error, fallback langsung ke DB
+                return $this->fetchNominalSppFromDb($namaTahun);
+            }
         } catch (\Throwable $e) {
-            Log::warning('SiswaService::resolveDefaultSppNominal fallback to 0', [
-                'error' => $e->getMessage(),
-                'tahun' => $namaTahun,
-            ]);
+            // safety net terakhir
+            return 0;
+        }
+    }
+
+    /**
+     * Query DB langsung tanpa cache. Dipakai sebagai fallback.
+     * Bullet-proof: return int.
+     */
+    private function fetchNominalSppFromDb(string $namaTahun): int
+    {
+        try {
+            $val = DB::table('jenis_biaya')
+                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
+                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
+                ->where('jenis_biaya.angkatan', $namaTahun)
+                ->value('jenis_biaya.total_beban');
+            return (int) ($val ?? 0);
+        } catch (\Throwable $e) {
             return 0;
         }
     }
