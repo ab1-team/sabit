@@ -255,21 +255,10 @@ class SiswaController extends Controller
 
     public function nominalSppByTahun(?string $tahun): int
     {
-        // Pakai SiswaService bila tersedia (state ideal), fallback ke query
-        // inline agar halaman edit tetap load normal ketika SiswaService
-        // versi lama masih tertanam di production (opcache / deploy
-        // belum sinkron). query inline dijaga identik dengan logika
-        // SiswaService::resolveDefaultSppNominal().
-        try {
-            if ($this->service
-                && method_exists($this->service, 'resolveDefaultSppNominal')
-                && is_callable([$this->service, 'resolveDefaultSppNominal'])) {
-                return $this->service->resolveDefaultSppNominal($tahun);
-            }
-        } catch (\Throwable $e) {
-            // abaikan, lanjut fallback
-        }
-
+        // HARD-CODED: tidak pernah memanggil SiswaService::resolveDefaultSppNominal()
+        // untuk menghindari "Call to undefined method" di production yang masih
+        // pakai SiswaService versi lama / opcache nyangkut / deploy belum sinkron.
+        // Query inline di sini adalah satu-satunya source of truth.
         return $this->nominalSppByTahunInline($tahun);
     }
 
