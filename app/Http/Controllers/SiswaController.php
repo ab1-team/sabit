@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 use App\Models\Siswa;
 use App\Models\AnggotaKelas;
 use App\Models\Ruangan;
-use App\Models\JenisBiaya;
 use App\Models\TahunAkademik;
 use App\Models\Kelas;
 use Illuminate\Http\Request;
@@ -16,7 +15,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Http\Requests\SiswaRequest;
 use App\Services\SiswaService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
@@ -163,11 +161,7 @@ class SiswaController extends Controller
 
         $tahunAktif = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
 
-        $nominal = (int) (JenisBiaya::query()
-            ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-            ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-            ->where('jenis_biaya.angkatan', $tahunAktif)
-            ->value('jenis_biaya.total_beban') ?? 0);
+        $nominal = $this->nominalSppByTahun($tahunAktif);
 
         $count = 0;
         foreach ($siswaIds as $idSiswa) {
@@ -253,51 +247,18 @@ class SiswaController extends Controller
         return $this->nominalSppByTahun(null);
     }
 
+    /**
+     * Resolve nominal SPP default untuk tahun akademik tertentu.
+     * Delegate ke SiswaService::resolveDefaultSppNominal() — satu-satunya
+     * sumber logika. Defensive try-catch supaya halaman edit tetap load
+     * normal meskipun service/cache/db bermasalah.
+     */
     public function nominalSppByTahun(?string $tahun): int
     {
-        // HARD-CODED: tidak pernah memanggil SiswaService::resolveDefaultSppNominal()
-        // untuk menghindari "Call to undefined method" di production yang masih
-        // pakai SiswaService versi lama / opcache nyangkut / deploy belum sinkron.
-        // Query inline di sini adalah satu-satunya source of truth.
-        return $this->nominalSppByTahunInline($tahun);
-    }
-
-    /**
-     * Implementasi inline identik dengan SiswaService::resolveDefaultSppNominal().
-     * Dipakai sebagai fallback agar halaman tidak pernah crash 500 meskipun
-     * SiswaService belum ter-deploy / masih versi lama di production.
-     */
-    private function nominalSppByTahunInline(?string $tahun): int
-    {
-        if (!$tahun) {
-            try {
-                $tahun = TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
-            } catch (\Throwable $e) {
-                $tahun = date('Y');
-            }
-        }
-
-        $cacheKey = "spp_nominal_{$tahun}:" . (tenant('id') ?? 'central');
-
         try {
-            return Cache::remember($cacheKey, 3600, function () use ($tahun) {
-                return (int) (JenisBiaya::query()
-                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                    ->where('jenis_biaya.angkatan', $tahun)
-                    ->value('jenis_biaya.total_beban') ?? 0);
-            });
+            return $this->service->resolveDefaultSppNominal($tahun);
         } catch (\Throwable $e) {
-            try {
-                $val = DB::table('jenis_biaya')
-                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                    ->where('jenis_biaya.angkatan', $tahun)
-                    ->value('jenis_biaya.total_beban');
-                return (int) ($val ?? 0);
-            } catch (\Throwable $e2) {
-                return 0;
-            }
+            return 0;
         }
     }
 

@@ -13,7 +13,6 @@ use App\Utils\Angka;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -155,7 +154,7 @@ class MigrasiSiswaImport implements
         }
 
         $sppInput = Angka::parseInt($row['spp_nominal'] ?? 0);
-        $sppNominal = $sppInput > 0 ? $sppInput : $this->resolveDefaultSppNominalSafe($namaTahun);
+        $sppNominal = $sppInput > 0 ? $sppInput : $this->service->resolveDefaultSppNominal($namaTahun);
 
         $nisn = trim((string) $row['nisn']);
         $existing = $existingMap[$nisn] ?? null;
@@ -362,60 +361,4 @@ class MigrasiSiswaImport implements
     public function getUpdated(): int { return $this->updated; }
     public function getFailed(): int { return $this->failed; }
     public function getFailures(): array { return $this->failures; }
-
-    /**
-     * Resolve default nominal SPP tanpa bergantung pada SiswaService.
-     * Hard-coded agar import tidak pernah crash 500 meskipun SiswaService
-     * versi lama / opcache nyangkut / deploy belum sinkron di production.
-     * Fallback berlapis: SiswaService jika ada -> Cache -> DB::table -> 0.
-     */
-    private function resolveDefaultSppNominalSafe(?string $namaTahun): int
-    {
-        // Layer 1: coba SiswaService kalau method tersedia (defensive)
-        try {
-            if ($this->service
-                && method_exists($this->service, 'resolveDefaultSppNominal')
-                && is_callable([$this->service, 'resolveDefaultSppNominal'])) {
-                $val = $this->service->resolveDefaultSppNominal($namaTahun);
-                if ($val !== null) return (int) $val;
-            }
-        } catch (\Throwable $e) {
-            // lanjut fallback
-        }
-
-        if (!$namaTahun) {
-            try {
-                $namaTahun = \App\Models\TahunAkademik::where('status', 'aktif')->value('nama_tahun') ?? date('Y');
-            } catch (\Throwable $e) {
-                $namaTahun = date('Y');
-            }
-        }
-
-        // Layer 2: Cache + Eloquent
-        try {
-            $cacheKey = "spp_nominal_{$namaTahun}:" . (tenant('id') ?? 'central');
-            return (int) (Cache::remember($cacheKey, 3600, function () use ($namaTahun) {
-                return \App\Models\JenisBiaya::query()
-                    ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                    ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                    ->where('jenis_biaya.angkatan', $namaTahun)
-                    ->value('jenis_biaya.total_beban') ?? 0;
-            }) ?? 0);
-        } catch (\Throwable $e) {
-            // lanjut fallback berikutnya
-        }
-
-        // Layer 3: DB::table raw
-        try {
-            $val = DB::table('jenis_biaya')
-                ->join('jenis_pembayaran', 'jenis_pembayaran.id', '=', 'jenis_biaya.id_jp')
-                ->where('jenis_pembayaran.kode_akun', '4.1.01.01')
-                ->where('jenis_biaya.angkatan', $namaTahun)
-                ->value('jenis_biaya.total_beban');
-            return (int) ($val ?? 0);
-        } catch (\Throwable $e) {
-            // safety net terakhir
-            return 0;
-        }
-    }
 }
