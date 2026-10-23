@@ -40,8 +40,9 @@ class TransaksiController extends Controller
 
         $tid = $this->currentTenantId($request);
         $rekenings = TenantRekening::query()
-            ->when($tid, fn ($q) => $q->where('tenant_id', $tid))
-            ->where('status', 'aktif')
+            ->when($tid, fn ($q) => $q->where(function ($qq) use ($tid) {
+                $qq->where('tenant_id', $tid)->orWhereNull('tenant_id');
+            }))
             ->orderBy('nama_rekening')
             ->get(['kd_rekening', 'nama_rekening']);
         return view('tenant.transaksi.index', [
@@ -72,20 +73,28 @@ class TransaksiController extends Controller
             'tgl_lunas'       => ['nullable', 'date'],
             'keterangan'      => ['nullable', 'string', 'max:255'],
             'mark_paid'       => ['nullable'],
+        ], [
+            'rekening_debit.exists' => 'Rekening tujuan yang dipilih tidak valid.',
         ]);
 
         $invoice = TenantInvoice::findOrFail($request->idv);
         $tglLunas = $request->filled('tgl_lunas') ? \Carbon\Carbon::parse($request->tgl_lunas)->toDateString() : now()->toDateString();
 
+        // Rekening kredit adalah akun pasangan dari rekening tujuan.
+        $rekening = TenantRekening::where('kd_rekening', $request->rekening_debit)->first();
+        $pasangan = $rekening && $rekening->pasangan && $rekening->pasangan !== '0'
+            ? (string) $rekening->pasangan
+            : (string) $request->rekening_debit;
+
         TenantTransaksi::create([
             'tenant_id'            => $invoice->tenant_id,
             'tgl_transaksi'        => $tglLunas,
             'rekening_debit'       => $request->rekening_debit,
-            'rekening_kredit'      => $request->rekening_debit,
+            'rekening_kredit'      => $pasangan,
             'idv'                  => $invoice->id,
-            'keterangan_transaksi' => $request->keterangan ?? $invoice->jenis_pembayaran,
+            'keterangan_transaksi' => $request->keterangan ?: $invoice->jenis_pembayaran,
             'jumlah'               => $request->jumlah,
-            'urutan'               => TenantTransaksi::max('urutan') + 1,
+            'urutan'               => (int) TenantTransaksi::max('urutan') + 1,
             'id_user'              => auth('tenant')->id(),
         ]);
 

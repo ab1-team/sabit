@@ -20,9 +20,5 @@ class TenantRekening extends Model
         'nama_rekening',
         'pasangan',
     ];
-
-    protected $casts = [
-        'pasangan' => 'decimal:2',
-    ];
 }
 

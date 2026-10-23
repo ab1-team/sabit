@@ -271,12 +271,9 @@ public function ttdPelaporanStore(Request $request)
         }
 
         $invoice->load('user');
-        $logoPath = public_path('assets/logo/abt_logo.png');
-        $data = ['invoice' => $invoice];
-        if (file_exists($logoPath)) {
-            $data['logo'] = base64_encode(file_get_contents($logoPath));
-            $data['logo_type'] = 'png';
-        }
+
+        $data = app(\App\Http\Controllers\Tenant\TenantInvoiceController::class)->printData($invoice);
+
         $pdf = Pdf::loadView('tenant.invoice.print', $data);
         $pdf->setPaper('A4', 'portrait');
 

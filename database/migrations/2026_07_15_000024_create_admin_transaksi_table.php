@@ -11,7 +11,7 @@ return new class extends Migration
     {
         if (!Schema::hasTable('admin_transaksi')) {
             DB::statement("CREATE TABLE `admin_transaksi` (
-                `idt` int(11) NOT NULL,
+                `idt` int(11) NOT NULL AUTO_INCREMENT,
                 `tgl_transaksi` date DEFAULT NULL,
                 `rekening_debit` varchar(10) DEFAULT '0',
                 `rekening_kredit` varchar(10) DEFAULT '0',
