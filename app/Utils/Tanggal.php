@@ -8,11 +8,15 @@ class Tanggal
 {
     public static function tglIndo($tanggal, $format = 'DD/MM/YYYY')
     {
+        if ($tanggal instanceof \DateTimeInterface) {
+            return Carbon::instance($tanggal)->isoFormat($format);
+        }
+
         if ($tanggal != '') {
-            $array_tgl = explode('-', $tanggal);
+            $array_tgl = explode('-', (string) $tanggal);
             $tahun = $array_tgl[0];
-            $bulan = $array_tgl[1];
-            $hari = $array_tgl[2];
+            $bulan = $array_tgl[1] ?? '';
+            $hari = $array_tgl[2] ?? '';
 
             if (strlen($hari) > 0 && strlen($bulan) > 0) {
                 $tanggal = $tahun . '-' . $bulan . '-' . $hari;
@@ -54,27 +58,59 @@ class Tanggal
 
     public static function tglLatin($tanggal)
     {
-        $tgl = explode('-', $tanggal);
+        if ($tanggal instanceof \DateTimeInterface) {
+            $carbon = Carbon::instance($tanggal);
 
-        return $tgl[2] . ' ' . self::namaBulan($tanggal) . ' ' . $tgl[0];
+            return $carbon->format('d') . ' ' . self::namaBulan($carbon->format('Y-m-d')) . ' ' . $carbon->format('Y');
+        }
+
+        $tgl = explode('-', (string) $tanggal);
+        $tahun = $tgl[0] ?? '';
+        $bulan = $tgl[1] ?? '';
+        $hari = $tgl[2] ?? '';
+
+        // Tanggal tidak lengkap (mis. hanya "2026-07") → pakai hari pertama.
+        if ($tahun === '' || $bulan === '') {
+            $carbon = Carbon::now();
+
+            return $carbon->format('d') . ' ' . self::namaBulan($carbon->format('Y-m-d')) . ' ' . $carbon->format('Y');
+        }
+
+        if ($hari === '') {
+            $hari = '01';
+        }
+
+        return $hari . ' ' . self::namaBulan($tanggal) . ' ' . $tahun;
     }
 
     public static function tahun($tanggal)
     {
-        $tgl = explode('-', $tanggal);
-        return $tgl[0];
+        if ($tanggal instanceof \DateTimeInterface) {
+            return Carbon::instance($tanggal)->format('Y');
+        }
+
+        $tgl = explode('-', (string) $tanggal);
+        return $tgl[0] ?? '';
     }
 
     public static function bulan($tanggal)
     {
-        $tgl = explode('-', $tanggal);
-        return $tgl[1];
+        if ($tanggal instanceof \DateTimeInterface) {
+            return Carbon::instance($tanggal)->format('m');
+        }
+
+        $tgl = explode('-', (string) $tanggal);
+        return $tgl[1] ?? '';
     }
 
     public static function namaBulan($tanggal)
     {
-        $tgl = explode('-', $tanggal);
-        $bln = $tgl[1];
+        if ($tanggal instanceof \DateTimeInterface) {
+            $bln = Carbon::instance($tanggal)->format('m');
+        } else {
+            $tgl = explode('-', (string) $tanggal);
+            $bln = $tgl[1] ?? '';
+        }
 
         switch ($bln) {
             case '01':
@@ -130,8 +166,12 @@ class Tanggal
 
     public static function hari($tanggal)
     {
-        $tgl = explode('-', $tanggal);
-        return $tgl[2];
+        if ($tanggal instanceof \DateTimeInterface) {
+            return Carbon::instance($tanggal)->format('d');
+        }
+
+        $tgl = explode('-', (string) $tanggal);
+        return $tgl[2] ?? '';
     }
 
     public static function namaHari($tanggal)
