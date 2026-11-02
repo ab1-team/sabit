@@ -18,37 +18,88 @@ use App\Models\AnggotaKelas;
 use App\Models\SubLaporan;
 use App\Models\JenisBiaya;
 use App\Models\Saldo;
+use App\Services\LaporanPdfService;
 use App\Utils\Keuangan;
 use App\Utils\Tanggal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanController extends Controller
 {
     private static array $aggCache = [];
-    private function respond(string $viewHtml, array $data, ?string $filename = null)
+
+    /**
+     * Kirim laporan ke browser.
+     *
+     * @param string|iterable $viewHtml HTML laporan. Jika iterable (mis. array
+     *                               berisi beberapa chunk), tiap chunk dirender
+     *                               menjadi PDF terpisah lalu digabung menjadi
+     *                               satu dokumen. Ini dipakai untuk laporan
+     *                               dengan ribuan baris agar pemakaian memori
+     *                               tetap datar (aman di server 256M).
+     */
+    private function respond(string|iterable $viewHtml, array $data, ?string $filename = null)
     {
         if (request('action') === 'excel') {
-            return response($viewHtml, 200, [
+            $html = is_string($viewHtml)
+                ? $viewHtml
+                : implode('', is_array($viewHtml) ? $viewHtml : iterator_to_array($viewHtml, false));
+
+            return response($html, 200, [
                 'Content-Type'        => 'application/vnd.ms-excel; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="' . ($filename ?? 'laporan.xls') . '"',
                 'Cache-Control'       => 'max-age=0',
                 'Pragma'              => 'public',
             ]);
         }
+
         $landscape = !empty($data['_landscape']);
-        $pdf = Pdf::loadHTML($viewHtml)
-            ->setPaper($landscape ? 'a4' : 'a4', $landscape ? 'landscape' : 'portrait')
-            ->setOptions([
-                'margin-top'    => 30,
-                'margin-bottom' => 15,
-                'margin-left'   => 15,
-                'margin-right'  => 15,
-                'enable-local-file-access' => true,
-            ]);
-        return $pdf->stream($filename ?? 'laporan.pdf');
+
+        // Nama berkas PDF harus berakhiran .pdf (nama aslinya berakhiran .xls
+        // karena dipakai untuk export excel).
+        $pdfName = pathinfo($filename ?? 'laporan.pdf', PATHINFO_FILENAME) . '.pdf';
+
+        return app(LaporanPdfService::class)->stream($viewHtml, $landscape, $pdfName);
+    }
+
+    /**
+     * Normalisasi parameter periode (tahun / bulan / hari) dari request.
+     *
+     * Parameter laporan bisa datang dari user (form) maupun dari request
+     * tanpa nilai (mis. dipanggil langsung via URL). Nilai yang tidak valid
+     * harus dinormalkan supaya tidak menyebabkan error 500, misalnya:
+     *   - tahun kosong / 0 / "abc"  → memakai tahun berjalan
+     *   - bulan kosong / 0 / 13     → memakai bulan berjalan
+     *   - hari kosong / > 31        → null (artinya seluruh hari)
+     *
+     * @param  array  $data  data laporan (diubah di tempat)
+     * @return array  data laporan yang sudah ternormalisasi
+     */
+    private function normalisasiPeriode(array $data): array
+    {
+        $sekarang = Carbon::now();
+
+        $tahun = isset($data['tahun']) ? (int) $data['tahun'] : 0;
+        if ($tahun < 1900 || $tahun > 9999) {
+            $tahun = (int) $sekarang->format('Y');
+        }
+
+        $bulan = isset($data['bulan']) ? (int) $data['bulan'] : 0;
+        if ($bulan < 1 || $bulan > 12) {
+            $bulan = (int) $sekarang->format('m');
+        }
+
+        $hari = isset($data['hari']) && $data['hari'] !== '' ? (int) $data['hari'] : 0;
+        if ($hari < 1 || $hari > 31) {
+            $hari = 0;
+        }
+
+        $data['tahun'] = (string) $tahun;
+        $data['bulan'] = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+        $data['hari']  = $hari > 0 ? str_pad((string) $hari, 2, '0', STR_PAD_LEFT) : '';
+
+        return $data;
     }
 
     public function index()
@@ -103,10 +154,12 @@ if ($file == 'buku_besar') {
             ]);
         } elseif ($file == 'calk') {
 
-            $tahun = request('tahun');
-            $bulan = str_pad(request('bulan'), 2, '0', STR_PAD_LEFT);
+            $periode = $this->normalisasiPeriode([
+                'tahun' => request('tahun'),
+                'bulan' => request('bulan'),
+            ]);
 
-            $tanggal = "{$tahun}-{$bulan}-01";
+            $tanggal = "{$periode['tahun']}-{$periode['bulan']}-01";
 
             $calk = Calk::where('tanggal', $tanggal)->first();
 
@@ -173,12 +226,13 @@ if ($file == 'buku_besar') {
         // ================= PROFIL =================
         $data['profil'] = Profil::first();
 
+        // ================= PERIODE (tahun/bulan/hari) =================
+        $data = $this->normalisasiPeriode($data);
+
         // ================= SIMPAN CALK =================
         if ($laporan === 'calk' && $request->action !== 'excel') {
 
-            $tahun = $request->tahun;
-            $bulan = str_pad($request->bulan, 2, '0', STR_PAD_LEFT);
-            $tanggal = "{$tahun}-{$bulan}-01";
+            $tanggal = "{$data['tahun']}-{$data['bulan']}-01";
 
             Calk::updateOrCreate(
                 ['tanggal' => $tanggal],
@@ -212,13 +266,14 @@ if ($file == 'buku_besar') {
 
     private function cover(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
-        $hari = str_pad($data['hari'], 2, '0', STR_PAD_LEFT);
+        $bln  = $data['bulan'];
+        $hari = $data['hari'] !== '' ? $data['hari'] : '01';
 
         $tgl = $thn . '-' . $bln . '-' . $hari;
 
-        $data['tahun']     = $thn;
         $data['judul']     = 'LAPORAN KEUANGAN';
         $data['sub_judul'] = 'Tahun ' . Tanggal::tahun($tgl);
         $data['tgl']       = Tanggal::tahun($tgl);
@@ -236,8 +291,10 @@ if ($file == 'buku_besar') {
 
     private function buku_besar(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
+        $bln  = $data['bulan'];
 
         $tgl_awal_tahun  = "$thn-01-01";
         $tgl_awal_bulan  = "$thn-$bln-01";
@@ -295,7 +352,12 @@ $kode = $rek->kode_akun;
         $data['komulatif_bulan_lalu_saldo']  = $komulatif_saldo;
 
         // 3) Transaksi bulan ini (untuk daftar di view) + totals
-        $transaksi_bulan_ini = Transaksi::with('user:id,nama_lengkap')
+        //
+        // CATATAN: kolom pada tabel `users` (tenant) adalah `nama`, bukan
+        // `nama_lengkap` (kolom `nama_lengkap` hanya ada pada tabel pusat
+        // `admin_user`). Meminta kolom `nama_lengkap` di sini membuat query
+        // eager load gagal → HTTP 500 untuk rekening yang memiliki transaksi.
+        $transaksi_bulan_ini = Transaksi::with('user:id,nama')
             ->whereNull('deleted_at')
             ->where(function ($q) use ($kode) {
                 $q->where('rekening_debit', $kode)->orWhere('rekening_kredit', $kode);
@@ -349,21 +411,112 @@ $data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn
         $data['tgl_akhir_bulan'] = $tgl_akhir_bulan;
         $data['tahun'] = $thn;
         $data['bulan'] = $bln;
-        $data['ttd'] = TandaTangan::first();
-        $data['ttd']?->applyDatePlaceholders($tgl_akhir_bulan);
+        $ttd = TandaTangan::first();
+        $ttd?->applyDatePlaceholders($tgl_akhir_bulan);
 
-        $view = view('laporan-keuangan.views.buku_besar', $data)->render();
+        // Laporan PDF dipecah menjadi beberapa bagian agar pemakaian memori
+        // tetap datar (aman untuk server production dengan memory_limit 256M).
+        $pecah = request('action') !== 'excel';
+        $potongan = $this->bukuBesarPotongan($transaksi_bulan_ini, $kode, $isDebet, $komulatif_saldo, $pecah);
 
-        return $this->respond($view, $data, 'buku-besar.xls');
+        $views = [];
+        foreach ($potongan as $potonganData) {
+            $data['transaksi']         = $potonganData['transaksi'];
+            $data['nomor_awal']       = $potonganData['nomor_awal'];
+            $data['saldo_awal_chunk'] = $potonganData['saldo_awal'];
+            $data['tampilkan_awal']   = $potonganData['tampilkan_awal'];
+            $data['tampilkan_akhir']  = $potonganData['tampilkan_akhir'];
+            $data['ttd']              = $potonganData['tampilkan_akhir'] ? $ttd : null;
+
+            $views[] = view('laporan-keuangan.views.buku_besar', $data)->render();
+        }
+
+        return $this->respond($pecah ? $views : $views[0], $data, 'buku-besar.xls');
+    }
+
+    /**
+     * Susun potongan (chunk) data untuk render Buku Besar.
+     *
+     * Setiap bagian membawa saldo awal bagian tersebut supaya kolom "Saldo"
+     * tetap kontinyu meskipun laporan dipecah menjadi beberapa PDF.
+     *
+     * @param \Illuminate\Support\Collection $transaksi
+     * @return array<int, array>
+     */
+    private function bukuBesarPotongan($transaksi, string $kode, bool $isDebet, float $saldoAwal, bool $pecah): array
+    {
+        if (! $pecah) {
+            return [[
+                'transaksi'        => $transaksi,
+                'nomor_awal'      => 1,
+                'saldo_awal'      => $saldoAwal,
+                'tampilkan_awal'  => true,
+                'tampilkan_akhir' => true,
+            ]];
+        }
+
+        $potongan = [];
+        $nomor    = 1;
+        $index    = 0;
+        $chunks   = $transaksi->chunk(LaporanPdfService::CHUNK_TRANSAKSI);
+        $total    = $chunks->count();
+
+        if ($total === 0) {
+            // Tidak ada transaksi pada bulan ini → tetap ada satu bagian kosong
+            // supaya laporan bisa dicetak (tanpa error).
+            return [[
+                'transaksi'        => $transaksi,
+                'nomor_awal'      => 1,
+                'saldo_awal'      => $saldoAwal,
+                'tampilkan_awal'  => true,
+                'tampilkan_akhir' => true,
+            ]];
+        }
+
+        foreach ($chunks as $chunk) {
+            // Collection::chunk() mempertahankan key asli, jadi di-reset agar
+            // penomoran baris di view selalu dimulai dari 0 per bagian.
+            $chunk = $chunk->values();
+
+            $potongan[] = [
+                'transaksi'        => $chunk,
+                'nomor_awal'      => $nomor,
+                'saldo_awal'      => $saldoAwal,
+                'tampilkan_awal'  => $index === 0,
+                'tampilkan_akhir' => $index === $total - 1,
+            ];
+
+            foreach ($chunk as $trx) {
+                $saldoAwal += $this->bukuBesarMutasi($trx, $kode, $isDebet);
+            }
+
+            $nomor += $chunk->count();
+            $index++;
+        }
+
+        return $potongan;
+    }
+
+    /**
+     * Perubahan saldo (debit - kredit atau kredit - debit) dari satu transaksi.
+     */
+    private function bukuBesarMutasi($trx, string $kode, bool $isDebet): float
+    {
+        $debit  = $trx->rekening_debit == $kode ? (float) $trx->jumlah : 0.0;
+        $kredit = $trx->rekening_kredit == $kode ? (float) $trx->jumlah : 0.0;
+
+        return $isDebet ? ($debit - $kredit) : ($kredit - $debit);
     }
 
     private function jurnal_transaksi(array $data)
     {
-        $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
-        $hari = str_pad($data['hari'], 2, '0', STR_PAD_LEFT);
+        $data = $this->normalisasiPeriode($data);
 
-        $tgl = $thn . '-' . $bln . '-' . $hari;
+        $thn  = $data['tahun'];
+        $bln  = $data['bulan'];
+        $hari = $data['hari'];
+
+        $tgl = $thn . '-' . $bln . '-' . ($hari !== '' ? $hari : '01');
 
         $data['judul']     = 'Jurnal Transaksi';
         $data['sub_judul'] = 'Tahun ' . Tanggal::tahun($tgl);
@@ -375,7 +528,7 @@ $data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn
         }
 
 
-        $data['transaksis'] = Transaksi::with(['rekeningDebit', 'rekeningKredit', 'user'])
+        $transaksis = Transaksi::with(['rekeningDebit', 'rekeningKredit', 'user'])
             ->when(!empty($data['bulan']), function ($q) use ($thn, $bln) {
                 $q->whereBetween('tanggal_transaksi', [
                     "$thn-$bln-01",
@@ -387,22 +540,67 @@ $data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn
             })
 ->orderBy('tanggal_transaksi', 'asc')
             ->get();
-        $data['ttd'] = TandaTangan::first();
-        $data['ttd']?->applyDatePlaceholders($tgl);
-        $view = view('laporan-keuangan.views.jurnal_transaksi', $data)->render();
 
-        return $this->respond($view, $data, 'jurnal-transaksi.xls');
+        $ttd = TandaTangan::first();
+        $ttd?->applyDatePlaceholders($tgl);
+
+        // Total keseluruhan (bukan per bagian) supaya baris "Total" tetap
+        // konsisten walaupun laporan dipecah menjadi beberapa bagian.
+        $totalDebit  = (float) $transaksis->sum('jumlah');
+        $totalKredit = (float) $transaksis->sum('jumlah');
+
+        // Jurnal Transaksi bisa berisi ribuan transaksi (setiap transaksi
+        // menghasilkan 2 baris tabel). Agar pemakaian memori tetap datar dan
+        // aman di server production (memory_limit 256M), laporan dipecah
+        // menjadi beberapa bagian lalu digabung menjadi satu PDF.
+        $pecah = request('action') !== 'excel';
+        $chunks = $pecah
+            ? $transaksis->chunk(LaporanPdfService::CHUNK_TRANSAKSI)
+            : collect([$transaksis]);
+
+        $views = [];
+        $index = 0;
+        $total = $chunks->count();
+
+        foreach ($chunks as $chunk) {
+            $chunk = $chunk->values();
+
+            $data['transaksis']      = $chunk;
+            $data['nomor_awal']     = $index * LaporanPdfService::CHUNK_TRANSAKSI + 1;
+            $data['total_debit']    = $totalDebit;
+            $data['total_kredit']   = $totalKredit;
+            $data['tampilkan_akhir'] = $index === $total - 1;
+            $data['ttd']            = $data['tampilkan_akhir'] ? $ttd : null;
+
+            $views[] = view('laporan-keuangan.views.jurnal_transaksi', $data)->render();
+
+            $index++;
+        }
+
+        if ($views === []) {
+            $data['transaksis']       = $transaksis;
+            $data['nomor_awal']      = 1;
+            $data['total_debit']     = $totalDebit;
+            $data['total_kredit']    = $totalKredit;
+            $data['tampilkan_akhir'] = true;
+            $data['ttd']             = $ttd;
+            $views[] = view('laporan-keuangan.views.jurnal_transaksi', $data)->render();
+        }
+
+        return $this->respond($pecah ? $views : $views[0], $data, 'jurnal-transaksi.xls');
     }
 
     private function arus_kas(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
-        $hari = str_pad($data['hari'], 2, '0', STR_PAD_LEFT);
+        $bln  = $data['bulan'];
+        $hari = $data['hari'];
 
         $tgl_awal_tahun  = "{$thn}-01-01";
         $tgl_awal_bulan  = "{$thn}-{$bln}-01";
-        $tgl_akhir_bulan = "{$thn}-{$bln}-" . cal_days_in_month(CAL_GREGORIAN, (int)$bln, (int)$thn);
+        $tgl_akhir_bulan = sprintf('%s-%s-%02d', $thn, $bln, cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn));
 
         $data['judul'] = 'Laporan Arus Kas';
 
@@ -472,13 +670,15 @@ $data['sub_judul'] = 'Bulan ' . Tanggal::namaBulan($tgl_awal_bulan) . ' ' . $thn
 
 private function laba_rugi(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = isset($data['bulan']) && $data['bulan'] !== '' ? str_pad($data['bulan'], 2, '0', STR_PAD_LEFT) : null;
-        $hari = isset($data['hari'])  && $data['hari']  !== '' ? str_pad($data['hari'],  2, '0', STR_PAD_LEFT) : null;
+        $bln  = $data['bulan'];
+        $hari = $data['hari'] !== '' ? $data['hari'] : null;
 
         $tgl = $thn
-            . ($bln ? '-' . $bln : '-12')
-            . ($hari ? '-' . $hari : '-' . date('t', strtotime("$thn-" . ($bln ?? '12') . "-01")));
+            . '-' . $bln
+            . '-' . ($hari ?: sprintf('%02d', cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn)));
 
         $keuangan = new Keuangan();
         $lr = $keuangan->listLabaRugi($tgl);
@@ -519,11 +719,13 @@ if (!empty($data['bulan'])) {
 
     private function neraca(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
+        $bln  = $data['bulan'];
 
         $tgl_awal  = "{$thn}-01-01";
-        $tgl_akhir = "{$thn}-{$bln}-" . cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn);
+        $tgl_akhir = sprintf('%s-%s-%02d', $thn, $bln, cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn));
 
         $data['judul'] = 'Neraca';
         $namaBulan = Tanggal::namaBulan("{$thn}-{$bln}-01");
@@ -599,12 +801,14 @@ $data['tgl_awal']  = $tgl_awal;
 
     private function neraca_saldo(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
-        $hari = str_pad($data['hari'], 2, '0', STR_PAD_LEFT);
+        $bln  = $data['bulan'];
+        $hari = $data['hari'];
 
         $tgl_awal  = "{$thn}-01-01";
-        $tgl_akhir = "{$thn}-{$bln}-" . cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn);
+        $tgl_akhir = sprintf('%s-%s-%02d', $thn, $bln, cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn));
 
         $data['judul'] = 'Neraca ';
 
@@ -656,11 +860,13 @@ return $r;
 
     private function calk(array $data)
     {
+        $data = $this->normalisasiPeriode($data);
+
         $thn  = $data['tahun'];
-        $bln  = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
+        $bln  = $data['bulan'];
 
         $tgl_awal  = "{$thn}-01-01";
-        $tgl_akhir = "{$thn}-{$bln}-" . cal_days_in_month(CAL_GREGORIAN, (int)$bln, (int)$thn);
+        $tgl_akhir = sprintf('%s-%s-%02d', $thn, $bln, cal_days_in_month(CAL_GREGORIAN, (int) $bln, (int) $thn));
 
         $data['judul'] = 'Calk';
 
@@ -843,9 +1049,62 @@ $data['totals'] = $totals;
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
 
-        $view = view('laporan-keuangan.views.pembayaran_spp', $data)->render();
         $data['_landscape'] = true;
-        return $this->respond($view, $data, 'laporan-spp.xls');
+
+        return $this->respond(
+            $this->renderBertingkat('laporan-keuangan.views.pembayaran_spp', $data, $anggotaKelas),
+            $data,
+            'laporan-spp.xls'
+        );
+    }
+
+    /**
+     * Render sebuah view menjadi satu atau beberapa bagian HTML.
+     *
+     * Laporan dengan banyak baris (mis. pembayaran SPP, daftar ulang, dll.)
+     * dipecah menjadi beberapa bagian agar pemakaian memori saat dirender oleh
+     * dompdf tetap datar dan aman pada server production (memory_limit 256M).
+     * Bagian-bagian ini kemudian digabung menjadi satu PDF oleh
+     * {@see LaporanPdfService}.
+     *
+     * @param  string  $view       nama view blade
+     * @param  array   $data       data view
+     * @param  mixed   $rows       koleksi baris yang dipecah (nullable)
+     * @return array<int, string> HTML per bagian
+     */
+    private function renderBertingkat(string $view, array $data, $rows = null): array
+    {
+        // Export excel tidak dipecah (tanpa dompdf, tidak ada masalah memori).
+        if (request('action') === 'excel' || $rows === null) {
+            $data['nomor_awal']         = $data['nomor_awal'] ?? 1;
+            $data['tampilkan_ringkasan'] = $data['tampilkan_ringkasan'] ?? true;
+
+            return [view($view, $data)->render()];
+        }
+
+        $chunks = collect($rows)->chunk(LaporanPdfService::CHUNK_TRANSAKSI);
+        $total  = $chunks->count();
+        $views  = [];
+        $index  = 0;
+
+        foreach ($chunks as $chunk) {
+            $data['anggotaKelas'] = $chunk->values();
+            $data['nomor_awal']   = $index * LaporanPdfService::CHUNK_TRANSAKSI + 1;
+            $data['tampilkan_ringkasan'] = ($index === $total - 1);
+
+            $views[] = view($view, $data)->render();
+
+            $index++;
+        }
+
+        if ($views === []) {
+            $data['anggotaKelas'] = collect();
+            $data['nomor_awal']   = 1;
+            $data['tampilkan_ringkasan'] = true;
+            $views[] = view($view, $data)->render();
+        }
+
+        return $views;
     }
 
     public function daftar_ulang(Request $request)
@@ -1000,14 +1259,23 @@ if (empty($data['tahun_akademik_id'])) {
         $data['anggotaKelas'] = $anggotaKelas;
         $data['profil'] = Profil::first();
 
+        // Ringkasan memakai data lengkap agar tetap konsisten ketika laporan
+        // dipecah menjadi beberapa bagian.
+        $data['total_siswa']      = $anggotaKelas->count();
+        $data['total_sudah_bayar'] = $anggotaKelas->filter(fn($r) => $r->sudah_bayar ?? false)->count();
+        $data['total_realisasi']  = $anggotaKelas->sum(fn($r) => $r->sudah_bayar ? ($r->realisasi ?? 0) : 0);
+
         $logoPath = \App\Models\Profil::logoPath();
         if (file_exists($logoPath)) {
             $data['logo'] = base64_encode(file_get_contents($logoPath));
             $data['logo_type'] = pathinfo($logoPath, PATHINFO_EXTENSION);
         }
 
-        $view = view('laporan-keuangan.views.daftar_ulang', $data)->render();
-        return $this->respond($view, $data, str_replace('.pdf', '.xls', $filename));
+        return $this->respond(
+            $this->renderBertingkat('laporan-keuangan.views.daftar_ulang', $data, $anggotaKelas),
+            $data,
+            str_replace('.pdf', '.xls', $filename)
+        );
     }
 
     private function nominalJenisBiaya($row, int $idJp): float

@@ -90,8 +90,8 @@
         </div>
         <div class="footer">
             <hr>
-            <div style="font-size: 16px"><b>{{ $profil->nama }}</b></div>
-            <div style="font-size: 12px">Alamat, {{ $profil->alamat }}, Telfon:{{ $profil->telpon }}</div>
+            <div style="font-size: 16px"><b>{{ $profil->nama ?? '-' }}</b></div>
+            <div style="font-size: 12px">Alamat, {{ $profil->alamat ?? '-' }}, Telfon:{{ $profil->telpon ?? '-' }}</div>
             <div style="font-size: 12px">Tahun {{ $tahun }}</div>
         </div>
     </div>

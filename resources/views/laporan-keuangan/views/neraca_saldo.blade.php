@@ -1,7 +1,6 @@
 @php
 
-    function formatRupiah($angka)
-    {
+    $formatRupiah = function ($angka) {
         if ($angka === null || $angka === '') {
             return '';
         }
@@ -10,7 +9,7 @@
             return '(' . \App\Utils\Angka::format(abs($angka), 2) . ')';
         }
         return \App\Utils\Angka::format($angka, 2);
-    }
+    };
 
     $total_ns_debit = $total_ns_kredit = 0;
     $total_rl_debit = $total_rl_kredit = 0;
@@ -107,12 +106,12 @@
                     <td style="border: 1px solid #313131; padding: 4px;">
                         {{ $rek->kode_akun }} - {{ $rek->nama_akun }}
                     </td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($ns_debit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($ns_kredit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($rl_debit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($rl_kredit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($n_debit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($n_kredit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($ns_debit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($ns_kredit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($rl_debit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($rl_kredit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($n_debit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($n_kredit) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -122,21 +121,21 @@
         <tr style="background: #d6d6d6; font-weight: bold;">
             <td style="border: 1px solid #313131; text-align: center;">Surplus / Defisit</td>
             <td colspan="2"></td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($surplus_defisit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($surplus_defisit) }}</td>
             <td></td>
             <td></td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($surplus_defisit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($surplus_defisit) }}</td>
         </tr>
         <tr style="background: #f5f5f5; font-weight: bold;">
             <td style="border: 1px solid #313131; text-align: center;">Jumlah</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($total_ns_debit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($total_ns_kredit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_ns_debit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_ns_kredit) }}</td>
             <td style="border: 1px solid #313131; text-align: right;">
-                {{ formatRupiah($total_rl_debit + $surplus_defisit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($total_rl_kredit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ formatRupiah($total_n_debit) }}</td>
+                {{ $formatRupiah($total_rl_debit + $surplus_defisit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_rl_kredit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_n_debit) }}</td>
             <td style="border: 1px solid #313131; text-align: right;">
-                {{ formatRupiah($total_n_kredit + $surplus_defisit) }}</td>
+                {{ $formatRupiah($total_n_kredit + $surplus_defisit) }}</td>
         </tr>
     </table>
     <table class="table table-bordered" width="100%" border="0" cellspacing="0" cellpadding="0">

@@ -1,11 +1,10 @@
 @php
-    function formatAngka($value)
-    {
+    $formatAngka = function ($value) {
         if ($value < 0) {
             return '(' . \App\Utils\Angka::format(abs($value), 2) . ')';
         }
         return \App\Utils\Angka::format($value, 2);
-    }
+    };
 @endphp
 <title>{{ $title }} ({{ $title_bulan }})</title>
 
@@ -92,17 +91,17 @@
                     @endphp
                     <tr style="background: {{ $bg }}">
                         <td>{{ $item->kode_akun }}. {{ $item->nama_akun }}</td>
-                        <td align="right">{{ formatAngka($lalu) }}</td>
-                        <td align="right">{{ formatAngka($ini) }}</td>
-                        <td align="right">{{ formatAngka($saldo) }}</td>
+                        <td align="right">{{ $formatAngka($lalu) }}</td>
+                        <td align="right">{{ $formatAngka($ini) }}</td>
+                        <td align="right">{{ $formatAngka($saldo) }}</td>
                     </tr>
                 @endforeach
 
                 <tr style="background: rgb(150,150,150); font-weight:bold;">
                     <td>Jumlah {{ $judul_kategori }}</td>
-                    <td align="right">{{ formatAngka($total_lalu) }}</td>
-                    <td align="right">{{ formatAngka($total_ini) }}</td>
-                    <td align="right">{{ formatAngka($total_sd) }}</td>
+                    <td align="right">{{ $formatAngka($total_lalu) }}</td>
+                    <td align="right">{{ $formatAngka($total_ini) }}</td>
+                    <td align="right">{{ $formatAngka($total_sd) }}</td>
                 </tr>
                 <tr>
                     <td colspan="4" height="6"></td>

@@ -40,7 +40,7 @@
             @forelse ($anggotaKelas as $i => $row)
                 @php $sudahBayar = $row->sudah_bayar ?? false; @endphp
                 <tr>
-                    <td style="border:1px solid #000; text-align:center;">{{ $i + 1 }}</td>
+                    <td style="border:1px solid #000; text-align:center;">{{ $nomor_awal + $i }}</td>
 
                     <td style="border:1px solid #000; text-align:center;">
                         {{ $row->kode_kelas }}
@@ -77,11 +77,11 @@
             @endforelse
         </tbody>
 
-        @if ($anggotaKelas->count() > 0)
+        @if ($anggotaKelas->count() > 0 && ! empty($tampilkan_ringkasan))
             @php
-                $totalSiswa = $anggotaKelas->count();
-                $sudahBayarCount = $anggotaKelas->filter(fn($r) => $r->sudah_bayar ?? false)->count();
-                $totalRealisasi = $anggotaKelas->sum(fn($r) => $r->sudah_bayar ? ($r->realisasi ?? 0) : 0);
+                $totalSiswa = $total_siswa ?? $anggotaKelas->count();
+                $sudahBayarCount = $total_sudah_bayar ?? $anggotaKelas->filter(fn($r) => $r->sudah_bayar ?? false)->count();
+                $totalRealisasi = $total_realisasi ?? $anggotaKelas->sum(fn($r) => $r->sudah_bayar ? ($r->realisasi ?? 0) : 0);
             @endphp
             <tfoot>
                 <tr style="font-weight:bold; background:#f1f5f9;">

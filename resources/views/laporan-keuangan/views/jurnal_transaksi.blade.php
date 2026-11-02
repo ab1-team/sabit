@@ -32,32 +32,47 @@
         </tr>
     </table>
 
-    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 11px; table-layout: fixed;">
+        <colgroup>
+            <col style="width: 4%;">
+            <col style="width: 10%;">
+            <col style="width: 8%;">
+            <col style="width: 10%;">
+            <col style="width: 33%;">
+            <col style="width: 15%;">
+            <col style="width: 15%;">
+        </colgroup>
         <thead>
             <tr style="background: rgb(74, 74, 74); font-weight: bold; color: #fff;">
-                <th align="center" width="4%">No</th>
-                <th align="center" width="10%">Tanggal</th>
-                <th align="center" width="8%">Ref ID.</th>
-                <th align="center" width="10%">Kd. Rek</th>
-                <th align="center" width="33%">Keterangan</th>
-                <th align="center" width="15%">Debit</th>
-                <th align="center" width="15%">Kredit</th>
+                <th align="center">No</th>
+                <th align="center">Tanggal</th>
+                <th align="center">Ref ID.</th>
+                <th align="center">Kd. Rek</th>
+                <th align="center">Keterangan</th>
+                <th align="center">Debit</th>
+                <th align="center">Kredit</th>
             </tr>
         </thead>
         <tbody>
             @php
-                $totalDebit = 0;
-                $totalKredit = 0;
+                // Total global (dihitung di controller) dipakai agar baris "Total"
+                // tetap konsisten walaupun laporan dipecah menjadi beberapa bagian.
+                // Kalau total global belum tersedia, hitung sendiri dari baris ini.
+                $pakaiTotalGlobal = isset($total_debit) && isset($total_kredit);
+                $totalDebit  = $pakaiTotalGlobal ? (float) $total_debit : 0.0;
+                $totalKredit = $pakaiTotalGlobal ? (float) $total_kredit : 0.0;
+                $nomor_awal  = $nomor_awal ?? 1;
             @endphp
 
-            @foreach ($transaksis as $i => $trx)
+            @forelse ($transaksis as $i => $trx)
                 @php
-                    $rowClass = $i % 2 == 0 ? 'row-white' : 'row-black';
+                    $rowClass = (($nomor_awal - 1) + $i) % 2 == 0 ? 'row-white' : 'row-black';
+                    $no = $nomor_awal + $i;
                 @endphp
 
                 {{-- Baris DEBIT --}}
                 <tr class="{{ $rowClass }}">
-                    <td align="center">{{ $i + 1 }}</td>
+                    <td align="center">{{ $no }}</td>
                     <td align="center">{{ $tglUtil->tglIndo($trx->tanggal_transaksi) }}</td>
                     <td align="center">{{ $trx->id }}</td>
                     <td align="center">{{ $trx->rekeningDebit->kode_akun ?? '' }}</td>
@@ -70,7 +85,7 @@
                 <tr class="{{ $rowClass }}">
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
-                    <td align="center">{{ $i + 1 }}</td>
+                    <td align="center">{{ $no }}</td>
                     <td align="center">{{ $trx->rekeningKredit->kode_akun ?? '' }}</td>
                     <td>{{ $trx->rekeningKredit->nama_akun ?? $trx->keterangan }}</td>
                     <td align="right">{{ \App\Utils\Angka::format(0, 2) }}</td>
@@ -78,26 +93,36 @@
                 </tr>
 
                 @php
-                    $totalDebit += $trx->jumlah;
-                    $totalKredit += $trx->jumlah;
+                    if (! $pakaiTotalGlobal) {
+                        $totalDebit  += $trx->jumlah;
+                        $totalKredit += $trx->jumlah;
+                    }
                 @endphp
-            @endforeach
+            @empty
+                <tr class="row-white">
+                    <td colspan="7" align="center"><i>Tidak ada transaksi pada periode ini</i></td>
+                </tr>
+            @endforelse
 
-            {{-- Total --}}
-            <tr style="background-color: #d3d3d3; font-weight: bold;">
-                <td colspan="5" align="center"><strong>Total</strong></td>
-                <td align="right">{{ \App\Utils\Angka::format($totalDebit, 2) }}</td>
-                <td align="right">{{ \App\Utils\Angka::format($totalKredit, 2) }}</td>
-            </tr>
+            @if (!empty($tampilkan_akhir))
+                {{-- Total --}}
+                <tr style="background-color: #d3d3d3; font-weight: bold;">
+                    <td colspan="5" align="center"><strong>Total</strong></td>
+                    <td align="right">{{ \App\Utils\Angka::format($totalDebit, 2) }}</td>
+                    <td align="right">{{ \App\Utils\Angka::format($totalKredit, 2) }}</td>
+                </tr>
+            @endif
         </tbody>
     </table>
-    <table class="table table-bordered" width="100%" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-            <td>
-                <div class="ttd-wrapper">
-                    {!! $ttd->tanda_tangan ?? '' !!}
-                </div>
-            </td>
-        </tr>
-    </table>
+    @if (!empty($tampilkan_akhir))
+        <table class="table table-bordered" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td>
+                    <div class="ttd-wrapper">
+                        {!! $ttd->tanda_tangan ?? '' !!}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    @endif
 @endsection

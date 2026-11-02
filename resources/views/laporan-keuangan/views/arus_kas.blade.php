@@ -6,10 +6,9 @@
     $total_bulan_ini = 0;
     $saldo_bulan_lalu = $saldo_bulan_lalu ?? 0;
 
-    function formatKas($jumlah)
-    {
+    $formatKas = function ($jumlah) {
         return $jumlah < 0 ? '(' . \App\Utils\Angka::format(abs($jumlah), 2) . ')' : \App\Utils\Angka::format($jumlah, 2);
-    }
+    };
 @endphp
 
 @extends('laporan-keuangan.layout.dasar')
@@ -50,7 +49,7 @@
                 <td width="80%">{{ $ak->nama_akun }}</td>
                 <td width="15%" align="right">
                     @if ($ak->id == 1)
-                        {{ formatKas($saldo_bulan_lalu) }}
+                        {{ $formatKas($saldo_bulan_lalu) }}
                     @endif
                 </td>
             </tr>
@@ -88,7 +87,7 @@
                     <tr style="background: rgb({{ $bg }})">
                         <td>&nbsp;</td>
                         <td>{{ $akun3->nama_akun }}</td>
-                        <td align="right">{{ formatKas($jumlah) }}</td>
+                        <td align="right">{{ $formatKas($jumlah) }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -97,7 +96,7 @@
                 <tr style="background: rgb(150,150,150); font-weight:bold;">
                     <td>&nbsp;</td>
                     <td>Jumlah {{ substr(ucwords(strtolower($ak->nama_akun)), 3) }}</td>
-                    <td align="right">{{ formatKas($sub_total) }}</td>
+                    <td align="right">{{ $formatKas($sub_total) }}</td>
                 </tr>
                 <tr>
                     <td colspan="4" height="8"></td>
@@ -120,7 +119,7 @@
             <tr style="background: rgb(128,128,128)">
                 <td>&nbsp;</td>
                 <td>{{ $title }}</td>
-                <td align="right">{{ formatKas($total) }}</td>
+                <td align="right">{{ $formatKas($total) }}</td>
             </tr>
         @endforeach
 
@@ -130,12 +129,12 @@
                     <tr style="background: rgb(128,128,128)">
                         <td width="5%" align="center">&nbsp;</td>
                         <td width="80%">Kenaikan (Penurunan) Kas</td>
-                        <td width="15%" align="right">{{ formatKas($total_bulan_ini) }}</td>
+                        <td width="15%" align="right">{{ $formatKas($total_bulan_ini) }}</td>
                     </tr>
                     <tr style="background: rgb(128,128,128); font-weight:bold;">
                         <td>&nbsp;</td>
                         <td>SALDO AKHIR KAS SETARA KAS</td>
-                        <td align="right">{{ formatKas($total_bulan_ini + $saldo_bulan_lalu) }}</td>
+                        <td align="right">{{ $formatKas($total_bulan_ini + $saldo_bulan_lalu) }}</td>
                     </tr>
                 </table>
             </td>

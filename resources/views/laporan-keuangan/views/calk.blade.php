@@ -38,7 +38,7 @@
                     </span>
                 </div>
                 <div>
-                    <span style="font-size:18px; font-weight:bold; text-transform:uppercase;">{{ $profil->nama }}
+                    <span style="font-size:18px; font-weight:bold; text-transform:uppercase;">{{ $profil->nama ?? '-' }}
                     </span>
                 </div>
                 <div>

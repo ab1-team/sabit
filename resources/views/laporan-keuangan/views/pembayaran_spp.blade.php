@@ -28,6 +28,12 @@
         $nBulan = count($bulanList);
         $bulanW = max(4, min(6, floor(56 / max(1, $nBulan))));
         $fixedW = 100 - ($bulanW * $nBulan);
+        // Nomor baris dimulai dari $nomor_awal supaya penomoran tetap
+        // kontinyu ketika laporan dipecah menjadi beberapa bagian.
+        $nomor_awal = $nomor_awal ?? 1;
+        // Ringkasan (baris JUMLAH) hanya ditampilkan pada bagian terakhir dan
+        // memakai data lengkap supaya angkanya tetap konsisten.
+        $tampilkan_ringkasan = $tampilkan_ringkasan ?? true;
     @endphp
 
     <table width="100%" cellpadding="3" cellspacing="0"
@@ -65,7 +71,7 @@
         <tbody>
             @forelse ($anggotaKelas as $i => $row)
                 <tr>
-                    <td style="border:1px solid #000; text-align:center;">{{ $i + 1 }}</td>
+                    <td style="border:1px solid #000; text-align:center;">{{ $nomor_awal + $i }}</td>
                     <td style="border:1px solid #000; text-align:center;">{{ $row->siswa_nisn ?? ($row->siswa->nisn ?? '-') }}</td>
                     <td style="border:1px solid #000;">{{ $row->siswa_nama ?? ($row->siswa->nama ?? '-') }}</td>
                     <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->per_bulan, 2) }}</td>
@@ -83,7 +89,7 @@
                     <td colspan="{{ 4 + $nBulan + 4 }}" style="border:1px solid #000; text-align:center; font-style:italic;">Tidak ada data</td>
                 </tr>
             @endforelse
-            @if (isset($totals) && $anggotaKelas->count() > 0)
+            @if (isset($totals) && $anggotaKelas->count() > 0 && ! empty($tampilkan_ringkasan))
                 <tr style="font-weight:bold; background:#f0f0f0;">
                     <td colspan="3" style="border:1px solid #000; text-align:center;">JUMLAH</td>
                     <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['per_bulan'] ?? 0, 2) }}</td>

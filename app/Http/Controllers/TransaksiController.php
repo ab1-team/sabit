@@ -471,7 +471,7 @@ class TransaksiController extends Controller
             ->addColumn('rekening_kredit_nama', fn ($r) => $r->rekeningKredit->nama_akun ?? '-')
             ->addColumn('ket', fn ($r) => $r->keterangan ?: '-')
             ->addColumn('nominal_fmt', fn ($r) => number_format((float) $r->jumlah, 0, ',', '.'))
-            ->addColumn('user', fn ($r) => $r->user->nama_lengkap ?? $r->user->name ?? '-')
+            ->addColumn('user', fn ($r) => $r->user->nama ?? '-')
             ->addColumn('aksi', function ($r) {
                 $id = (int) $r->id;
                 $base = '/app/transaksi/jurnal-umum/printDokumen/';
