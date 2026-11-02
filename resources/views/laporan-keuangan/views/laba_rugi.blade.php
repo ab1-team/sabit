@@ -45,13 +45,13 @@
         </tr>
     </table>
 
-    <table border="0" cellspacing="0" cellpadding="0">
+    <table border="0" cellspacing="0" cellpadding="0" style="table-layout: fixed;">
         <thead>
             <tr style="background: rgb(232,232,232); font-weight:bold; font-size:12px;">
-                <td width="55%" align="center">Rekening</td>
-                <td width="15%" align="center">s.d. Bulan Lalu</td>
-                <td width="15%" align="center">Bulan Ini</td>
-                <td width="15%" align="center">s.d. Bulan Ini</td>
+                <td width="52%" align="center" style="padding-left: 8px;">Rekening</td>
+                <td width="16%" align="center">s.d. Bulan Lalu</td>
+                <td width="16%" align="center">Bulan Ini</td>
+                <td width="16%" align="center">s.d. Bulan Ini</td>
             </tr>
         </thead>
         <tbody>
@@ -69,7 +69,7 @@
 
             @foreach ($kategori as $judul_kategori => $items)
                 <tr style="background: rgb(200,200,200); font-weight:bold; text-transform: uppercase;">
-                    <td colspan="4" height="14">{{ $loop->iteration }}. {{ $judul_kategori }}</td>
+                    <td colspan="4" height="14" style="padding-left: 8px;">{{ $loop->iteration }}. {{ $judul_kategori }}</td>
                 </tr>
 
                 @php
@@ -90,18 +90,18 @@
                         $total_sd += $saldo;
                     @endphp
                     <tr style="background: {{ $bg }}">
-                        <td>{{ $item->kode_akun }}. {{ $item->nama_akun }}</td>
-                        <td align="right">{{ $formatAngka($lalu) }}</td>
-                        <td align="right">{{ $formatAngka($ini) }}</td>
-                        <td align="right">{{ $formatAngka($saldo) }}</td>
+                        <td style="padding-left: 8px;">{{ $item->kode_akun }}. {{ $item->nama_akun }}</td>
+                        <td align="right" style="white-space: nowrap;">{{ $formatAngka($lalu) }}</td>
+                        <td align="right" style="white-space: nowrap;">{{ $formatAngka($ini) }}</td>
+                        <td align="right" style="white-space: nowrap;">{{ $formatAngka($saldo) }}</td>
                     </tr>
                 @endforeach
 
                 <tr style="background: rgb(150,150,150); font-weight:bold;">
-                    <td>Jumlah {{ $judul_kategori }}</td>
-                    <td align="right">{{ $formatAngka($total_lalu) }}</td>
-                    <td align="right">{{ $formatAngka($total_ini) }}</td>
-                    <td align="right">{{ $formatAngka($total_sd) }}</td>
+                    <td style="padding-left: 8px;">Jumlah {{ $judul_kategori }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ $formatAngka($total_lalu) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ $formatAngka($total_ini) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ $formatAngka($total_sd) }}</td>
                 </tr>
                 <tr>
                     <td colspan="4" height="6"></td>

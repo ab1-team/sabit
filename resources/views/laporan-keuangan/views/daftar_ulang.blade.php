@@ -23,17 +23,23 @@
         </tr>
     </table>
 
-    <table width="100%" cellpadding="4" cellspacing="0" style="border-collapse:collapse; font-size:11px;">
-
+    <table width="100%" cellpadding="4" cellspacing="0"
+        style="border-collapse:collapse; font-size:11px; table-layout: fixed;">
+        {{--
+            Lebar kolom (persen) ditulis pada sel baris header. Catatan:
+            dompdf mengabaikan tag <colgroup>, jadi lebar harus ditulis
+            pada sel baris pertama tabel. Kolom No & Kelas diperkecil
+            supaya kolom Nama Siswa / Keterangan lebih lega.
+        --}}
         <thead>
             <tr style="text-align:center; font-weight:bold;">
-                <th style="border:1px solid #000; width:4%;">No</th>
-                <th style="border:1px solid #000; width:8%;">Kelas</th>
-                <th style="border:1px solid #000; width:10%;">NISN</th>
-                <th style="border:1px solid #000; width:23%;">Nama Siswa</th>
-                <th style="border:1px solid #000; width:15%;">Tgl Bayar Terakhir</th>
-                <th style="border:1px solid #000; width:18%;">Jumlah Bayar</th>
-                <th style="border:1px solid #000; width:22%;">Keterangan</th>
+                <th width="3%" style="border:1px solid #000; width: 3%;">No</th>
+                <th width="7%" style="border:1px solid #000; width: 7%;">Kelas</th>
+                <th width="10%" style="border:1px solid #000; width: 10%;">NISN</th>
+                <th width="28%" style="border:1px solid #000; width: 28%; text-align:left; padding-left: 8px;">Nama Siswa</th>
+                <th width="14%" style="border:1px solid #000; width: 14%;">Tgl Bayar Terakhir</th>
+                <th width="16%" style="border:1px solid #000; width: 16%;">Jumlah Bayar</th>
+                <th width="22%" style="border:1px solid #000; width: 22%; padding-left: 8px;">Keterangan</th>
             </tr>
         </thead>
         <tbody>
@@ -50,7 +56,7 @@
                         {{ $row->siswa_nisn ?? ($row->siswa->nisn ?? '-') }}
                     </td>
 
-                    <td style="border:1px solid #000;">
+                    <td style="border:1px solid #000; padding-left: 8px;">
                         {{ $row->siswa_nama ?? ($row->siswa->nama ?? '-') }}
                     </td>
 
@@ -60,7 +66,7 @@
                             : '-' }}
                     </td>
 
-                    <td style="border:1px solid #000; text-align:right;">
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">
                         {{ $sudahBayar ? \App\Utils\Angka::format($row->realisasi ?? 0, 2) : '-' }}
                     </td>
 
@@ -88,7 +94,7 @@
                     <td colspan="5" style="border:1px solid #000; text-align:right; padding:6px;">
                         Total Sudah Bayar: {{ $sudahBayarCount }} / {{ $totalSiswa }} siswa
                     </td>
-                    <td style="border:1px solid #000; text-align:right;">
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap; padding:6px;">
                         {{ \App\Utils\Angka::format($totalRealisasi, 2) }}
                     </td>
                     <td style="border:1px solid #000;"></td>

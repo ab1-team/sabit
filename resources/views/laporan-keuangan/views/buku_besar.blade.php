@@ -27,23 +27,20 @@
     </div>
     <table border="0" width="100%" cellspacing="0" cellpadding="3"
         style="font-size: 11px; border-collapse: collapse; table-layout: fixed;">
-        <colgroup>
-            <col style="width: 4%;">
-            <col style="width: 10%;">
-            <col style="width: 8%;">
-            <col style="width: 39%;">
-            <col style="width: 13%;">
-            <col style="width: 13%;">
-            <col style="width: 13%;">
-        </colgroup>
+        {{--
+            Lebar kolom (persen). Catatan: dompdf mengabaikan tag <colgroup>,
+            jadi lebar harus ditulis pada sel baris header. Persentase kolom
+            "No" dan "Ref ID." diperkecil supaya kolom Keterangan & angka
+            (Debit/Kredit/Saldo) mendapat ruang lebih lega.
+        --}}
         <tr style="background: rgb(74,74,74); color:#fff; font-weight:bold;">
-            <td align="center">No</td>
-            <td align="center">Tanggal</td>
-            <td align="center">Ref ID.</td>
-            <td align="center">Keterangan</td>
-            <td align="center">Debit</td>
-            <td align="center">Kredit</td>
-            <td align="center">Saldo</td>
+            <td width="4%" align="center">No</td>
+            <td width="10%" align="center">Tanggal</td>
+            <td width="7%" align="center">Ref ID.</td>
+            <td width="35%" align="center" style="padding-left: 8px;">Keterangan</td>
+            <td width="15%" align="center">Debit</td>
+            <td width="15%" align="center">Kredit</td>
+            <td width="14%" align="center">Saldo</td>
         </tr>
 
         @if (!empty($tampilkan_awal))
@@ -52,10 +49,10 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td>Saldo Awal Tahun</td>
-                <td align="right">0.00</td>
-                <td align="right">0.00</td>
-                <td align="right">{{ $fmt($saldo_awal ?? 0) }}</td>
+                <td style="padding-left: 8px;">Saldo Awal Tahun</td>
+                <td align="right" style="white-space: nowrap;">0.00</td>
+                <td align="right" style="white-space: nowrap;">0.00</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($saldo_awal ?? 0) }}</td>
             </tr>
 
             {{-- Komulatif s/d Bulan Lalu --}}
@@ -63,10 +60,10 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td>Komulatif Transaksi s/d Bulan Lalu</td>
-                <td align="right">{{ $fmt($komulatif_bulan_lalu_debit) }}</td>
-                <td align="right">{{ $fmt($komulatif_bulan_lalu_kredit) }}</td>
-                <td align="right">{{ $fmt($komulatif_bulan_lalu_saldo) }}</td>
+                <td style="padding-left: 8px;">Komulatif Transaksi s/d Bulan Lalu</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($komulatif_bulan_lalu_debit) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($komulatif_bulan_lalu_kredit) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($komulatif_bulan_lalu_saldo) }}</td>
             </tr>
         @endif
 
@@ -94,46 +91,46 @@
                 <td align="center">{{ $nomor_awal + $i }}</td>
                 <td align="center">{{ \App\Utils\Tanggal::tglIndo($trx->tanggal_transaksi) }}</td>
                 <td align="center">{{ $trx->id }}</td>
-                <td>{{ $trx->keterangan }}</td>
-                <td align="right">{{ $fmt($debit) }}</td>
-                <td align="right">{{ $fmt($kredit) }}</td>
-                <td align="right">{{ $fmt($total_saldo) }}</td>
+                <td style="padding-left: 8px;">{{ $trx->keterangan }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($debit) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($kredit) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_saldo) }}</td>
             </tr>
         @empty
             <tr style="background: rgb(255,255,255);">
                 <td></td>
                 <td></td>
                 <td></td>
-                <td><i>Tidak ada transaksi pada periode ini</i></td>
-                <td align="right">0.00</td>
-                <td align="right">0.00</td>
-                <td align="right">{{ $fmt($total_saldo) }}</td>
+                <td style="padding-left: 8px;"><i>Tidak ada transaksi pada periode ini</i></td>
+                <td align="right" style="white-space: nowrap;">0.00</td>
+                <td align="right" style="white-space: nowrap;">0.00</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_saldo) }}</td>
             </tr>
         @endforelse
 
         @if (!empty($tampilkan_akhir))
             {{-- Total Bulan Ini --}}
             <tr style="background: rgb(233,233,233); font-weight:bold;">
-                <td colspan="4">Total Transaksi Bulan {{ Tanggal::namaBulan($tgl_awal_bulan) }} {{ $tahun }}</td>
-                <td align="right">{{ $fmt($total_bulan_ini['debit']) }}</td>
-                <td align="right">{{ $fmt($total_bulan_ini['kredit']) }}</td>
+                <td colspan="4" style="padding-left: 8px;">Total Transaksi Bulan {{ Tanggal::namaBulan($tgl_awal_bulan) }} {{ $tahun }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_bulan_ini['debit']) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_bulan_ini['kredit']) }}</td>
                 <td align="right"></td>
             </tr>
 
             {{-- Total s/d Bulan Ini --}}
             <tr style="background: rgb(210,210,210); font-weight:bold;">
-                <td colspan="4">Total Transaksi sampai dengan Bulan {{ Tanggal::namaBulan($tgl_awal_bulan) }}
+                <td colspan="4" style="padding-left: 8px;">Total Transaksi sampai dengan Bulan {{ Tanggal::namaBulan($tgl_awal_bulan) }}
                     {{ $tahun }}</td>
-                <td align="right">{{ $fmt($total_sampai_bulan_ini['debit']) }}</td>
-                <td align="right">{{ $fmt($total_sampai_bulan_ini['kredit']) }}</td>
-                <td align="right">{{ $fmt($total_saldo) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_sampai_bulan_ini['debit']) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_sampai_bulan_ini['kredit']) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_saldo) }}</td>
             </tr>
 
             {{-- Total Komulatif Tahun --}}
             <tr style="background: rgb(190,190,190); font-weight:bold;">
-                <td colspan="4">Total Transaksi Komulatif sampai dengan Tahun {{ $tahun }}</td>
-                <td align="right">{{ $fmt($total_tahun_ini['debit']) }}</td>
-                <td align="right">{{ $fmt($total_tahun_ini['kredit']) }}</td>
+                <td colspan="4" style="padding-left: 8px;">Total Transaksi Komulatif sampai dengan Tahun {{ $tahun }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_tahun_ini['debit']) }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $fmt($total_tahun_ini['kredit']) }}</td>
                 <td align="right"></td>
             </tr>
         @endif

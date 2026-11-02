@@ -33,24 +33,19 @@
     </table>
 
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 11px; table-layout: fixed;">
-        <colgroup>
-            <col style="width: 4%;">
-            <col style="width: 10%;">
-            <col style="width: 8%;">
-            <col style="width: 10%;">
-            <col style="width: 33%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-        </colgroup>
+        {{--
+            Catatan: dompdf mengabaikan tag <colgroup>, jadi lebar kolom
+            harus ditulis pada sel baris header.
+        --}}
         <thead>
             <tr style="background: rgb(74, 74, 74); font-weight: bold; color: #fff;">
-                <th align="center">No</th>
-                <th align="center">Tanggal</th>
-                <th align="center">Ref ID.</th>
-                <th align="center">Kd. Rek</th>
-                <th align="center">Keterangan</th>
-                <th align="center">Debit</th>
-                <th align="center">Kredit</th>
+                <th width="4%" align="center">No</th>
+                <th width="10%" align="center">Tanggal</th>
+                <th width="7%" align="center">Ref ID.</th>
+                <th width="10%" align="center">Kd. Rek</th>
+                <th width="33%" align="center" style="padding-left: 8px;">Keterangan</th>
+                <th width="18%" align="center">Debit</th>
+                <th width="18%" align="center">Kredit</th>
             </tr>
         </thead>
         <tbody>
@@ -76,9 +71,9 @@
                     <td align="center">{{ $tglUtil->tglIndo($trx->tanggal_transaksi) }}</td>
                     <td align="center">{{ $trx->id }}</td>
                     <td align="center">{{ $trx->rekeningDebit->kode_akun ?? '' }}</td>
-                    <td>{{ $trx->rekeningDebit->nama_akun ?? $trx->keterangan }}</td>
-                    <td align="right">{{ \App\Utils\Angka::format($trx->jumlah, 2) }}</td>
-                    <td align="right">{{ \App\Utils\Angka::format(0, 2) }}</td>
+                    <td style="padding-left: 8px;">{{ $trx->rekeningDebit->nama_akun ?? $trx->keterangan }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ \App\Utils\Angka::format($trx->jumlah, 2) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ \App\Utils\Angka::format(0, 2) }}</td>
                 </tr>
 
                 {{-- Baris KREDIT --}}
@@ -87,9 +82,9 @@
                     <td>&nbsp;</td>
                     <td align="center">{{ $no }}</td>
                     <td align="center">{{ $trx->rekeningKredit->kode_akun ?? '' }}</td>
-                    <td>{{ $trx->rekeningKredit->nama_akun ?? $trx->keterangan }}</td>
-                    <td align="right">{{ \App\Utils\Angka::format(0, 2) }}</td>
-                    <td align="right">{{ \App\Utils\Angka::format($trx->jumlah, 2) }}</td>
+                    <td style="padding-left: 8px;">{{ $trx->rekeningKredit->nama_akun ?? $trx->keterangan }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ \App\Utils\Angka::format(0, 2) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ \App\Utils\Angka::format($trx->jumlah, 2) }}</td>
                 </tr>
 
                 @php
@@ -108,8 +103,8 @@
                 {{-- Total --}}
                 <tr style="background-color: #d3d3d3; font-weight: bold;">
                     <td colspan="5" align="center"><strong>Total</strong></td>
-                    <td align="right">{{ \App\Utils\Angka::format($totalDebit, 2) }}</td>
-                    <td align="right">{{ \App\Utils\Angka::format($totalKredit, 2) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ \App\Utils\Angka::format($totalDebit, 2) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ \App\Utils\Angka::format($totalKredit, 2) }}</td>
                 </tr>
             @endif
         </tbody>

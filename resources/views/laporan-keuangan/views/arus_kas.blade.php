@@ -26,10 +26,10 @@
         </tr>
     </table>
 
-    <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+    <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px; table-layout: fixed;">
         <tr style="background: rgb(200,200,200)">
-            <th colspan="2">Nama Akun</th>
-            <th>Jumlah</th>
+            <th colspan="2" width="82%" align="left" style="padding-left: 8px;">Nama Akun</th>
+            <th width="18%">Jumlah</th>
         </tr>
         <tr>
             <td colspan="4" height="8"></td>
@@ -45,9 +45,9 @@
             @endphp
 
             <tr style="background: rgb({{ $bg }})">
-                <td width="5%" align="center">{{ $romawi ?: '' }}</td>
-                <td width="80%">{{ $ak->nama_akun }}</td>
-                <td width="15%" align="right">
+                <td width="4%" align="center">{{ $romawi ?: '' }}</td>
+                <td width="78%" style="padding-left: 8px;">{{ $ak->nama_akun }}</td>
+                <td width="18%" align="right" style="white-space: nowrap;">
                     @if ($ak->id == 1)
                         {{ $formatKas($saldo_bulan_lalu) }}
                     @endif
@@ -86,8 +86,8 @@
 
                     <tr style="background: rgb({{ $bg }})">
                         <td>&nbsp;</td>
-                        <td>{{ $akun3->nama_akun }}</td>
-                        <td align="right">{{ $formatKas($jumlah) }}</td>
+                        <td style="padding-left: 8px;">{{ $akun3->nama_akun }}</td>
+                        <td align="right" style="white-space: nowrap;">{{ $formatKas($jumlah) }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -95,8 +95,8 @@
             @if ($dot == '.')
                 <tr style="background: rgb(150,150,150); font-weight:bold;">
                     <td>&nbsp;</td>
-                    <td>Jumlah {{ substr(ucwords(strtolower($ak->nama_akun)), 3) }}</td>
-                    <td align="right">{{ $formatKas($sub_total) }}</td>
+                    <td style="padding-left: 8px;">Jumlah {{ substr(ucwords(strtolower($ak->nama_akun)), 3) }}</td>
+                    <td align="right" style="white-space: nowrap;">{{ $formatKas($sub_total) }}</td>
                 </tr>
                 <tr>
                     <td colspan="4" height="8"></td>
@@ -118,23 +118,23 @@
 
             <tr style="background: rgb(128,128,128)">
                 <td>&nbsp;</td>
-                <td>{{ $title }}</td>
-                <td align="right">{{ $formatKas($total) }}</td>
+                <td style="padding-left: 8px;">{{ $title }}</td>
+                <td align="right" style="white-space: nowrap;">{{ $formatKas($total) }}</td>
             </tr>
         @endforeach
 
         <tr>
             <td colspan="3" style="padding: 0 !important;">
-                <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
+                <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px; table-layout: fixed;">
                     <tr style="background: rgb(128,128,128)">
-                        <td width="5%" align="center">&nbsp;</td>
-                        <td width="80%">Kenaikan (Penurunan) Kas</td>
-                        <td width="15%" align="right">{{ $formatKas($total_bulan_ini) }}</td>
+                        <td width="4%" align="center">&nbsp;</td>
+                        <td width="78%" style="padding-left: 8px;">Kenaikan (Penurunan) Kas</td>
+                        <td width="18%" align="right" style="white-space: nowrap;">{{ $formatKas($total_bulan_ini) }}</td>
                     </tr>
                     <tr style="background: rgb(128,128,128); font-weight:bold;">
                         <td>&nbsp;</td>
-                        <td>SALDO AKHIR KAS SETARA KAS</td>
-                        <td align="right">{{ $formatKas($total_bulan_ini + $saldo_bulan_lalu) }}</td>
+                        <td style="padding-left: 8px;">SALDO AKHIR KAS SETARA KAS</td>
+                        <td align="right" style="white-space: nowrap;">{{ $formatKas($total_bulan_ini + $saldo_bulan_lalu) }}</td>
                     </tr>
                 </table>
             </td>

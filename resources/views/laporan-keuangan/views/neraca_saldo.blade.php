@@ -37,21 +37,26 @@
     </table>
 
     <table width="100%" cellspacing="0" cellpadding="0"
-        style="font-size: 11px; border-collapse: collapse; border: 1px solid #313131;">
+        style="font-size: 11px; border-collapse: collapse; border: 1px solid #313131; table-layout: fixed;">
+        {{--
+            Catatan: dompdf mengabaikan tag <colgroup>, jadi lebar kolom
+            harus ditulis pada sel baris header. Kolom Rekening diperkecil
+            supaya kolom angka (Debit/Kredit) lebih lega.
+        --}}
         <thead>
             <tr style="background: #c4c4c4; font-weight: 600; text-align: center;">
-                <th rowspan="2" style="border: 0.2px solid #313131; width: 30%; padding: 4px;">Rekening</th>
-                <th colspan="2" style="border: 0.2px solid #313131;">Neraca Saldo</th>
-                <th colspan="2" style="border: 0.2px solid #313131;">Laba Rugi</th>
-                <th colspan="2" style="border: 0.2px solid #313131;">Neraca</th>
+                <th rowspan="2" width="25%" style="border: 0.2px solid #313131; width: 25%; padding: 4px; padding-left: 8px;">Rekening</th>
+                <th colspan="2" width="25%" style="border: 0.2px solid #313131; width: 25%;">Neraca Saldo</th>
+                <th colspan="2" width="25%" style="border: 0.2px solid #313131; width: 25%;">Laba Rugi</th>
+                <th colspan="2" width="25%" style="border: 0.2px solid #313131; width: 25%;">Neraca</th>
             </tr>
             <tr style="background: #c4c4c4; font-weight: 600; text-align: center;">
-                <th style="border: 0.2px solid #313131; width: 10%;">Debit</th>
-                <th style="border: 0.2px solid #313131; width: 10%;">Kredit</th>
-                <th style="border: 0.2px solid #313131; width: 10%;">Debit</th>
-                <th style="border: 0.2px solid #313131; width: 10%;">Kredit</th>
-                <th style="border: 0.2px solid #313131; width: 10%;">Debit</th>
-                <th style="border: 0.2px solid #313131; width: 10%;">Kredit</th>
+                <th width="12.5%" style="border: 0.2px solid #313131; width: 12.5%;">Debit</th>
+                <th width="12.5%" style="border: 0.2px solid #313131; width: 12.5%;">Kredit</th>
+                <th width="12.5%" style="border: 0.2px solid #313131; width: 12.5%;">Debit</th>
+                <th width="12.5%" style="border: 0.2px solid #313131; width: 12.5%;">Kredit</th>
+                <th width="12.5%" style="border: 0.2px solid #313131; width: 12.5%;">Debit</th>
+                <th width="12.5%" style="border: 0.2px solid #313131; width: 12.5%;">Kredit</th>
             </tr>
         </thead>
         <tbody>
@@ -103,15 +108,15 @@
                 @endphp
 
                 <tr>
-                    <td style="border: 1px solid #313131; padding: 4px;">
+                    <td style="border: 1px solid #313131; padding: 4px; padding-left: 8px;">
                         {{ $rek->kode_akun }} - {{ $rek->nama_akun }}
                     </td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($ns_debit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($ns_kredit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($rl_debit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($rl_kredit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($n_debit) }}</td>
-                    <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($n_kredit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($ns_debit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($ns_kredit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($rl_debit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($rl_kredit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($n_debit) }}</td>
+                    <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($n_kredit) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -121,20 +126,20 @@
         <tr style="background: #d6d6d6; font-weight: bold;">
             <td style="border: 1px solid #313131; text-align: center;">Surplus / Defisit</td>
             <td colspan="2"></td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($surplus_defisit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($surplus_defisit) }}</td>
             <td></td>
             <td></td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($surplus_defisit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($surplus_defisit) }}</td>
         </tr>
         <tr style="background: #f5f5f5; font-weight: bold;">
             <td style="border: 1px solid #313131; text-align: center;">Jumlah</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_ns_debit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_ns_kredit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($total_ns_debit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($total_ns_kredit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">
                 {{ $formatRupiah($total_rl_debit + $surplus_defisit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_rl_kredit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">{{ $formatRupiah($total_n_debit) }}</td>
-            <td style="border: 1px solid #313131; text-align: right;">
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($total_rl_kredit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">{{ $formatRupiah($total_n_debit) }}</td>
+            <td style="border: 1px solid #313131; text-align: right; white-space: nowrap;">
                 {{ $formatRupiah($total_n_kredit + $surplus_defisit) }}</td>
         </tr>
     </table>

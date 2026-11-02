@@ -16,6 +16,9 @@
 @extends('laporan-keuangan.layout.dasar')
 
 @section('content')
+    {{-- Judul dibuat sebagai tabel terpisah supaya baris pertama tabel data
+         tetap berisi header (Kode / Nama Akun / Saldo). dompdf hanya memakai
+         sel baris pertama untuk menentukan lebar kolom. --}}
     <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
         <tr>
             <td colspan="3" align="center">
@@ -30,10 +33,13 @@
         <tr>
             <td colspan="3" height="8"></td>
         </tr>
+    </table>
+
+    <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px; table-layout: fixed;">
         <tr style="background:#000; color:#fff; font-weight:600;">
-            <td width="10%" style="padding:4px;">Kode</td>
-            <td width="70%" style="padding:4px;">Nama Akun</td>
-            <td width="20%" style="padding:4px;" align="right">Saldo</td>
+            <td width="12%" style="padding:4px;">Kode</td>
+            <td width="62%" style="padding:4px; padding-left: 8px;">Nama Akun</td>
+            <td width="26%" style="padding:4px;" align="right">Saldo</td>
         </tr>
         <tr>
             <td colspan="3" height="6"></td>
@@ -49,7 +55,7 @@
             @foreach ($lev1->akun2 as $lev2)
                 <tr style="background:#a7a7a7; font-weight:bold;">
                     <td>{{ $lev2->kode_akun }}.</td>
-                    <td colspan="2">{{ $lev2->nama_akun }}</td>
+                    <td colspan="2" style="padding-left: 8px;">{{ $lev2->nama_akun }}</td>
                 </tr>
                 @foreach ($lev2->akun3 as $lev3)
                     @php
@@ -61,14 +67,14 @@
 
                     <tr style="background:{{ $bg }};">
                         <td>{{ $lev3->kode_akun }}.</td>
-                        <td>{{ $lev3->nama_akun }}</td>
-                        <td align="right">{{ Keuangan::formatSaldo($saldo_akun3) }}</td>
+                        <td style="padding-left: 8px;">{{ $lev3->nama_akun }}</td>
+                        <td align="right" style="white-space: nowrap;">{{ Keuangan::formatSaldo($saldo_akun3) }}</td>
                     </tr>
                 @endforeach
             @endforeach
             <tr style="background:#a7a7a7; font-weight:bold;">
-                <td colspan="2" align="left">Jumlah {{ $lev1->nama_akun }}</td>
-                <td align="right">{{ Keuangan::formatSaldo($total_akun1) }}</td>
+                <td colspan="2" align="left" style="padding-left: 8px;">Jumlah {{ $lev1->nama_akun }}</td>
+                <td align="right" style="white-space: nowrap;">{{ Keuangan::formatSaldo($total_akun1) }}</td>
             </tr>
             <tr>
                 <td colspan="3" height="6"></td>
@@ -76,8 +82,8 @@
             @if ($isLev1Modal($lev1))
                 <tr style="background:#c8c8c8; font-weight:bold;">
                     <td>3.2.02.</td>
-                    <td>Laba Rugi Berjalan (Surplus/Defisit)</td>
-                    <td align="right">{{ Keuangan::formatSaldo($laba_rugi_berjalan ?? 0) }}</td>
+                    <td style="padding-left: 8px;">Laba Rugi Berjalan (Surplus/Defisit)</td>
+                    <td align="right" style="white-space: nowrap;">{{ Keuangan::formatSaldo($laba_rugi_berjalan ?? 0) }}</td>
                 </tr>
             @endif
         @endforeach

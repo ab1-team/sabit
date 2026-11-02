@@ -59,17 +59,16 @@
                 Informasi Tambahan Laporan Keuangan
             </div>
             <div>
-                <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px;">
-                    <tr>
-                        <td colspan="4" height="3"></td>
-                    </tr>
+                <table border="0" width="100%" cellspacing="0" cellpadding="0" style="font-size: 11px; table-layout: fixed;">
+                    {{-- Baris pertama harus berisi header: dompdf hanya memakai sel
+                         baris pertama untuk menentukan lebar kolom. --}}
                     <tr style="background-color: #000; color: #fff; font-weight: bold;">
-                        <td width="10%">Kode</td>
-                        <td width="70%">Nama Akun</td>
-                        <td width="20%" align="right">Saldo</td>
+                        <td width="12%">Kode</td>
+                        <td width="62%" style="padding-left: 8px;">Nama Akun</td>
+                        <td width="26%" align="right">Saldo</td>
                     </tr>
                     <tr>
-                        <td colspan="4" height="5"></td>
+                        <td colspan="3" height="5"></td>
                     </tr>
                     @foreach ($akun1 as $lev1)
                         @php $total_lev1 = 0; @endphp
@@ -81,7 +80,7 @@
                         @foreach ($lev1->akun2 as $lev2)
                             <tr style="background:#a7a7a7; font-weight:bold;">
                                 <td>{{ $lev2->kode_akun }}.</td>
-                                <td colspan="2">{{ $lev2->nama_akun }}</td>
+                                <td colspan="2" style="padding-left: 8px;">{{ $lev2->nama_akun }}</td>
                             </tr>
 
                             @foreach ($lev2->akun3 as $lev3)
@@ -94,8 +93,8 @@
                                 {{-- AKUN LEVEL 3 --}}
                                 <tr style="background:#d0d0d0; font-weight:bold;">
                                     <td>{{ $lev3->kode_akun }}.</td>
-                                    <td>{{ $lev3->nama_akun }}</td>
-                                    <td align="right">{{ Keuangan::formatSaldo($saldo_lev3) }}</td>
+                                    <td style="padding-left: 8px;">{{ $lev3->nama_akun }}</td>
+                                    <td align="right" style="white-space: nowrap;">{{ Keuangan::formatSaldo($saldo_lev3) }}</td>
                                 </tr>
 
                                 {{-- DETAIL REKENING (PENJELASAN SAJA) --}}
@@ -105,8 +104,8 @@
                                     @endphp
                                     <tr style="background: {{ $i % 2 == 0 ? '#e6e6e6' : '#ffffff' }}">
                                         <td>{{ $rek->kode_akun }}.</td>
-                                        <td>{{ $rek->nama_akun }}</td>
-                                        <td align="right">{{ Keuangan::formatSaldoCALK($saldo_rek) }}</td>
+                                        <td style="padding-left: 8px;">{{ $rek->nama_akun }}</td>
+                                        <td align="right" style="white-space: nowrap;">{{ Keuangan::formatSaldoCALK($saldo_rek) }}</td>
                                     </tr>
                                     @php $i++; @endphp
                                 @endforeach
@@ -120,8 +119,8 @@
                         @endforeach
 
                         <tr style="background:#a7a7a7; font-weight:bold;">
-                            <td colspan="2">Jumlah {{ $lev1->nama_akun }}</td>
-                            <td align="right">{{ Keuangan::formatSaldo($total_lev1) }}</td>
+                            <td colspan="2" style="padding-left: 8px;">Jumlah {{ $lev1->nama_akun }}</td>
+                            <td align="right" style="white-space: nowrap;">{{ Keuangan::formatSaldo($total_lev1) }}</td>
                         </tr>
                     @endforeach
 

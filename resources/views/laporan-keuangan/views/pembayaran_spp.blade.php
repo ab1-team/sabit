@@ -26,8 +26,6 @@
 
     @php
         $nBulan = count($bulanList);
-        $bulanW = max(4, min(6, floor(56 / max(1, $nBulan))));
-        $fixedW = 100 - ($bulanW * $nBulan);
         // Nomor baris dimulai dari $nomor_awal supaya penomoran tetap
         // kontinyu ketika laporan dipecah menjadi beberapa bagian.
         $nomor_awal = $nomor_awal ?? 1;
@@ -38,46 +36,36 @@
 
     <table width="100%" cellpadding="3" cellspacing="0"
         style="border-collapse:collapse; font-size:9px; table-layout:fixed;">
-        <colgroup>
-            <col style="width:3%;">
-            <col style="width:8%;">
-            <col style="width:18%;">
-            <col style="width:7%;">
-            @for ($i = 0; $i < $nBulan; $i++)
-                <col style="width:{{ $bulanW }}%;">
-            @endfor
-            <col style="width:8%;">
-            <col style="width:8%;">
-            <col style="width:8%;">
-            <col style="width:{{ max(4, $fixedW - 24) }}%;">
-        </colgroup>
-
+        {{--
+            Catatan: dompdf mengabaikan tag <colgroup>, jadi lebar kolom
+            harus ditulis pada sel baris header.
+        --}}
         <thead>
-    <tr style="text-align:center; font-weight:bold;">
-        <th rowspan="2" style="border:1px solid #000;" width="5%">No</th>
-        <th rowspan="2" style="border:1px solid #000;" width="12%">NISN</th>
-        <th rowspan="2" style="border:1px solid #000;" width="25%">Nama Siswa</th>
-        <th rowspan="2" style="border:1px solid #000;" width="12%">Target / Bulan</th>
-        <th colspan="3" style="border:1px solid #000;" width="36%">Akumulasi</th>
-        <th rowspan="2" style="border:1px solid #000;" width="10%">Keterangan</th>
-    </tr>
-    <tr style="text-align:center; font-weight:bold;">
-        <th style="border:1px solid #000; border-top:none;" width="12%">Target s.d. Saat Ini</th>
-        <th style="border:1px solid #000; border-top:none;" width="12%">Bayar s.d. Periode Ini</th>
-        <th style="border:1px solid #000; border-top:none;" width="12%">Sisa</th>
-    </tr>
-</thead>
+            <tr style="text-align:center; font-weight:bold;">
+                <th rowspan="2" style="border:1px solid #000;" width="4%">No</th>
+                <th rowspan="2" style="border:1px solid #000;" width="11%">NISN</th>
+                <th rowspan="2" style="border:1px solid #000; text-align:left;" width="25%">Nama Siswa</th>
+                <th rowspan="2" style="border:1px solid #000;" width="11%">Target / Bulan</th>
+                <th colspan="3" style="border:1px solid #000;" width="37%">Akumulasi</th>
+                <th rowspan="2" style="border:1px solid #000;" width="12%">Keterangan</th>
+            </tr>
+            <tr style="text-align:center; font-weight:bold;">
+                <th style="border:1px solid #000; border-top:none;" width="12.3%">Target s.d. Saat Ini</th>
+                <th style="border:1px solid #000; border-top:none;" width="12.3%">Bayar s.d. Periode Ini</th>
+                <th style="border:1px solid #000; border-top:none;" width="12.4%">Sisa</th>
+            </tr>
+        </thead>
 
         <tbody>
             @forelse ($anggotaKelas as $i => $row)
                 <tr>
                     <td style="border:1px solid #000; text-align:center;">{{ $nomor_awal + $i }}</td>
                     <td style="border:1px solid #000; text-align:center;">{{ $row->siswa_nisn ?? ($row->siswa->nisn ?? '-') }}</td>
-                    <td style="border:1px solid #000;">{{ $row->siswa_nama ?? ($row->siswa->nama ?? '-') }}</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->per_bulan, 2) }}</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->target_sd_saat_ini, 2) }}</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($row->sd_periode_ini, 2) }}</td>
-                    <td style="border:1px solid #000; text-align:right; color: {{ $row->sisa > 0 ? 'red' : 'black' }};">
+                    <td style="border:1px solid #000; padding-left: 8px;">{{ $row->siswa_nama ?? ($row->siswa->nama ?? '-') }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($row->per_bulan, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($row->target_sd_saat_ini, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($row->sd_periode_ini, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap; color: {{ $row->sisa > 0 ? 'red' : 'black' }};">
                         {{ $row->sisa > 0 ? \App\Utils\Angka::format($row->sisa, 2) : '-' }}
                     </td>
                     <td style="border:1px solid #000; text-align:center; color: {{ $row->sisa > 0 ? 'red' : 'black' }};">
@@ -92,10 +80,10 @@
             @if (isset($totals) && $anggotaKelas->count() > 0 && ! empty($tampilkan_ringkasan))
                 <tr style="font-weight:bold; background:#f0f0f0;">
                     <td colspan="3" style="border:1px solid #000; text-align:center;">JUMLAH</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['per_bulan'] ?? 0, 2) }}</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['target_sd_saat_ini'] ?? 0, 2) }}</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['sd_periode_ini'] ?? 0, 2) }}</td>
-                    <td style="border:1px solid #000; text-align:right;">{{ \App\Utils\Angka::format($totals['sisa'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($totals['per_bulan'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($totals['target_sd_saat_ini'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($totals['sd_periode_ini'] ?? 0, 2) }}</td>
+                    <td style="border:1px solid #000; text-align:right; white-space:nowrap;">{{ \App\Utils\Angka::format($totals['sisa'] ?? 0, 2) }}</td>
                     <td style="border:1px solid #000;"></td>
                 </tr>
             @endif
