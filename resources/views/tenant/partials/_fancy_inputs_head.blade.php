@@ -6,10 +6,21 @@
     .select2-container { width: 100% !important; }
     .select2-container--bootstrap-5 .select2-selection { min-height: 44px; border-color: #cbd5e1; border-radius: .75rem; padding: .375rem .875rem; font-size: .875rem; }
     .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { padding: .25rem 1.5rem .25rem 0; color: #1e293b; line-height: 1.75rem; }
+    /* Teks select2 harus tepat di tengah kotak (vertikal).
+       Tanpa `display:flex` + `align-items:center`, baris teks yang
+       `line-height`-nya lebih besar dari tinggi kotak ikut turun ke
+       bawah sehingga terlihat "kurang ke atas". */
+    .select2-container--bootstrap-5 .select2-selection--single { display: flex; align-items: center; }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { flex: 1 1 auto; min-width: 0; }
     .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow { top: 9px; right: 10px; }
     .select2-container--bootstrap-5.select2-container--focus .select2-selection,
     .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
     .select2-container--bootstrap-5 .select2-dropdown { border-color: #cbd5e1; border-radius: .75rem; overflow: hidden; }
+    /* Tema select2-bootstrap-5 memberi opsi terpilih warna biru (#0d6efd).
+       Samakan dengan tema indigo aplikasi. */
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--selected,
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[aria-selected="true"]:not(.select2-results__option--highlighted) { background: #eef2ff !important; color: #4338ca !important; font-weight: 600; }
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--highlighted { background: #e0e7ff !important; color: #3730a3 !important; }
     .modal-scroll .select2-container--open { z-index: 70; }
     .modal-scroll .select2-container--bootstrap-5 .select2-dropdown { z-index: 70; }
     .modal-scroll .select2-container--bootstrap-5 .select2-search__field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .15); }

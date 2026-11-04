@@ -107,15 +107,9 @@ return [
         'filter' => [
             'label'       => 'Filter',
             'status'      => 'Status',
-            'jenis'       => 'Payment Type',
-            'due'         => 'Due Date',
             'all'         => 'All',
             'reset'       => 'Reset',
             'status_all'  => 'All statuses',
-            'jenis_all'   => 'All types',
-            'due_all'     => 'All due dates',
-            'due_overdue' => 'Overdue',
-            'due_soon'    => 'Due within 7 days',
         ],
 
         'col' => [

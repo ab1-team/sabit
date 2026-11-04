@@ -13,6 +13,9 @@
         .select2-container { width: 100% !important; }
         .select2-container--bootstrap-5 .select2-selection { min-height: 40px; border-color: #e2e8f0; border-radius: .5rem; padding: .25rem .75rem; font-size: .875rem; }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { padding: .125rem 1.5rem .125rem 0; color: #1e293b; line-height: 1.75rem; }
+        /* Teks select2 tepat di tengah kotak (vertikal). */
+        .select2-container--bootstrap-5 .select2-selection--single { display: flex; align-items: center; }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { flex: 1 1 auto; min-width: 0; }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow { top: 8px; right: 8px; }
         .select2-container--bootstrap-5.select2-container--focus .select2-selection,
         .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }

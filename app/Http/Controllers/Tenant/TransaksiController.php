@@ -105,8 +105,33 @@ class TransaksiController extends Controller
             ]);
         }
 
-        return redirect()->route('tenant.transaksi.index')
+        // Pembayaran dicatat → status tagihan tenant berubah, cache harus di-refresh.
+        \App\Services\TenantInvoiceStatus::flush((string) $invoice->tenant_id);
+
+        // Kembali ke halaman asal bila pemanggil menyediakannya (mis. modal
+        // pembayaran di halaman /invoice), supaya user bisa langsung lanjut
+        // ke langkah berikutnya tanpa pindah halaman lagi.
+        $target = $this->safeRedirectTarget($request);
+
+        return redirect($target ?: route('tenant.transaksi.index'))
             ->with('success', 'Pembayaran berhasil dicatat.');
+    }
+
+    /**
+     * Target redirect setelah pembayaran.
+     *
+     * Hanya path internal yang diizinkan (dimulai dengan "/" tapi bukan "//")
+     * supaya tidak menjadi open redirect ke situs luar.
+     */
+    private function safeRedirectTarget(Request $request): ?string
+    {
+        $target = trim((string) $request->input('redirect_to', ''));
+
+        if ($target === '' || ! str_starts_with($target, '/') || str_starts_with($target, '//')) {
+            return null;
+        }
+
+        return $target;
     }
 
     private function currentTenantId(Request $request): ?string

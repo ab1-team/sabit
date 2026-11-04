@@ -12,21 +12,43 @@ class TenantContext
     private const CACHE_KEY = 'central:tenants_for_select';
     private const CACHE_TTL = 300;
 
+    /**
+     * Nilai sentinel yang dipakai select2 untuk opsi "Semua Sekolah".
+     * Dikirim sebagai tenant_id agar tidak bentrok dengan string kosong
+     * (yang oleh framework diubah menjadi null oleh ConvertEmptyStringsToNull).
+     */
+    public const ALL_SENTINEL = '__all__';
+
     public function handle(Request $request, Closure $next): Response
     {
         $tenants = $this->tenantsForSelect();
 
         $request->attributes->set('tenants_all', $tenants);
 
-        $requested = $request->query('tenant_id', $request->input('tenant_id'));
         $session = session('central_tenant_id');
 
-        if ($requested !== null && $requested !== '' && $requested !== 'all') {
-            $exists = collect($tenants)->firstWhere('id', $requested);
-            if ($exists) {
-                session(['central_tenant_id' => (string) $requested]);
+        // PENTING: bedakan "parameter tenant_id tidak dikirim sama sekali"
+        // dari "tenant_id sengaja dikosongkan (= pilih Semua Sekolah)".
+        // Tanpa pembedaan ini, pengguna tidak pernah bisa kembali ke tampilan
+        // "Semua Sekolah" setelah pernah memilih sekolah tertentu.
+        //
+        // Filter konsol pusat hanya boleh diubah lewat request navigasi (GET).
+        // Form POST (mis. simpan invoice) juga membawa `tenant_id` milik
+        // formulirnya sendiri, sehingga tidak boleh mengubah cakupan konsol.
+        if ($request->isMethod('GET') && ($request->query->has('tenant_id') || $request->request->has('tenant_id'))) {
+            $requested = $request->query('tenant_id', $request->input('tenant_id'));
+
+            // Nilai kosong / sentinel = tidak memfilter sekolah tertentu.
+            if ($requested === null || $requested === '' || $requested === 'all' || $requested === self::ALL_SENTINEL) {
+                session()->forget('central_tenant_id');
+            } else {
+                $exists = collect($tenants)->firstWhere('id', $requested);
+                if ($exists) {
+                    session(['central_tenant_id' => (string) $requested]);
+                }
             }
         } elseif ($session !== null && $session !== 'all') {
+            // Tenant yang tersimpan sudah dihapus → bersihkan filter.
             $exists = collect($tenants)->firstWhere('id', $session);
             if (!$exists) {
                 session()->forget('central_tenant_id');

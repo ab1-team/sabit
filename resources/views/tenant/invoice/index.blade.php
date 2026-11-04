@@ -31,6 +31,12 @@
         .select2-container--open { z-index: 1080 !important; }
         .select2-container--bootstrap-5 .select2-selection { min-height: 44px; border-color: #cbd5e1; border-radius: .75rem; padding: .375rem .875rem; font-size: .875rem; box-shadow: none; }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { padding: .25rem 1.5rem .25rem 0; color: #1e293b; line-height: 1.75rem; }
+        /* Teks select2 tepat di tengah kotak (vertikal).
+           Tanpa flex + align-items:center, baris teks dengan line-height
+           1.75rem (28px) melebihi tinggi kotak (40px - padding) sehingga
+           teks terdorong ke bawah dan terlihat "kurang ke atas". */
+        .select2-container--bootstrap-5 .select2-selection--single { display: flex; align-items: center; }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { flex: 1 1 auto; min-width: 0; }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow { top: 9px; right: 10px; }
         .select2-container--bootstrap-5.select2-container--focus .select2-selection,
         .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
@@ -38,6 +44,11 @@
         .select2-container--bootstrap-5 .select2-search__field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .15) !important; }
         .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] { background: #eef2ff; color: #4338ca; }
         .select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] { background: #eef2ff; color: #4338ca; font-weight: 600; }
+        /* Tema select2-bootstrap-5 memberi opsi terpilih warna biru (#0d6efd).
+           Samakan dengan tema indigo halaman ini. */
+        .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--selected,
+        .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[aria-selected="true"]:not(.select2-results__option--highlighted) { background: #eef2ff !important; color: #4338ca !important; font-weight: 600; }
+        .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--highlighted { background: #e0e7ff !important; color: #3730a3 !important; }
         .select2-container--bootstrap-5 .select2-selection__clear { margin-right: 1.6rem; }
 
         /* Flatpickr berada di atas modal */
@@ -60,7 +71,11 @@
         .filter-select { min-width: 0; }
         .filter-select + .select2-container { width: 100% !important; }
         .filter-select + .select2-container .select2-selection { min-height: 40px; }
-        .filter-select.select2-hidden-accessible { width: 100% !important; }
+        /* CATATAN: jangan memberi `width: 100% !important` pada
+           `.filter-select.select2-hidden-accessible`. Select2 menyembunyikan
+           <select> asli dengan `position:absolute; width:1px !important`.
+           Override itu membuat select tersembunyi selebar viewport sehingga
+           halaman ikut ter-scroll horizontal. */
 
         /* Tabel */
         .table-wrap { overflow-x: auto; }
@@ -158,6 +173,10 @@
             #invoices tbody td:last-child > div > span[aria-disabled="true"] { box-sizing: border-box; width: 1.75rem; height: 1.75rem; padding: 0; justify-content: center; }
         }
     </style>
+
+    {{-- Gaya bersama tabel DataTables (grid + paginasi) — harus SETELAH <style> di atas
+         supaya aturan partial (pakai !important) yang menang. --}}
+    @include('tenant.partials._datatables')
 </head>
 <body class="min-h-screen text-slate-800">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -225,42 +244,21 @@
             </article>
         </section>
 
-        @include('tenant.partials.tenant-filter')
-
-        {{-- Filter toolbar --}}
-        <section class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-end">
-                <div class="flex-1">
-                    <label for="filter-status" class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">{{ __('tenant.invoice.filter.status') }}</label>
-                    <select id="filter-status" class="filter-select select2" data-placeholder="{{ __('tenant.invoice.filter.status_all') }}">
-                        <option value="">{{ __('tenant.invoice.filter.status_all') }}</option>
-                        <option value="unpaid">{{ __('tenant.invoice.status.unpaid') }}</option>
-                        <option value="paid">{{ __('tenant.invoice.status.paid') }}</option>
-                    </select>
-                </div>
-                <div class="flex-1">
-                    <label for="filter-jenis" class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">{{ __('tenant.invoice.filter.jenis') }}</label>
-                    <select id="filter-jenis" class="filter-select select2" data-placeholder="{{ __('tenant.invoice.filter.jenis_all') }}">
-                        <option value="">{{ __('tenant.invoice.filter.jenis_all') }}</option>
-                        @foreach ($paymentTypes as $pt)
-                            <option value="{{ $pt }}">{{ $pt }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="flex-1">
-                    <label for="filter-due" class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">{{ __('tenant.invoice.filter.due') }}</label>
-                    <select id="filter-due" class="filter-select select2" data-placeholder="{{ __('tenant.invoice.filter.due_all') }}">
-                        <option value="">{{ __('tenant.invoice.filter.due_all') }}</option>
-                        <option value="overdue">{{ __('tenant.invoice.filter.due_overdue') }}</option>
-                        <option value="due_soon">{{ __('tenant.invoice.filter.due_soon') }}</option>
-                    </select>
-                </div>
-                <button type="button" id="filter-reset" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.25 8.25 0 004.5 10m0 0a8.25 8.25 0 0013.5-2.625L21 4m0 0v5h-5"/></svg>
-                    {{ __('tenant.invoice.filter.reset') }}
-                </button>
-            </div>
-        </section>
+        {{--
+            Filter sekolah + filter status (Lunas / Belum Lunas).
+            Kedua filter diletakkan pada satu panel supaya sederhana.
+            Filter status mengirim nilainya lewat AJAX ke tabel (bukan reload
+            halaman), sedangkan pilihan sekolah tetap memakai navigasi GET.
+        --}}
+        @include('tenant.partials.tenant-filter', [
+            'statusFilterOptions' => [
+                ['value' => '__all__', 'label' => __('tenant.invoice.filter.status_all')],
+                ['value' => 'unpaid', 'label' => __('tenant.invoice.status.unpaid')],
+                ['value' => 'paid', 'label' => __('tenant.invoice.status.paid')],
+            ],
+            'statusFilterValue' => $statusFilterValue ?? '__all__',
+            'statusFilterLabel' => __('tenant.invoice.filter.status'),
+        ])
 
         {{-- Tabel --}}
         <section class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -361,6 +359,9 @@
             <form id="payment-form" action="{{ route('tenant.transaksi.store') }}" method="POST" class="px-5 py-5 sm:px-6">
                 @csrf
                 <input type="hidden" id="payment-idv" name="idv">
+                {{-- Setelah pembayaran sukses, balik ke halaman ini supaya user
+                     bisa langsung lanjut ke langkah berikutnya. --}}
+                <input type="hidden" name="redirect_to" value="{{ request()->getRequestUri() }}">
 
                 {{-- Ringkasan invoice --}}
                 <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
@@ -536,7 +537,26 @@
 
             /* ------------------------------------------------------------------
              * Select2 pada filter bar (di luar modal → dropdown ke body)
+             *
+             * Filter status (Lunas / Belum Lunas) berada di partial
+             * `tenant.partials.tenant-filter` bersama pemilih sekolah.
+             *
+             * Opsi "Semua …" memakai nilai sentinel `__all__` (lihat catatan
+             * pada markup filter bar). Select2 TIDAK boleh diberi `placeholder`
+             * di sini: bila diberi, opsi bernilai kosong dianggap placeholder
+             * dan dihapus dari daftar dropdown.
              * ------------------------------------------------------------------ */
+            const FILTER_ALL = '__all__';
+
+            /**
+             * Terjemahkan nilai sentinel `__all__` menjadi string kosong,
+             * karena string kosong berarti "tanpa filter" di sisi server.
+             */
+            function filterValue(selector) {
+                var value = $(selector).val();
+                return value === FILTER_ALL ? '' : (value || '');
+            }
+
             function initFilterSelects() {
                 $('.filter-select').each(function () {
                     const $el = $(this);
@@ -544,9 +564,15 @@
                     $el.select2({
                         theme: 'bootstrap-5',
                         width: '100%',
-                        placeholder: $el.data('placeholder') || '—',
                         allowClear: false,
                         minimumResultsForSearch: $el.find('option').length <= 5 ? Infinity : 0,
+                    }).on('select2:open', function () {
+                        // Select2 4.1 tidak punya opsi `searchPlaceholder`;
+                        // placeholder kotak pencarian diisi manual.
+                        const $field = $('.select2-container--open .select2-search__field');
+                        if ($field.length) {
+                            $field.attr('placeholder', $el.data('search-placeholder') || 'Cari...');
+                        }
                     });
                 });
             }
@@ -692,9 +718,7 @@
                 ajax: {
                     url: @json(route('tenant.invoice.data')),
                     data: function (d) {
-                        d.status_filter = $('#filter-status').val() || '';
-                        d.jenis_filter = $('#filter-jenis').val() || '';
-                        d.due_filter = $('#filter-due').val() || '';
+                        d.status_filter = filterValue('#filter-status');
                     },
                 },
                 language: {
@@ -706,6 +730,7 @@
                     loadingRecords: 'Memuat…',
                     processing: 'Memproses…',
                     search: 'Cari:',
+                    searchPlaceholder: 'Cari data...',
                     zeroRecords: 'Tidak ada invoice yang cocok.',
                     paginate: { first: '«', last: '»', next: '›', previous: '‹' },
                 },
@@ -751,16 +776,38 @@
 
             /* ------------------------------------------------------------------
              * Filter
+             *
+             * Hanya ada filter status (Lunas / Belum Lunas). Jenis pembayaran
+             * dan jatuh tempo sengaja dihapus agar semua pembayaran tetap
+             * tampil; info jatuh tempo sudah tersedia di kolom tabel.
              * ------------------------------------------------------------------ */
             function reloadTable() {
                 table.ajax.reload(null, false);
             }
 
-            $('#filter-status, #filter-jenis, #filter-due').on('change', reloadTable);
+            /**
+             * Simpan pilihan filter status ke URL (query param `status_filter`).
+             *
+             * Tujuannya supaya filter tetap aktif setelah halaman di-reload,
+             * termasuk setelah redirect dari proses pembayaran (kembali ke
+             * /invoice). Query param ini dibaca controller untuk meng-set
+             * nilai awal <select>.
+             */
+            function syncStatusFilterToUrl() {
+                var value = filterValue('#filter-status');
+                var url = new URL(window.location.href);
 
-            document.getElementById('filter-reset').addEventListener('click', function () {
-                // Set nilai tanpa memicu `change` → hanya 1x request ke server.
-                $('#filter-status, #filter-jenis, #filter-due').val('').trigger('change.select2');
+                if (value) {
+                    url.searchParams.set('status_filter', value);
+                } else {
+                    url.searchParams.delete('status_filter');
+                }
+
+                window.history.replaceState({}, '', url.toString());
+            }
+
+            $('#filter-status').on('change', function () {
+                syncStatusFilterToUrl();
                 reloadTable();
             });
 

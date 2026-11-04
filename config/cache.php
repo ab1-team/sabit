@@ -49,6 +49,24 @@ return [
             'lock_connection' => null,
         ],
 
+        /*
+         * Store cache yang selalu_shared antar host (pusat & tenant).
+         *
+         * Dipakai untuk data lintas tenant (mis. status tagihan lisensi
+         * sekolah), sehingga tidak boleh:
+         *   - ikut ter-scope tagged cache tenant, dan
+         *   - ikut ter-scope database tenant.
+         *
+         * Driver 'file' dipilih karena aman: driver 'database' di-intercept
+         * TaggedCacheTenancyBootstrapper sehingga selalu memakai koneksi
+         * default (yang pada host tenant = database tenant).
+         */
+        'central' => [
+            'driver' => 'file',
+            'path' => storage_path('framework/cache/central'),
+            'lock_path' => storage_path('framework/cache/central'),
+        ],
+
         'file' => [
             'driver' => 'file',
             'path' => storage_path('framework/cache/data'),

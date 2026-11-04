@@ -28,6 +28,9 @@
         .select2-container { width: 100% !important; }
         .select2-container--bootstrap-5 .select2-selection { min-height: 44px; border-color: #cbd5e1; border-radius: .75rem; padding: .375rem .875rem; font-size: .875rem; }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { padding: .25rem 1.5rem .25rem 0; color: #1e293b; line-height: 1.75rem; }
+        /* Teks select2 tepat di tengah kotak (vertikal). */
+        .select2-container--bootstrap-5 .select2-selection--single { display: flex; align-items: center; }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { flex: 1 1 auto; min-width: 0; }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow { top: 9px; right: 10px; }
         .select2-container--bootstrap-5.select2-container--focus .select2-selection,
         .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
@@ -70,6 +73,10 @@
         .dataTables_wrapper .dataTables_processing { background: rgba(255, 255, 255, .85) !important; border: 1px solid #e2e8f0 !important; border-radius: .75rem !important; color: #475569 !important; font-weight: 600 !important; box-shadow: 0 10px 25px rgba(15, 23, 42, .08); }
         .dataTables_empty { padding: 2.5rem 1rem !important; color: #94a3b8 !important; font-size: .875rem; }
     </style>
+
+    {{-- Gaya bersama tabel DataTables (grid + paginasi) — harus SETELAH <style> di atas
+         supaya aturan partial (pakai !important) yang menang. --}}
+    @include('tenant.partials._datatables')
 </head>
 <body class="min-h-screen text-slate-800">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -209,6 +216,7 @@
                 loadingRecords: 'Memuat…',
                 processing: 'Memproses…',
                 search: 'Cari:',
+                searchPlaceholder: 'Cari data...',
                 zeroRecords: 'Tidak ada kelas yang cocok.',
                 paginate: { first: '«', last: '»', next: '›', previous: '‹' },
             },

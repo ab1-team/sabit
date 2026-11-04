@@ -107,15 +107,9 @@ return [
         'filter' => [
             'label'      => 'Filter',
             'status'     => 'Status',
-            'jenis'      => 'Jenis Pembayaran',
-            'due'        => 'Jatuh Tempo',
             'all'        => 'Semua',
             'reset'      => 'Atur Ulang',
             'status_all' => 'Semua status',
-            'jenis_all'  => 'Semua jenis',
-            'due_all'    => 'Semua jatuh tempo',
-            'due_overdue'=> 'Terlambat',
-            'due_soon'   => 'Jatuh tempo ≤ 7 hari',
         ],
 
         'col' => [

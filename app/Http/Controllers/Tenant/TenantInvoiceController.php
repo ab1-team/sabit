@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\TenantInvoice;
+use App\Services\TenantInvoiceStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -59,6 +60,9 @@ class TenantInvoiceController extends Controller
             'summary'       => $this->summary($request),
             'rekenings'     => $this->rekenings(),
             'paymentTypes'  => TenantInvoice::JENIS_PEMBAYARAN,
+            // Nilai awal filter status (Lunas / Belum Lunas). Dipakai juga
+            // supaya pilihan status tetap aktif saat sekolah diganti.
+            'statusFilterValue' => $this->statusFilter($request),
         ]);
     }
 
@@ -67,25 +71,13 @@ class TenantInvoiceController extends Controller
         $tenantMap = $this->tenantMap();
         $tid = $this->currentTenantId($request);
 
-        $statusFilter = (string) $request->input('status_filter', '');
-        $jenisFilter = (string) $request->input('jenis_filter', '');
-        $dueFilter   = (string) $request->input('due_filter', '');
+        $statusFilter = $this->statusFilter($request);
 
         $data = TenantInvoice::with('user')
             ->select('admin_invoice.*')
             ->when($tid, fn ($q, $v) => $q->where('admin_invoice.tenant_id', $v))
             ->when(in_array($statusFilter, [TenantInvoice::STATUS_PAID, TenantInvoice::STATUS_UNPAID], true),
-                fn ($q) => $q->where('admin_invoice.status', $statusFilter))
-            ->when($jenisFilter !== '', fn ($q) => $q->where('admin_invoice.jenis_pembayaran', $jenisFilter))
-            ->when($dueFilter === 'overdue', fn ($q) => $q
-                ->where('admin_invoice.status', TenantInvoice::STATUS_UNPAID)
-                ->whereNotNull('admin_invoice.tgl_lunas')
-                ->whereDate('admin_invoice.tgl_lunas', '<', today()))
-            ->when($dueFilter === 'due_soon', fn ($q) => $q
-                ->where('admin_invoice.status', TenantInvoice::STATUS_UNPAID)
-                ->whereNotNull('admin_invoice.tgl_lunas')
-                ->whereDate('admin_invoice.tgl_lunas', '>=', today())
-                ->whereDate('admin_invoice.tgl_lunas', '<=', today()->addDays(7)));
+                fn ($q) => $q->where('admin_invoice.status', $statusFilter));
 
         return DataTables::eloquent($data)
             ->addIndexColumn()
@@ -122,19 +114,19 @@ class TenantInvoiceController extends Controller
             ->addColumn('jumlah_fmt', fn ($row) => 'Rp '.number_format((float) $row->jumlah, 0, ',', '.'))
             ->addColumn('status_badge', function ($row) {
                 if ($row->status === TenantInvoice::STATUS_PAID) {
-                    return '<span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">'
-                        .'<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Lunas</span>';
+                    return '<span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">'
+                        .'<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"></span>Lunas</span>';
                 }
 
                 if ($row->isOverdue()) {
-                    $days = abs((int) $row->daysToDue());
-
-                    return '<span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-600/20">'
-                        .'<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>Terlambat<span class="hidden sm:inline"> '.$days.' hr</span></span>';
+                    // Badge cukup menampilkan "Terlambat" — jumlah hari
+                    // tetap tersedia di kolom "Jatuh Tempo" ("Telat N hari").
+                    return '<span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-600/20">'
+                        .'<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500"></span>Terlambat</span>';
                 }
 
-                return '<span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20">'
-                    .'<span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>Belum<span class="hidden sm:inline"> Lunas</span></span>';
+                return '<span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20">'
+                    .'<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"></span>Belum<span class="hidden sm:inline"> Lunas</span></span>';
             })
             // Kunci di bawah harus sama dengan `columns[i][name]` yang dikirim DataTables.
             ->orderColumn('admin_invoice.jenis_pembayaran', 'admin_invoice.jenis_pembayaran $1')
@@ -205,6 +197,9 @@ class TenantInvoiceController extends Controller
 
         TenantInvoice::create($data);
 
+        // Status tagihan tenant berubah → cache status tagihan harus di-refresh.
+        TenantInvoiceStatus::flush((string) $data['tenant_id']);
+
         return redirect()->route('tenant.invoice.index')
             ->with('success', 'Invoice berhasil dibuat.');
     }
@@ -221,7 +216,11 @@ class TenantInvoiceController extends Controller
 
     public function destroy(TenantInvoice $invoice)
     {
+        $tenantId = (string) $invoice->tenant_id;
+
         $invoice->delete();
+
+        TenantInvoiceStatus::flush($tenantId);
 
         return redirect()->route('tenant.invoice.index')
             ->with('success', 'Invoice dihapus.');
@@ -274,6 +273,22 @@ class TenantInvoiceController extends Controller
     private function currentTenantId(Request $request): ?string
     {
         return $request->attributes->get('current_tenant_id');
+    }
+
+    /**
+     * Nilai filter status (Lunas / Belum Lunas).
+     *
+     * Hanya `paid` dan `unpaid` yang valid; nilai lain (termasuk string
+     * kosong dan sentinel `__all__`) berarti "tanpa filter" sehingga semua
+     * pembayaran tetap tampil.
+     */
+    private function statusFilter(Request $request): string
+    {
+        $value = (string) $request->input('status_filter', '');
+
+        return in_array($value, [TenantInvoice::STATUS_PAID, TenantInvoice::STATUS_UNPAID], true)
+            ? $value
+            : '';
     }
 
     /**

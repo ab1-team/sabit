@@ -633,6 +633,43 @@
 
         <div class="container-fluid py-2">
             <div class="container-fluid">
+                {{-- Banner permanen tagihan lisensi belum lunas.
+                     Muncul di semua halaman tenant selama ada tagihan unpaid. --}}
+                @php $tagihanBanner = session('tenant_tagihan'); @endphp
+                @if(is_array($tagihanBanner) && !empty($tagihanBanner['blocked']))
+                    <div id="tenantTagihanBanner"
+                        class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3"
+                        style="border-radius:.75rem;font-size:.8125rem;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="material-icons align-middle mt-1" style="font-size:20px;">warning</i>
+                            <span>
+                                <strong>Tagihan Lisensi Belum Lunas</strong> —
+                                {{ $tagihanBanner['total'] }} tagihan
+                                @if ($tagihanBanner['terlambat'] > 0)
+                                    ({{ $tagihanBanner['terlambat'] }} terlambat)
+                                @else
+                                    (belum terlambat)
+                                @endif,
+                                total <strong>{{ $tagihanBanner['nominal_fmt'] }}</strong>.
+                                Login baru akan ditolak sampai tagihan dilunasi.
+                                <br>
+                                <span style="font-size:.75rem;opacity:.9;">
+                                    {{ config('support.nama') }} —
+                                    <a href="mailto:{{ config('support.email') }}" class="text-white text-decoration-underline">{{ config('support.email') }}</a>
+                                    &middot;
+                                    <a href="https://wa.me/{{ config('support.whatsapp') }}" target="_blank" rel="noopener" class="text-white text-decoration-underline">WhatsApp</a>
+                                    &middot;
+                                    <a href="tel:{{ preg_replace('/[^0-9+]/', '', config('support.telepon')) }}" class="text-white text-decoration-underline">{{ config('support.telepon') }}</a>
+                                </span>
+                            </span>
+                        </div>
+                        <a href="{{ route('app.tagihan.index') }}"
+                            class="btn btn-sm btn-light text-dark text-nowrap" style="font-weight:600;">
+                            Lihat Tagihan
+                        </a>
+                    </div>
+                @endif
+
                 @yield('content')
             </div>
             <footer class="footer py-4">
@@ -957,6 +994,107 @@
                         '_blank'
                     );
                     window.location.href = "{{ route('app.dashboard') }}?gen_piutang=1&job=" + encodeURIComponent(job);
+                }
+            });
+        })();
+        </script>
+    @endif
+
+    {{-- Popup notifikasi tagihan lisensi yang belum lunas.
+         Dipasang di layout tenant sehingga user yang SUDAH login tetap
+         mendapat pemberitahuan (login baru sendiri sudah ditolak oleh
+         AuthController::login).
+
+         Popup hanya muncul SEKALI per sesi — user yang menutupnya tidak
+         akan diganggu lagi di navigasi berikutnya; banner di halaman
+         tetap terlihat selama tagihan belum lunas. --}}
+    @php
+        $tagihan = session('tenant_tagihan');
+        // Popup notifikasi ditampilkan SEKALI per sesi. Penandanya di-set
+        // di sini (saat popup benar-benar dirender), bukan di middleware,
+        // supaya request yang berakhir sebagai redirect tidak ikut
+        // menghabiskan popup.
+        $tagihanPopupPending = is_array($tagihan)
+            && ! empty($tagihan['blocked'])
+            && ! session('tenant_tagihan_popup_shown');
+
+        if ($tagihanPopupPending) {
+            session()->put('tenant_tagihan_popup_shown', true);
+        }
+    @endphp
+    @if($tagihanPopupPending)
+        @php
+            // Disiapkan di luar @json karena directive Blade @json mem-parse
+            // sampai tanda ')' pertama — ekspresi closure di dalamnya akan
+            // membuat PHP hasil kompilasi rusak.
+            $__tagihanRingkas = [
+                'total'       => (int) $tagihan['total'],
+                'terlambat'   => (int) $tagihan['terlambat'],
+                'nominal_fmt' => $tagihan['nominal_fmt'],
+            ];
+            $__tagihanDetail = [];
+            foreach ((array) ($tagihan['invoices'] ?? []) as $__inv) {
+                $__tagihanDetail[] = [
+                    'nomor'     => $__inv['nomor'] ?? '-',
+                    'jenis'     => $__inv['jenis_pembayaran'] ?? '-',
+                    'tgl_lunas' => $__inv['tgl_lunas'] ?? null,
+                    'terlambat' => (bool) ($__inv['terlambat'] ?? false),
+                    'jumlah'    => $__inv['jumlah_fmt'] ?? '-',
+                ];
+            }
+        @endphp
+        <script>
+        (function () {
+            const tg = @json($__tagihanRingkas);
+            const detail = @json($__tagihanDetail);
+
+            const rows = detail.map((d) =>
+                '<tr>' +
+                    '<td style="padding:.4rem .5rem;font-family:ui-monospace,monospace;font-size:.75rem;">' + d.nomor + '</td>' +
+                    '<td style="padding:.4rem .5rem;font-size:.8125rem;">' + d.jenis + '</td>' +
+                    '<td style="padding:.4rem .5rem;font-size:.8125rem;white-space:nowrap;">' +
+                        (d.tgl_lunas || '—') +
+                        (d.terlambat ? ' <span style="color:#be123c;font-weight:700;">(terlambat)</span>' : '') +
+                    '</td>' +
+                    '<td style="padding:.4rem .5rem;font-size:.8125rem;text-align:right;white-space:nowrap;">' + d.jumlah + '</td>' +
+                '</tr>'
+            ).join('');
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Tagihan Lisensi Belum Lunas',
+                html:
+                    '<div style="text-align:left;font-size:.875rem;line-height:1.6;">' +
+                        '<p style="margin:0 0 .6rem;">' +
+                            'Terdapat <strong>' + tg.total + ' tagihan</strong> yang belum lunas' +
+                            (tg.terlambat > 0 ? ' (<strong>' + tg.terlambat + ' sudah terlambat</strong>)' : '') +
+                            ' dengan total <strong>' + tg.nominal_fmt + '</strong>.' +
+                        '</p>' +
+                        '<div style="max-height:180px;overflow:auto;border:1px solid #e2e8f0;border-radius:.5rem;">' +
+                            '<table style="width:100%;border-collapse:collapse;">' + rows + '</table>' +
+                        '</div>' +
+                        '<p style="margin:.6rem 0 0;font-size:.8125rem;color:#64748b;">' +
+                            'Silakan lakukan pembayaran, lalu hubungi tim teknis kami untuk konfirmasi.' +
+                        '</p>' +
+                        '<div style="margin-top:.6rem;padding:.55rem .7rem;border-radius:.5rem;background:#f8fafc;border:1px solid #e2e8f0;font-size:.8125rem;">' +
+                            '<strong>Tim Teknis ABT</strong><br>' +
+                            '<a href="mailto:' + @json(config('support.email')) + '" style="color:#4f46e5;text-decoration:none;">' + @json(config('support.email')) + '</a>' +
+                            ' &middot; ' +
+                            '<a href="https://wa.me/' + @json(config('support.whatsapp')) + '" target="_blank" rel="noopener" style="color:#4f46e5;text-decoration:none;">WhatsApp</a>' +
+                            ' &middot; ' +
+                            '<a href="tel:' + @json(preg_replace('/[^0-9+]/', '', config('support.telepon'))) + '" style="color:#4f46e5;text-decoration:none;">' + @json(config('support.telepon')) + '</a>' +
+                        '</div>' +
+                    '</div>',
+                showCancelButton: true,
+                confirmButtonText: 'Lihat Tagihan',
+                cancelButtonText: 'Tutup',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                customClass: { popup: 'swal-tagihan-popup' },
+                width: '32rem',
+            }).then((r) => {
+                if (r.isConfirmed) {
+                    window.location.href = "{{ route('app.tagihan.index') }}";
                 }
             });
         })();

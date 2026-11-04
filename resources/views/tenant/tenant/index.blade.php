@@ -54,6 +54,10 @@
         .dataTables_wrapper .dataTables_processing { background: rgba(255, 255, 255, .85) !important; border: 1px solid #e2e8f0 !important; border-radius: .75rem !important; color: #475569 !important; font-weight: 600 !important; box-shadow: 0 10px 25px rgba(15, 23, 42, .08); }
         .dataTables_empty { padding: 2.5rem 1rem !important; color: #94a3b8 !important; font-size: .875rem; }
     </style>
+
+    {{-- Gaya bersama tabel DataTables (grid + paginasi) — harus SETELAH <style> di atas
+         supaya aturan partial (pakai !important) yang menang. --}}
+    @include('tenant.partials._datatables')
 </head>
 <body class="min-h-screen text-slate-800">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -393,6 +397,7 @@
                 loadingRecords: 'Memuat…',
                 processing: 'Memproses…',
                 search: 'Cari:',
+                searchPlaceholder: 'Cari data...',
                 zeroRecords: 'Tidak ada tenant yang cocok.',
                 paginate: { first: '«', last: '»', next: '›', previous: '‹' },
             },

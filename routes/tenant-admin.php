@@ -21,6 +21,7 @@ use App\Http\Controllers\JenisPembayaranController;
 use App\Http\Controllers\RekeningController;
 use App\Http\Controllers\DaftarKelasController;
 use App\Http\Controllers\AdminLandingController;
+use App\Http\Controllers\Tenant\TagihanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,7 +49,17 @@ use Illuminate\Support\Facades\Route;
 // routes/tenant-halaman-publik.php tidak mencuri URI ini). File ini hanya
 // berisi route di bawah group auth (Route::group(['middleware' => ['auth']])).
 
-Route::group(['middleware' => ['auth'], 'prefix' => 'app'], function () {
+// Halaman notifikasi tagihan lisensi.
+// TIDAK memakai middleware 'auth' karena justru dipakai ketika login
+// ditolak akibat tagihan belum lunas. Route ini tetap hanya bisa diakses
+// dari host admin tenant (middleware 'domain.type:admin').
+Route::group(['middleware' => ['domain.type:admin']], function () {
+    Route::get('/app/tagihan', [TagihanController::class, 'blocked'])->name('app.tagihan.index');
+    Route::get('/app/tagihan/{invoice}/print', [TagihanController::class, 'print'])->name('app.tagihan.print');
+    Route::post('/app/tagihan/logout', [TagihanController::class, 'logout'])->name('app.tagihan.logout');
+});
+
+Route::group(['middleware' => ['auth', 'invoice.paid'], 'prefix' => 'app'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('app.dashboard');
 
     Route::put('/profile/update/{id}', [ProfilController::class, 'update']);

@@ -36,6 +36,11 @@
                                 </div>
                             </div>
                             <div class="card-body">
+                                {{-- Catatan: tidak ada notifikasi tagihan di halaman ini.
+                                     Kalau tagihan lisensi belum lunas, login otomatis
+     ditolak dan user diarahkan ke halaman /app/tagihan yang sudah
+     menampilkan detail tagihan, instruksi pembayaran, dan kontak bantuan. --}}
+
                                 <p class="text-center mt-2 mb-3" style="font-size: 12px;">
                                     Silakan Login Pada Form di bawah ini
                                 </p>

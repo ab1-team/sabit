@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Profil;
+use App\Http\Middleware\EnsureInvoicePaid;
+use App\Services\TenantInvoiceStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +57,22 @@ class AuthController extends Controller
         $profil = Profil::first();
         session()->put('profil', $profil);
 
+        // Tagihan lisensi yang belum lunas → login ditolak, user diarahkan
+        // ke halaman notifikasi tagihan (/app/tagihan) yang menampilkan
+        // detail tagihan, instruksi pembayaran, dan kontak bantuan.
+        // Dicek SETELAH password benar agar tidak membocorkan informasi
+        // tagihan ke whoever.
+        $tagihan = $this->unpaidTagihan();
+
+        if ($tagihan !== null && $tagihan['blocked']) {
+            Auth::guard('web')->logout();
+            $request->session()->forget('auth_portal');
+            $request->session()->forget('profil');
+            $request->session()->regenerate();
+
+            return redirect()->route('app.tagihan.index');
+        }
+
         // Tentukan tujuan redirect setelah login.
         // - User yang punya hak akses menu Beranda (id=1) -> ke dashboard utama.
         // - User tanpa hak akses Beranda (mis. administrator landing) -> langsung
@@ -96,10 +114,35 @@ class AuthController extends Controller
     {
         session()->forget('profil');
         session()->forget('piutang_prompt');
+        session()->forget(EnsureInvoicePaid::SESSION_KEY);
+        session()->forget(EnsureInvoicePaid::SESSION_POPUP_SHOWN);
         Auth::guard('web')->logout();
         session()->forget('auth_portal');
         $request->session()->regenerate();
         $request->session()->regenerateToken();
         return redirect(url('/login'))->with('success', 'Anda telah berhasil keluar');
+    }
+
+    /**
+     * Ringkasan tagihan lisensi yang belum lunas untuk tenant aktif.
+     * Return null bila konteks tenant tidak tersedia (mis. dijalankan dari
+     * host pusat).
+     */
+    private function unpaidTagihan(): ?array
+    {
+        $tenantId = tenant('id');
+
+        if (empty($tenantId)) {
+            return null;
+        }
+
+        try {
+            return app(TenantInvoiceStatus::class)->summary((string) $tenantId);
+        } catch (\Throwable $e) {
+            // Jangan sampai masalah pengecekan tagihan memblokir login.
+            \Log::warning('Gagal mengecek tagihan tenant: '.$e->getMessage());
+
+            return null;
+        }
     }
 }

@@ -282,9 +282,23 @@ public function ttdPelaporanStore(Request $request)
 
     private function currentTenantId(Request $request): ?string
     {
+        // Di host tenant (aplikasi sekolah), tenant aktif adalah tenant
+        // tenancy itu sendiri — bukan filter konsol pusat. Tanpa ini,
+        // `current_tenant_id` bernilai null dan query invoice menjadi
+        // TIDAK ter-scope sehingga membocorkan invoice sekolah lain.
         $tid = $request->attributes->get('current_tenant_id');
 
-        return $tid ? (string) $tid : null;
+        if ($tid) {
+            return (string) $tid;
+        }
+
+        if (! \App\Support\HostContext::isCentral($request->getHost())) {
+            $tenantId = tenant('id');
+
+            return $tenantId ? (string) $tenantId : null;
+        }
+
+        return null;
     }
 }
 

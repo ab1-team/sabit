@@ -39,6 +39,10 @@
             .dataTables_wrapper .dataTables_filter { text-align: left; }
         }
     </style>
+
+    {{-- Gaya bersama tabel DataTables (grid + paginasi) — harus SETELAH <style> di atas
+         supaya aturan partial (pakai !important) yang menang. --}}
+    @include('tenant.partials._datatables')
 </head>
 <body class="min-h-screen text-slate-800">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -266,6 +270,7 @@
                     loadingRecords: 'Memuat…',
                     processing: 'Memproses…',
                     search: 'Cari:',
+                    searchPlaceholder: 'Cari data...',
                     zeroRecords: 'Tidak ada hasil.',
                     paginate: { first: '«', last: '»', next: '›', previous: '‹' }
                 }
